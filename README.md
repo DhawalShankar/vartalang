@@ -80,5 +80,3 @@ meet with respect to grow together.
 
 A humble initiative to bring India closer —
 **one conversation, one connection, one language at a time.**
-
----
