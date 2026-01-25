@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import { 
@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useDarkMode } from '@/lib/DarkModeContext';
 
-export default function ChatsPage() {
+function ChatsContent() {
   const { darkMode } = useDarkMode();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -416,9 +416,9 @@ export default function ChatsPage() {
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex items-center  justify-center">
-                <div className="text-center p-60">
-                  <MessageCircle className={`w-16 h-16  mx-auto mb-4 ${darkMode ? "text-orange-400/50" : "text-orange-600/50"}`} />
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center p-8">
+                  <MessageCircle className={`w-16 h-16 mx-auto mb-4 ${darkMode ? "text-orange-400/50" : "text-orange-600/50"}`} />
                   <p className={`text-lg font-semibold ${darkMode ? "text-orange-200" : "text-orange-800"}`}>
                     Select a conversation
                   </p>
@@ -432,5 +432,20 @@ export default function ChatsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ChatsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#FFF9F5]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-orange-700">Loading chats...</p>
+        </div>
+      </div>
+    }>
+      <ChatsContent />
+    </Suspense>
   );
 }
