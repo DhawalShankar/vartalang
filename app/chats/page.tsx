@@ -7,8 +7,6 @@ import {
   Search, 
   Send, 
   MoreVertical,
-  Paperclip,
-  Smile,
   Check,
   CheckCheck,
   ArrowLeft,
@@ -402,9 +400,7 @@ function ChatsContent() {
                             : "bg-orange-50 border-orange-300 text-orange-950 placeholder:text-orange-400 focus:border-orange-500"
                         }`}
                       />
-                      <button className={`p-2 rounded-lg transition-all ${darkMode ? "hover:bg-orange-900/30 text-orange-400" : "hover:bg-orange-100 text-orange-600"}`}>
-                        <Smile className="w-5 h-5" />
-                      </button>
+                      
                       <button
                         onClick={handleSendMessage}
                         className="p-2 rounded-lg bg-linear-to-r from-orange-500 to-red-600 text-white hover:scale-105 transition-all"
