@@ -101,8 +101,8 @@ export default function ProfilePage() {
             {/* Cover */}
             <div className={`h-32 ${
               darkMode 
-                ? 'bg-gradient-to-r from-orange-900/40 to-red-900/40' 
-                : 'bg-gradient-to-r from-orange-100 to-red-100'
+                ? 'bg-linear-to-r from-orange-900/40 to-red-900/40' 
+                : 'bg-linear-to-r from-orange-100 to-red-100'
             }`}></div>
 
             <div className="px-6 pb-6">
@@ -134,7 +134,7 @@ export default function ProfilePage() {
                     <>
                       <button
                         onClick={() => setIsEditing(true)}
-                        className="px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all flex items-center gap-2"
+                        className="px-6 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all flex items-center gap-2"
                       >
                         <Edit className="w-4 h-4" />
                         Edit Profile
@@ -151,7 +151,7 @@ export default function ProfilePage() {
                     <>
                       <button
                         onClick={handleSave}
-                        className="px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all flex items-center gap-2"
+                        className="px-6 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all flex items-center gap-2"
                       >
                         <Save className="w-4 h-4" />
                         Save

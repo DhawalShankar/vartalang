@@ -48,11 +48,36 @@ export default function SignupPage() {
     setFormData({ ...formData, languagesKnow: updated });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Form submitted:", formData);
-    // TODO: API call
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+ const res = await fetch('/api/auth/signup', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(formData),
+});
+
+const text = await res.text();
+console.log('STATUS:', res.status);
+console.log('HEADERS:', Object.fromEntries(res.headers.entries()));
+console.log('RAW RESPONSE:', text);
+
+  if (!res.ok) {
+    let errorMessage = "Signup failed";
+    try {
+      const data = JSON.parse(text);
+      errorMessage = data.error || errorMessage;
+    } catch (e) {
+      // If parsing fails, use the raw text or default message
+    }
+    alert(errorMessage);
+    return;
+  }
+
+  window.location.href = "/auth/login";
+};
 
   return (
     <div className={`min-h-screen ${darkMode ? "bg-[#1a1410]" : "bg-[#FFF9F5]"}`}>

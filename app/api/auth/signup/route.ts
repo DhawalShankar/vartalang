@@ -1,46 +1,121 @@
-import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
-import User from "@/models/user";   // ✅ correct case
-import { connectDB } from "@/lib/db";
+// app/api/auth/signup/route.ts
 
-export async function POST(req: Request) {
+// 🔥 CRITICAL: Force Node.js runtime (MongoDB / Mongoose need this)
+export const runtime = 'nodejs';
+
+import { NextRequest, NextResponse } from 'next/server';
+import dbConnect from '@/lib/mongodb';
+import User from '@/models/User';
+import { signupSchema } from '@/lib/validations/auth';
+import { ZodError } from 'zod';
+
+export async function POST(req: NextRequest) {
   try {
-    await connectDB();
+    // Parse body
+    const body = await req.json();
 
-    const { name, email, password } = await req.json();
+    // Validate input
+    const validatedData = signupSchema.parse(body);
 
-    // optional: check if user already exists
-    const exists = await User.findOne({ email });
-    if (exists) {
+    // Connect DB
+    await dbConnect();
+
+    // Check existing user
+    const existingUser = await User.findOne({
+      email: validatedData.email.toLowerCase(),
+    });
+
+    if (existingUser) {
       return NextResponse.json(
-        { error: "User already exists" },
+        { error: 'User with this email already exists' },
         { status: 400 }
       );
     }
 
-    const hashed = await bcrypt.hash(password, 10);
-
+    // Create user
     const user = await User.create({
-      name,
-      email,
-      password: hashed,
-      premium: false
+      email: validatedData.email.toLowerCase(),
+      password: validatedData.password, // ⚠️ hash if not already
+      name: validatedData.name,
+      profilePhoto: validatedData.profilePhoto || undefined,
+      primaryLanguageToLearn: validatedData.primaryLanguageToLearn,
+      secondaryLanguageToLearn: validatedData.secondaryLanguageToLearn,
+      languagesKnow: validatedData.languagesKnow,
+      primaryRole: validatedData.primaryRole,
+      state: validatedData.state,
+      country: validatedData.country,
+      emailUpdates: validatedData.emailUpdates,
+      provider: 'email',
     });
 
-    // ✅ SAFE RESPONSE (no password)
+    // Remove password before sending
+    const userResponse = user.toObject();
+    delete userResponse.password;
+
     return NextResponse.json(
       {
-        success: true,
+        message: 'Account created successfully',
         user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          premium: user.premium
-        }
+          id: userResponse._id,
+          email: userResponse.email,
+          name: userResponse.name,
+          primaryRole: userResponse.primaryRole,
+        },
       },
       { status: 201 }
     );
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (error) {
+    console.error('Signup error:', error);
+
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        {
+          error: 'Validation error',
+          details: error.issues.map(issue => ({
+            field: issue.path.join('.'),
+            message: issue.message,
+          })),
+        },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+/* ---------------------------------------------------------------
+   OPTIONAL: Email existence check (frontend validation)
+----------------------------------------------------------------*/
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const email = searchParams.get('email');
+
+    if (!email) {
+      return NextResponse.json(
+        { error: 'Email parameter required' },
+        { status: 400 }
+      );
+    }
+
+    await dbConnect();
+
+    const existingUser = await User.findOne({
+      email: email.toLowerCase(),
+    });
+
+    return NextResponse.json({
+      exists: Boolean(existingUser),
+    });
+  } catch (error) {
+    console.error('Email check error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }

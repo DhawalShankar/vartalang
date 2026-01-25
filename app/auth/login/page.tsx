@@ -3,6 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Mail, Lock } from "lucide-react";
 import { useDarkMode } from '@/lib/DarkModeContext';
+import { signIn } from "next-auth/react";
 
 export default function SigninPage() {
   const { darkMode } = useDarkMode(); // Use context
@@ -11,11 +12,22 @@ export default function SigninPage() {
     password: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Login:", formData);
-    // TODO: API call
-  };
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  const res = await signIn("credentials", {
+    email: formData.email,
+    password: formData.password,
+    redirect: false,
+  });
+
+  if (res?.error) {
+    alert("Invalid email or password");
+    return;
+  }
+
+  window.location.href = "/dashboard";
+};
 
   return (
     <div className={`min-h-screen flex items-center justify-center px-4 ${darkMode ? "bg-[#1a1410]" : "bg-[#FFF9F5]"}`}>

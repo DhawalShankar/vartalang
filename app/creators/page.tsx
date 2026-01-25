@@ -254,7 +254,7 @@ export default function CreatorsPage() {
         </div>
         <label className="relative inline-flex items-center cursor-pointer">
           <input type="checkbox" className="sr-only peer" />
-          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-orange-500 peer-checked:to-red-600"></div>
+          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-linear-to-r peer-checked:from-orange-500 peer-checked:to-red-600"></div>
         </label>
       </div>
 
@@ -274,7 +274,7 @@ export default function CreatorsPage() {
       </div>
 
       <div className="flex gap-3 pt-4">
-        <button className="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all">
+        <button className="flex-1 px-6 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all">
           Create Course
         </button>
         <button 
@@ -395,12 +395,12 @@ export default function CreatorsPage() {
         </div>
         <label className="relative inline-flex items-center cursor-pointer">
           <input type="checkbox" className="sr-only peer" />
-          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-orange-500 peer-checked:to-red-600"></div>
+          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-linear-to-r peer-checked:from-orange-500 peer-checked:to-red-600"></div>
         </label>
       </div>
 
       <div className="flex gap-3 pt-4">
-        <button className="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all">
+        <button className="flex-1 px-6 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all">
           Upload Note
         </button>
         <button 
@@ -525,7 +525,7 @@ export default function CreatorsPage() {
       </div>
 
       <div className="flex gap-3 pt-4">
-        <button className="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all">
+        <button className="flex-1 px-6 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all">
           Create Session
         </button>
         <button 
@@ -578,7 +578,7 @@ export default function CreatorsPage() {
             
             <button 
               onClick={() => setShowCreateModal(true)}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all flex items-center gap-2"
+              className="px-6 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all flex items-center gap-2"
             >
               <Plus className="w-5 h-5" />
               Create New
@@ -634,7 +634,7 @@ export default function CreatorsPage() {
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`px-6 py-3 rounded-xl font-medium text-sm whitespace-nowrap transition-all flex items-center gap-2 ${
                   activeTab === tab.id
-                    ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white'
+                    ? 'bg-linear-to-r from-orange-500 to-red-600 text-white'
                     : darkMode
                       ? 'bg-orange-900/10 border border-orange-800/30 text-orange-200 hover:bg-orange-900/20'
                       : 'bg-white border border-orange-100 text-gray-700 hover:bg-orange-50'
@@ -823,7 +823,7 @@ export default function CreatorsPage() {
                       </div>
 
                       <div className="flex gap-2">
-                        <button className="flex-1 px-3 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 text-white text-sm font-semibold hover:shadow-lg transition-all">
+                        <button className="flex-1 px-3 py-2 rounded-lg bg-linear-to-r from-orange-500 to-red-600 text-white text-sm font-semibold hover:shadow-lg transition-all">
                           Edit
                         </button>
                         <button className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
@@ -907,7 +907,7 @@ export default function CreatorsPage() {
                     </div>
 
                     <div className="flex gap-2">
-                      <button className="flex-1 px-3 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 text-white text-sm font-semibold hover:shadow-lg transition-all">
+                      <button className="flex-1 px-3 py-2 rounded-lg bg-linear-to-r from-orange-500 to-red-600 text-white text-sm font-semibold hover:shadow-lg transition-all">
                         Edit
                       </button>
                       <button className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
@@ -1022,7 +1022,7 @@ export default function CreatorsPage() {
                     </div>
 
                     <div className="flex gap-2">
-                      <button className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all">
+                      <button className="flex-1 px-4 py-2 rounded-lg bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all">
                         Manage
                       </button>
                       <button className={`px-4 py-2 rounded-lg border font-medium transition-all ${
@@ -1044,8 +1044,8 @@ export default function CreatorsPage() {
             <div className="space-y-6">
               <div className={`p-8 rounded-2xl border text-center ${
                 darkMode 
-                  ? 'bg-gradient-to-br from-orange-900/20 to-red-900/20 border-orange-800/30' 
-                  : 'bg-gradient-to-br from-orange-50 to-red-50 border-orange-100 shadow-xl'
+                  ? 'bg-linear-to-br from-orange-900/20 to-red-900/20 border-orange-800/30' 
+                  : 'bg-linear-to-br from-orange-50 to-red-50 border-orange-100 shadow-xl'
               }`}>
                 <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${
                   darkMode ? 'bg-orange-500/20' : 'bg-orange-100'
@@ -1058,7 +1058,7 @@ export default function CreatorsPage() {
                 <h2 className={`text-5xl font-bold mb-4 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
                   ₹{stats.totalRevenue.toLocaleString()}
                 </h2>
-                <button className="px-8 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all">
+                <button className="px-8 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all">
                   Withdraw Funds
                 </button>
               </div>
@@ -1146,7 +1146,7 @@ export default function CreatorsPage() {
                     onClick={() => setCreateType(tab.type as any)}
                     className={`px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-all ${
                       createType === tab.type
-                        ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white'
+                        ? 'bg-linear-to-r from-orange-500 to-red-600 text-white'
                         : darkMode
                           ? 'bg-orange-900/10 text-orange-200 hover:bg-orange-900/20'
                           : 'bg-orange-50 text-gray-700 hover:bg-orange-100'
@@ -1174,8 +1174,8 @@ export default function CreatorsPage() {
       }`}>
         <div className={`absolute inset-0 ${
           darkMode
-            ? 'bg-gradient-to-br from-orange-900/30 via-red-900/20 to-transparent'
-            : 'bg-gradient-to-br from-orange-100 via-red-50 to-transparent'
+            ? 'bg-linear-to-br from-orange-900/30 via-red-900/20 to-transparent'
+            : 'bg-linear-to-br from-orange-100 via-red-50 to-transparent'
         }`}></div>
 
         <div className="max-w-3xl mx-auto text-center relative z-10">
@@ -1204,7 +1204,7 @@ export default function CreatorsPage() {
             <button
               onClick={() => setShowCreateModal(true)}
               className="inline-flex items-center gap-2 px-10 py-4 rounded-full font-semibold text-base
-              bg-gradient-to-r from-orange-500 to-red-600 text-white
+              bg-linear-to-r from-orange-500 to-red-600 text-white
               hover:shadow-xl hover:scale-105 transition-all"
             >
               Create Content
