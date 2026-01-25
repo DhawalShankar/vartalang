@@ -83,19 +83,21 @@ export default function Navbar() {
                   </button>
 
                   {/* Profile */}
-                  <button
-                    className={`p-2 rounded-full transition-all ${
-                      darkMode
-                        ? "bg-orange-900/30 hover:bg-orange-900/50"
-                        : "bg-orange-50 hover:bg-orange-100"
-                    }`}
-                  >
-                    <User
-                      className={`w-4 h-4 ${
-                        darkMode ? "text-orange-300" : "text-orange-700"
+                  <Link href="/profile">
+                    <button
+                      className={`p-2 rounded-full transition-all ${
+                        darkMode
+                          ? "bg-orange-900/30 hover:bg-orange-900/50"
+                          : "bg-orange-50 hover:bg-orange-100"
                       }`}
-                    />
-                  </button>
+                    >
+                      <User
+                        className={`w-4 h-4 ${
+                          darkMode ? "text-orange-300" : "text-orange-700"
+                        }`}
+                      />
+                    </button>
+                  </Link>
                 </>
               ) : (
                 <>
