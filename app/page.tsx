@@ -1,20 +1,13 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { Heart, Menu, X, ArrowRight, MessageCircle, Target, BookOpen, Moon, Sun, Users, Globe, Shield, Sparkles, Star, CheckCircle, Play } from 'lucide-react';
-
+import Link from 'next/link';
+import { Heart, ArrowRight, MessageCircle, Target, BookOpen, Users, Globe, Shield, Sparkles, Star, CheckCircle } from 'lucide-react';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
+import { useDarkMode } from '@/lib/DarkModeContext';
 export default function VartaLangLanding() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(true);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
+   const { darkMode } = useDarkMode(); // Use context
+    
   const languages = [
     'Hindi • हिंदी',
     'Tamil • தமிழ்',
@@ -28,74 +21,14 @@ export default function VartaLangLanding() {
     'English'
   ];
 
-  return (
-    <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'bg-[#1a1410]' : 'bg-[#FFF9F5]'}`} style={{fontFamily: '"Inter", -apple-system, sans-serif'}}>
+   return (
+    <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'bg-[#1a1410]' : 'bg-[#FFF9F5]'}`}>
       
-      {/* Floating Navbar */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'py-3' : 'py-5'}`}>
-        <div className="max-w-6xl mx-auto px-4 lg:px-6">
-          <div className={`backdrop-blur-xl rounded-full border transition-all duration-500 ${
-            darkMode 
-              ? 'bg-[#2a1f1a]/80 border-orange-900/30 shadow-xl shadow-orange-500/5' 
-              : 'bg-white/80 border-orange-100 shadow-lg shadow-orange-200/20'
-          }`}>
-            <div className="flex justify-between items-center px-5 h-14">
-              
-              {/* Logo */}
-              <div className="flex items-center gap-2.5">
-                <div className="relative w-8 h-8">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                    darkMode 
-                      ? 'bg-linear-to-br from-orange-500 to-red-700' 
-                      : 'bg-linear-to-br from-orange-500 to-red-600'
-                  }`}>
-                    <span className="text-white text-sm font-bold">V</span>
-                  </div>
-                </div>
-                <span className={`text-base font-bold ${darkMode ? 'text-orange-100' : 'text-gray-800'}`}>
-                  VartaLang
-                </span>
-              </div>
-
-              {/* Desktop Menu */}
-              <div className="hidden md:flex items-center gap-4">
-                <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  darkMode ? 'bg-orange-900/30 text-orange-300' : 'bg-orange-50 text-orange-700'
-                }`}>
-                  Coming Soon
-                </div>
-                <button 
-                  onClick={() => setDarkMode(!darkMode)}
-                  className={`p-2 rounded-full transition-all hover:scale-110 ${
-                    darkMode ? 'bg-orange-900/30 hover:bg-orange-900/50' : 'bg-orange-50 hover:bg-orange-100'
-                  }`}
-                >
-                  {darkMode ? <Sun className="w-4 h-4 text-orange-300" /> : <Moon className="w-4 h-4 text-orange-700" />}
-                </button>
-              </div>
-
-              {/* Mobile Menu */}
-              <div className="md:hidden flex items-center gap-2">
-                <button 
-                  onClick={() => setDarkMode(!darkMode)}
-                  className={`p-1.5 rounded-full ${darkMode ? 'bg-orange-900/30' : 'bg-orange-50'}`}
-                >
-                  {darkMode ? <Sun className="w-4 h-4 text-orange-300" /> : <Moon className="w-4 h-4 text-orange-700" />}
-                </button>
-                <button 
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
-                  className={darkMode ? 'text-orange-100' : 'text-gray-800'}
-                >
-                  {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
+      {/* Use Common Navbar */}
+      <Navbar />
 
       {/* Hero Section */}
-      <section className="pt-28 pb-16 px-4 relative overflow-hidden">
+      <section className=" pt-40 pb-8 px-4 relative overflow-hidden">
         {/* Warm Background Glow */}
         <div className={`absolute top-20 left-1/3 w-72 h-72 rounded-full blur-3xl ${
           darkMode ? 'bg-orange-900/20' : 'bg-orange-200/40'
@@ -117,7 +50,7 @@ export default function VartaLangLanding() {
           </div>
 
           {/* Headline */}
-          <h1 className={`text-4xl md:text-6xl font-bold mb-5 leading-tight ${
+          <h1 className={`text-4xl md:text-5xl font-bold mb-5 leading-tight ${
             darkMode ? 'text-orange-50' : 'text-gray-900'
           }`}>
             Learn languages by connecting with
@@ -138,14 +71,10 @@ export default function VartaLangLanding() {
 
           {/* CTA */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <button className={`group px-8 py-4 rounded-full font-semibold text-base hover:shadow-lg transition-all hover:scale-105 inline-flex items-center gap-2 ${
-              darkMode 
-                ? 'bg-linear-to-r from-orange-500 to-red-600 text-white' 
-                : 'bg-linear-to-r from-orange-500 to-red-600 text-white'
-            }`}>
-              Join the Waitlist
+            <Link href="/auth/signup" className="group px-8 py-4 rounded-full font-semibold text-base bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-lg transition-all hover:scale-105 inline-flex items-center gap-2">
+              Join Now
               <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
-            </button>
+            </Link>
             <button className={`px-8 py-4 rounded-full font-medium text-base border transition-all hover:scale-105 ${
               darkMode 
                 ? 'border-orange-800/50 text-orange-200 hover:bg-orange-900/20' 
@@ -159,15 +88,13 @@ export default function VartaLangLanding() {
           <div className="mt-10 flex justify-center items-center gap-3">
             <div className="flex -space-x-2">
               {[1,2,3].map((i) => (
-                <div key={i} className={`w-9 h-9 rounded-full border-2 ${
-                  darkMode 
-                    ? 'bg-linear-to-br from-orange-400 to-red-500 border-[#1a1410]' 
-                    : 'bg-linear-to-br from-orange-400 to-red-500 border-white'
-                }`}></div>
+                <div key={i} className={`w-9 h-9 rounded-full border-2 bg-linear-to-br from-orange-400 to-red-500 ${
+                      darkMode ? 'border-[#1a1410]' : 'border-white'
+                    }`}></div>
               ))}
             </div>
             <span className={`text-sm font-medium ${darkMode ? 'text-orange-300' : 'text-gray-600'}`}>
-               Learners are waiting!
+              Learners are waiting!
             </span>
           </div>
         </div>
@@ -191,7 +118,7 @@ export default function VartaLangLanding() {
         </div>
       </section>
 
-      {/* What You Can Do - Mission Focused */}
+      {/* What You Can Do */}
       <section className="py-20 px-4">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
@@ -244,10 +171,10 @@ export default function VartaLangLanding() {
                     : 'bg-white border-orange-100 hover:shadow-lg hover:border-orange-200'
                 }`}
               >
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 bg-linear-to-br ${
                   darkMode 
-                    ? 'bg-linear-to-br from-orange-500/20 to-red-600/20' 
-                    : 'bg-linear-to-br from-orange-50 to-red-50'
+                    ? 'from-orange-500/20 to-red-600/20' 
+                    : 'from-orange-50 to-red-50'
                 }`}>
                   <feature.icon className={`w-6 h-6 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
                 </div>
@@ -263,7 +190,7 @@ export default function VartaLangLanding() {
         </div>
       </section>
 
-      {/* Why VartaLang - Values */}
+      {/* Why VartaLang */}
       <section className="py-16 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10">
@@ -310,10 +237,10 @@ export default function VartaLangLanding() {
               ? 'bg-orange-900/10 border-orange-800/30' 
               : 'bg-white border-orange-100 shadow-lg'
           }`}>
-            <div className={`inline-flex items-center justify-center w-14 h-14 rounded-full mb-5 ${
+            <div className={`inline-flex items-center justify-center w-14 h-14 rounded-full mb-5 bg-linear-to-br ${
               darkMode 
-                ? 'bg-linear-to-br from-orange-500/20 to-red-600/20' 
-                : 'bg-linear-to-br from-orange-50 to-red-50'
+                ? 'from-orange-500/20 to-red-600/20' 
+                : 'from-orange-50 to-red-50'
             }`}>
               <Sparkles className={`w-7 h-7 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
             </div>
@@ -333,78 +260,71 @@ export default function VartaLangLanding() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 px-4 relative overflow-hidden">
-        <div className={`absolute inset-0 ${
-          darkMode 
-            ? 'bg-linear-to-br from-orange-900/40 via-red-900/40 to-orange-800/40' 
-            : 'bg-linear-to-br from-orange-400 via-red-500 to-orange-500'
-        }`}></div>
-        
-        <div className="max-w-3xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-xl rounded-full mb-5">
-            <Heart className="w-4 h-4 text-white fill-white" />
-            <span className="text-sm font-semibold text-white">Join our peaceful community</span>
-          </div>
-          
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white leading-tight">
-            Welcome to VartaLang
-          </h2>
-          <p className="text-lg text-white/90 mb-8 max-w-xl mx-auto">
-            A humble initiative to bring India closer. 
-            Be among the first to experience respectful language exchange.
-          </p>
-          
-          <button className="px-10 py-4 bg-white text-gray-900 rounded-full font-semibold text-base hover:shadow-xl transition-all hover:scale-105 inline-flex items-center gap-2">
-            Join the Waitlist
-            <ArrowRight className="w-5 h-5" />
-          </button>
-        </div>
-      </section>
+{/* CTA Section */}
+<section
+  className={`py-24 px-4 relative overflow-hidden ${
+    darkMode ? 'bg-[#1a1410]' : 'bg-[#FFF4EC]'
+  }`}
+>
+  {/* Soft Gradient Overlay */}
+  <div
+    className={`absolute inset-0 ${
+      darkMode
+        ? 'bg-linear-to-br from-orange-900/30 via-red-900/20 to-transparent'
+        : 'bg-linear-to-br from-orange-100 via-red-50 to-transparent'
+    }`}
+  ></div>
 
-      {/* Footer */}
-      <footer className={`py-12 px-4 border-t ${darkMode ? 'border-orange-900/30 bg-[#1a1410]' : 'border-orange-100 bg-white/50'} backdrop-blur-xl`}>
-        <div className="max-w-5xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-8">
-            <div className="flex items-center gap-2.5">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                darkMode 
-                  ? 'bg-linear-to-br from-orange-500 to-red-700' 
-                  : 'bg-linear-to-br from-orange-500 to-red-600'
-              }`}>
-                <span className="text-white text-sm font-bold">V</span>
-              </div>
-              <span className={`font-bold ${darkMode ? 'text-orange-100' : 'text-gray-800'}`}>
-                VartaLang
-              </span>
-            </div>
-            
-            <div className="flex gap-6 text-sm">
-              {['Instagram', 'Twitter', 'Discord'].map((social) => (
-                <a 
-                  key={social}
-                  href="#" 
-                  className={`font-medium transition-all hover:scale-110 ${
-                    darkMode ? 'text-orange-300 hover:text-orange-200' : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  {social}
-                </a>
-              ))}
-            </div>
-          </div>
-          
-          <div className={`pt-6 border-t text-center ${darkMode ? 'border-orange-900/30' : 'border-orange-100'}`}>
-            <p className={`text-xs font-medium flex items-center justify-center gap-1 ${
-              darkMode ? 'text-orange-300/80' : 'text-gray-600'
-            }`}>
-              Built with <Heart className="w-3 h-3 fill-current text-red-500" /> for language learners across India
-            </p>
-            <p className={`text-xs mt-1 ${darkMode ? 'text-orange-400/60' : 'text-gray-500'}`}>
-              © 2026 VartaLang • India's Language Bridge
-            </p>
-          </div>
-        </div>
-      </footer>
+  <div className="max-w-3xl mx-auto text-center relative z-10">
+    {/* Badge */}
+    <div
+      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 border backdrop-blur ${
+        darkMode
+          ? 'bg-orange-900/30 border-orange-700/40 text-orange-200'
+          : 'bg-white/70 border-orange-200 text-orange-700'
+      }`}
+    >
+      <Heart className="w-4 h-4 fill-current" />
+      <span className="text-sm font-semibold">
+        Join our peaceful community
+      </span>
+    </div>
+
+    {/* Heading */}
+    <h2
+      className={`text-4xl md:text-5xl font-bold mb-4 leading-tight ${
+        darkMode ? 'text-orange-50' : 'text-gray-900'
+      }`}
+    >
+      Welcome to VartaLang
+    </h2>
+
+    {/* Text */}
+    <p
+      className={`text-lg mb-8 max-w-xl mx-auto ${
+        darkMode ? 'text-orange-200/80' : 'text-gray-600'
+      }`}
+    >
+      A humble initiative to bring India closer.
+      <br />
+      Be among the first to experience respectful language exchange.
+    </p>
+
+    {/* CTA Button */}
+    <Link
+      href="/auth/signup"
+      className="inline-flex items-center gap-2 px-10 py-4 rounded-full font-semibold text-base
+      bg-linear-to-r from-orange-500 to-red-600 text-white
+      hover:shadow-xl hover:scale-105 transition-all"
+    >
+      Join Now
+      <ArrowRight className="w-5 h-5" />
+    </Link>
+  </div>
+</section>
+
+      {/* Use Common Footer */}
+      <Footer />
 
       <style jsx>{`
         @keyframes scroll {
