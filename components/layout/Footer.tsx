@@ -13,13 +13,11 @@ export default function Footer() {
       <div className="max-w-5xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-8">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              darkMode
-                ? "bg-linear-to-br from-orange-500 to-red-700"
-                : "bg-linear-to-br from-orange-500 to-red-600"
-            }`}>
-              <span className="text-white text-sm font-bold">V</span>
-            </div>
+            <img
+                  src="/logo.png"
+                  alt="Vartalang Logo"
+                  className="w-17 h-auto"
+                />
             <span className={`font-bold ${darkMode ? "text-orange-100" : "text-gray-800"}`}>
               VartaLang
             </span>

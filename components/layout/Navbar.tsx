@@ -25,15 +25,14 @@ export default function Navbar() {
           <div className="flex justify-between items-center px-5 h-14">
             {/* LOGO */}
             <Link href="/" className="flex items-center gap-2.5">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center bg-linear-to-br ${
-                  darkMode
-                    ? "from-orange-500 to-red-700"
-                    : "from-orange-500 to-red-600"
-                }`}
-              >
-                <span className="text-white text-sm font-bold">V</span>
-              </div>
+             
+                <img
+                  src="/logo.png"
+                  alt="Vartalang Logo"
+                  className="w-17 h-auto"
+                />
+              
+
               <span
                 className={`text-base font-bold ${
                   darkMode ? "text-orange-100" : "text-gray-800"
