@@ -1,19 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Menu, X, Sun, Moon, Bell, User } from "lucide-react";
 import { useDarkMode } from "@/lib/DarkModeContext";
-
+import { useAuth } from "@/lib/AuthContext";
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { darkMode, setDarkMode } = useDarkMode();
 
-  // 🔐 TEMP: replace later with real auth
-  const isLoggedIn = true;
-
+  const { isLoggedIn} = useAuth();
+  const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+  
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 py-4">
+    <nav  className={`fixed top-0 left-0 right-0 z-50 py-4 transition-opacity`}>
       <div className="max-w-6xl mx-auto px-4 lg:px-6">
         <div
           className={`backdrop-blur-xl rounded-full border transition-all ${

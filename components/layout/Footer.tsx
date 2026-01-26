@@ -5,6 +5,11 @@ import { useDarkMode } from "@/lib/DarkModeContext";
 
 export default function Footer() {
   const { darkMode } = useDarkMode(); // Use context
+  const socials = [
+  { name: "Instagram", href: "https://instagram.com/vartalang" },
+  { name: "Twitter", href: "https://x.com/vartalang" },
+  { name: "WhatsApp", href: "https://wa.me/7388270331" },
+];
 
   return (
     <footer className={`py-12 px-4 border-t ${
@@ -24,14 +29,22 @@ export default function Footer() {
           </Link>
 
           <div className="flex gap-6 text-sm">
-            {["Instagram", "Twitter", "Discord"].map((social) => (
-              <a key={social} href="#" className={`font-medium transition-all hover:scale-110 ${
-                darkMode ? "text-orange-300 hover:text-orange-200" : "text-gray-600 hover:text-gray-900"
-              }`}>
-                {social}
-              </a>
-            ))}
-          </div>
+  {socials.map((s) => (
+    <a
+      key={s.name}
+      href={s.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`font-medium transition-all hover:scale-110 ${
+        darkMode
+          ? "text-orange-300 hover:text-orange-200"
+          : "text-gray-600 hover:text-gray-900"
+      }`}
+    >
+      {s.name}
+    </a>
+  ))}
+</div>
         </div>
 
         <div className={`pt-6 border-t text-center ${darkMode ? "border-orange-900/30" : "border-orange-100"}`}>

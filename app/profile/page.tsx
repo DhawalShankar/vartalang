@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   User, Edit, Save, X, Camera, MapPin, Languages, 
@@ -31,33 +31,20 @@ interface UserProfile {
   coursesCompleted: number;
   hoursLearned: number;
 }
-
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [editedProfile, setEditedProfile] = useState<UserProfile | null>(null);
+ 
+ 
 export default function ProfilePage() {
   const { darkMode } = useDarkMode();
   const [isEditing, setIsEditing] = useState(false);
+  const handleLogout = () => {
+  localStorage.removeItem("token");
+  window.location.href = "/auth/login";
+  };
   
-  const [profile, setProfile] = useState<UserProfile>({
-    name: 'Rahul Sharma',
-    email: 'rahul.sharma@example.com',
-    profilePhoto: '',
-    bio: 'Passionate about learning languages and connecting with people across India. Love sharing my knowledge of Hindi and Tamil.',
-    state: 'Karnataka',
-    city: 'Bangalore',
-    primaryLanguageToLearn: 'Telugu',
-    secondaryLanguageToLearn: 'Malayalam',
-    languagesKnow: [
-      { language: 'Hindi', fluency: 'Native' },
-      { language: 'Tamil', fluency: 'Advanced' },
-      { language: 'English', fluency: 'Advanced' }
-    ],
-    primaryRole: 'learner',
-    joinedDate: 'January 2024',
-    totalConnections: 12,
-    coursesCompleted: 3,
-    hoursLearned: 45
-  });
-
-  const [editedProfile, setEditedProfile] = useState(profile);
+ const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
   const languages = [
     "Hindi", "English", "Tamil", "Telugu", "Kannada", "Malayalam",
@@ -76,20 +63,46 @@ export default function ProfilePage() {
     setProfile(editedProfile);
     setIsEditing(false);
   };
+  
 
   const handleCancel = () => {
     setEditedProfile(profile);
     setIsEditing(false);
   };
+  useEffect(() => {
+  const token = localStorage.getItem("token");
+  if (!token) return;
+
+  fetch(`${API_URL}/auth/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      setProfile(data.user);
+      setEditedProfile(data.user);
+    })
+    .catch(() => {
+      localStorage.removeItem("token");
+      window.location.href = "/auth/login";
+    });
+    }, []);
+    if (!profile || !editedProfile) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      Loading profile...
+    </div>
+  );
+}
 
   return (
     <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'bg-[#1a1410]' : 'bg-[#FFF9F5]'}`}>
       <Navbar />
       
-      {/* Space for Global Header */}
-      <div className="h-20"></div>
+      
 
-      <div className="py-12 px-4">
+      <div className="py-27 px-4">
         <div className="max-w-5xl mx-auto">
           
           {/* Profile Header Card */}
@@ -567,14 +580,18 @@ export default function ProfilePage() {
                 <Shield className="w-5 h-5" />
                 Privacy & Safety
               </button>
-              <button className={`w-full px-4 py-3 rounded-xl text-left flex items-center gap-3 transition-all ${
-                darkMode 
-                  ? 'hover:bg-red-900/20 text-red-400' 
-                  : 'hover:bg-red-50 text-red-600'
-              }`}>
-                <LogOut className="w-5 h-5" />
-                Log Out
-              </button>
+              <button
+  onClick={handleLogout}
+  className={`w-full px-4 py-3 rounded-xl text-left flex items-center gap-3 transition-all ${
+            darkMode 
+            ? 'hover:bg-red-900/20 text-red-400' 
+            : 'hover:bg-red-50 text-red-600'
+        }`}
+      >
+        <LogOut className="w-5 h-5" />
+        Log Out
+      </button>
+
             </div>
           </div>
 

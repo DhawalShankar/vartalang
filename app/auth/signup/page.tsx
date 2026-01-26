@@ -51,28 +51,18 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
- const res = await fetch('/api/auth/signup', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify(formData),
-});
+  const res = await fetch("http://localhost:4000/auth/signup", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(formData),
+  });
 
-const text = await res.text();
-console.log('STATUS:', res.status);
-console.log('HEADERS:', Object.fromEntries(res.headers.entries()));
-console.log('RAW RESPONSE:', text);
+  const data = await res.json();
 
   if (!res.ok) {
-    let errorMessage = "Signup failed";
-    try {
-      const data = JSON.parse(text);
-      errorMessage = data.error || errorMessage;
-    } catch (e) {
-      // If parsing fails, use the raw text or default message
-    }
-    alert(errorMessage);
+    alert(data.error || "Signup failed");
     return;
   }
 
