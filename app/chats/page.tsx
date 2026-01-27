@@ -164,14 +164,14 @@ function ChatsContent() {
     // Listen for user blocked/unblocked
     const handleUserBlocked = (data: any) => {
       console.log("🚫 User blocked:", data);
-      if (data.chatId === selectedChat && selectedChat) {
+      if (data.chatId === selectedChat) {
         fetchChatMessages(selectedChat);
       }
     };
 
     const handleUserUnblocked = (data: any) => {
       console.log("✅ User unblocked:", data);
-      if (data.chatId === selectedChat && selectedChat) {
+      if (data.chatId === selectedChat) {
         fetchChatMessages(selectedChat);
       }
     };
