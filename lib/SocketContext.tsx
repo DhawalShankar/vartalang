@@ -24,7 +24,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const token = localStorage.getItem("token");
     const userId = localStorage.getItem("userId");
 
-    if (!token || !userId) return;
+    if (!token || !userId) {
+      console.log("No token or userId found, skipping socket connection");
+      return;
+    }
 
     // Initialize Socket.IO connection
     const socketInstance = io(API_URL, {
@@ -32,14 +35,25 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionAttempts: 5,
+      auth: {
+        token // Optional: pass token in auth
+      }
     });
 
     socketInstance.on("connect", () => {
       console.log("✅ Socket connected:", socketInstance.id);
       setIsConnected(true);
       
-      // Let server know this user is online
-      socketInstance.emit("user_online", userId);
+      // Let server know this user is online with userId AND token
+      socketInstance.emit("user_online", { userId, token });
+    });
+
+    socketInstance.on("connected", (data) => {
+      console.log("✅ Server confirmed connection:", data);
+    });
+
+    socketInstance.on("auth_error", (error) => {
+      console.error("❌ Socket auth error:", error);
     });
 
     socketInstance.on("disconnect", () => {
@@ -52,9 +66,15 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       setIsConnected(false);
     });
 
+    socketInstance.on("user_status", (data) => {
+      console.log("👤 User status update:", data);
+      // You can handle online/offline status here
+    });
+
     setSocket(socketInstance);
 
     return () => {
+      console.log("🔌 Disconnecting socket");
       socketInstance.disconnect();
     };
   }, []);

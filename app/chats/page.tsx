@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import { 
@@ -16,6 +16,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { useDarkMode } from '@/lib/DarkModeContext';
+import { useSocket } from '@/lib/SocketContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
@@ -53,6 +54,7 @@ interface ChatDetail {
 
 function ChatsContent() {
   const { darkMode } = useDarkMode();
+  const { socket, isConnected } = useSocket();
   const router = useRouter();
   const searchParams = useSearchParams();
   const chatParam = searchParams.get('chat');
@@ -67,6 +69,18 @@ function ChatsContent() {
   const [sending, setSending] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [reportReason, setReportReason] = useState("");
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const currentUserId = localStorage.getItem("userId");
+
+  // Auto-scroll to bottom when new messages arrive
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [currentChatDetail?.messages]);
 
   useEffect(() => {
     fetchChats();
@@ -78,6 +92,109 @@ function ChatsContent() {
       fetchChatMessages(chatParam);
     }
   }, [chatParam]);
+
+  // Socket.IO event listeners
+  useEffect(() => {
+    if (!socket || !isConnected) {
+      console.log("Socket not connected yet");
+      return;
+    }
+
+    console.log("Setting up Socket.IO listeners");
+
+    // Join the current chat room
+    if (selectedChat) {
+      console.log(`Joining chat room: ${selectedChat}`);
+      socket.emit("join_chat", selectedChat);
+    }
+
+    // Listen for new messages
+    const handleReceiveMessage = (data: any) => {
+      console.log("📨 Received message via Socket.IO:", data);
+      
+      const { chatId, message } = data;
+      
+      // Update current chat detail if this is the active chat
+      if (selectedChat === chatId && currentChatDetail) {
+        setCurrentChatDetail(prev => {
+          if (!prev) return prev;
+          
+          // Check if message already exists (avoid duplicates)
+          const messageExists = prev.messages.some(m => m._id === message._id);
+          if (messageExists) return prev;
+          
+          return {
+            ...prev,
+            messages: [...prev.messages, {
+              _id: message._id,
+              sender: message.sender,
+              text: message.text,
+              timestamp: message.timestamp,
+              read: message.read
+            }]
+          };
+        });
+      }
+      
+      // Update chat list
+      fetchChats();
+    };
+
+    // Listen for read receipts
+    const handleMessagesRead = (data: any) => {
+      console.log("✅ Messages marked as read:", data);
+      
+      const { chatId, userId: readBy } = data;
+      
+      // Only update if someone else read our messages
+      if (readBy !== currentUserId && selectedChat === chatId) {
+        setCurrentChatDetail(prev => {
+          if (!prev) return prev;
+          
+          return {
+            ...prev,
+            messages: prev.messages.map(msg => 
+              msg.sender === currentUserId ? { ...msg, read: true } : msg
+            )
+          };
+        });
+      }
+    };
+
+    // Listen for user blocked/unblocked
+    const handleUserBlocked = (data: any) => {
+      console.log("🚫 User blocked:", data);
+      if (data.chatId === selectedChat && selectedChat) {
+        fetchChatMessages(selectedChat);
+      }
+    };
+
+    const handleUserUnblocked = (data: any) => {
+      console.log("✅ User unblocked:", data);
+      if (data.chatId === selectedChat && selectedChat) {
+        fetchChatMessages(selectedChat);
+      }
+    };
+
+    socket.on("receive_message", handleReceiveMessage);
+    socket.on("messages_read", handleMessagesRead);
+    socket.on("user_blocked", handleUserBlocked);
+    socket.on("user_unblocked", handleUserUnblocked);
+
+    // Cleanup
+    return () => {
+      console.log("Cleaning up Socket.IO listeners");
+      socket.off("receive_message", handleReceiveMessage);
+      socket.off("messages_read", handleMessagesRead);
+      socket.off("user_blocked", handleUserBlocked);
+      socket.off("user_unblocked", handleUserUnblocked);
+      
+      if (selectedChat) {
+        console.log(`Leaving chat room: ${selectedChat}`);
+        socket.emit("leave_chat", selectedChat);
+      }
+    };
+  }, [socket, isConnected, selectedChat, currentChatDetail, currentUserId]);
 
   const fetchChats = async () => {
     const token = localStorage.getItem("token");
@@ -118,6 +235,11 @@ function ChatsContent() {
 
       const data = await res.json();
       setCurrentChatDetail(data.chat);
+      
+      // Join the chat room via Socket.IO
+      if (socket && isConnected) {
+        socket.emit("join_chat", chatId);
+      }
     } catch (error) {
       console.error("Fetch messages error:", error);
     }
@@ -126,7 +248,27 @@ function ChatsContent() {
   const handleSendMessage = async () => {
     if (!messageInput.trim() || !selectedChat || sending) return;
 
+    const tempMessage: Message = {
+      _id: `temp-${Date.now()}`,
+      sender: currentUserId || '',
+      text: messageInput.trim(),
+      timestamp: new Date().toISOString(),
+      read: false
+    };
+
+    // Optimistically add message to UI
+    setCurrentChatDetail(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        messages: [...prev.messages, tempMessage]
+      };
+    });
+
+    const messageText = messageInput;
+    setMessageInput("");
     setSending(true);
+
     const token = localStorage.getItem("token");
 
     try {
@@ -136,16 +278,42 @@ function ChatsContent() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ text: messageInput }),
+        body: JSON.stringify({ text: messageText }),
       });
 
       if (!res.ok) throw new Error("Failed to send message");
 
-      setMessageInput("");
-      await fetchChatMessages(selectedChat);
+      const data = await res.json();
+      
+      // Replace temp message with real message
+      setCurrentChatDetail(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          messages: prev.messages.map(msg => 
+            msg._id === tempMessage._id ? {
+              ...msg,
+              _id: data.messageData._id,
+              timestamp: data.messageData.timestamp
+            } : msg
+          )
+        };
+      });
+
       await fetchChats();
     } catch (error) {
       console.error("Send message error:", error);
+      
+      // Remove temp message on error
+      setCurrentChatDetail(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          messages: prev.messages.filter(msg => msg._id !== tempMessage._id)
+        };
+      });
+      
+      setMessageInput(messageText); // Restore input
       alert("Failed to send message");
     } finally {
       setSending(false);
@@ -153,12 +321,22 @@ function ChatsContent() {
   };
 
   const handleChatClick = (chatId: string) => {
+    // Leave previous chat room
+    if (selectedChat && socket && isConnected) {
+      socket.emit("leave_chat", selectedChat);
+    }
+    
     setSelectedChat(chatId);
     router.push(`/chats?chat=${chatId}`);
     fetchChatMessages(chatId);
   };
 
   const handleBack = () => {
+    // Leave chat room
+    if (selectedChat && socket && isConnected) {
+      socket.emit("leave_chat", selectedChat);
+    }
+    
     setSelectedChat(null);
     setCurrentChatDetail(null);
     router.push('/chats');
@@ -322,6 +500,18 @@ function ChatsContent() {
   return (
     <div className={`pt-20 min-h-screen ${darkMode ? "bg-[#1a1410]" : "bg-[#FFF9F5]"}`}>
       <Navbar />
+      
+      {/* Socket Connection Status - DEBUG ONLY, remove in production */}
+      <div className="fixed bottom-4 right-4 z-50">
+        <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+          isConnected 
+            ? "bg-green-500 text-white" 
+            : "bg-red-500 text-white"
+        }`}>
+          {isConnected ? "🟢 Connected" : "🔴 Disconnected"}
+        </div>
+      </div>
+
       <div className="max-w-7xl mx-auto p-4">
         <div className="grid md:grid-cols-3 gap-4 h-[calc(100vh-120px)]">
           
@@ -526,7 +716,7 @@ function ChatsContent() {
                     </div>
                   ) : (
                     currentChatDetail.messages.map((msg) => {
-                      const isMe = msg.sender === localStorage.getItem("userId");
+                      const isMe = msg.sender === currentUserId;
                       return (
                         <div
                           key={msg._id}
@@ -561,6 +751,7 @@ function ChatsContent() {
                       );
                     })
                   )}
+                  <div ref={messagesEndRef} />
                 </div>
 
                 {/* Message Input */}
@@ -578,7 +769,7 @@ function ChatsContent() {
                         placeholder="Type a message..."
                         value={messageInput}
                         onChange={(e) => setMessageInput(e.target.value)}
-                        onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                        onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
                         disabled={sending}
                         className={`flex-1 px-4 py-2 rounded-xl border focus:outline-none ${
                           darkMode 
