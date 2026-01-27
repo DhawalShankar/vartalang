@@ -17,6 +17,23 @@ import {
 } from "lucide-react";
 import { useDarkMode } from '@/lib/DarkModeContext';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
+interface Match {
+  _id: string;
+  name: string;
+  email: string;
+  bio?: string;
+  city?: string;
+  state: string;
+  country: string;
+  primaryLanguageToLearn: string;
+  secondaryLanguageToLearn?: string;
+  languagesKnow: Array<{ language: string; fluency: string }>;
+  primaryRole: 'learner' | 'teacher';
+  matchType: 'primary' | 'secondary';
+}
+
 export default function MatchesPage() {
   const { darkMode } = useDarkMode();
   const router = useRouter();
@@ -24,6 +41,9 @@ export default function MatchesPage() {
   const [direction, setDirection] = useState<'left' | 'right' | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [swipedMatches, setSwipedMatches] = useState<string[]>([]);
   
   // Swipe state
   const [touchStart, setTouchStart] = useState({ x: 0, y: 0 });
@@ -41,85 +61,83 @@ export default function MatchesPage() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const matches = [
-    {
-      id: 1,
-      name: "Priya Sharma",
-      avatar: "PS",
-      location: "Mumbai, Maharashtra",
-      teaching: ["Hindi", "Marathi"],
-      learning: ["English"],
-      matchType: "primary",
-      bio: "Native Hindi speaker passionate about teaching through cultural exchange. Love discussing Bollywood, Indian history, and daily conversations!",
-      interests: ["Music", "Movies", "Cooking", "Culture"],
-      experience: "2 years teaching"
-    },
-    {
-      id: 2,
-      name: "Arjun Patel",
-      avatar: "AP",
-      location: "Ahmedabad, Gujarat",
-      teaching: ["Gujarati", "Hindi"],
-      learning: ["English"],
-      matchType: "primary",
-      bio: "Friendly language enthusiast who loves making learning fun through real conversations and cultural stories.",
-      interests: ["Reading", "Travel", "Food", "Technology"],
-      experience: "3 years teaching"
-    },
-    {
-      id: 3,
-      name: "Lakshmi Iyer",
-      avatar: "LI",
-      location: "Chennai, Tamil Nadu",
-      teaching: ["Tamil", "English"],
-      learning: ["Hindi"],
-      matchType: "secondary",
-      bio: "College student eager to share Tamil language and South Indian culture. Patient and friendly teaching style!",
-      interests: ["Art", "Photography", "Literature", "Dance"],
-      experience: "New to teaching"
-    },
-    {
-      id: 4,
-      name: "Rahul Kumar",
-      avatar: "RK",
-      location: "Delhi, Delhi",
-      teaching: ["Hindi", "English"],
-      learning: ["Spanish"],
-      matchType: "primary",
-      bio: "Professional teacher who makes learning Hindi simple and enjoyable. Focus on practical conversations for everyday life.",
-      interests: ["Sports", "History", "Travel", "Cuisine"],
-      experience: "5 years teaching"
-    },
-    {
-      id: 5,
-      name: "Anjali Desai",
-      avatar: "AD",
-      location: "Pune, Maharashtra",
-      teaching: ["Marathi", "Hindi"],
-      learning: ["French"],
-      matchType: "secondary",
-      bio: "Marketing professional who loves languages and cultural exchange. Teach through everyday scenarios and friendly conversation.",
-      interests: ["Fashion", "Music", "Yoga", "Books"],
-      experience: "1 year teaching"
+  useEffect(() => {
+    fetchMatches();
+  }, []);
+
+  const fetchMatches = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/auth/login");
+      return;
     }
-  ];
 
-  const currentMatch = matches[currentIndex];
+    try {
+      const res = await fetch(`${API_URL}/matches/potential`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-  const handleSwipe = (swipeDirection: 'left' | 'right') => {
+      if (!res.ok) throw new Error("Failed to fetch matches");
+
+      const data = await res.json();
+      setMatches(data.matches);
+      setLoading(false);
+    } catch (error) {
+      console.error("Fetch matches error:", error);
+      setLoading(false);
+    }
+  };
+
+  const handleSwipe = async (swipeDirection: 'left' | 'right') => {
+    if (!currentMatch) return;
+
     setDirection(swipeDirection);
     setShowDetails(false);
-    
-    setTimeout(() => {
-      if (swipeDirection === 'right' && currentMatch) {
-        router.push(`/chats?user=${currentMatch.id}`);
-      } else {
+
+    const token = localStorage.getItem("token");
+    const action = swipeDirection === 'right' ? 'like' : 'pass';
+
+    try {
+      const res = await fetch(`${API_URL}/matches/swipe`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          targetUserId: currentMatch._id,
+          action,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to process swipe");
+
+      const data = await res.json();
+
+      setTimeout(() => {
+        if (swipeDirection === 'right' && data.matched) {
+          // Redirect to chats
+          router.push(`/chats`);
+        } else {
+          setSwipedMatches([...swipedMatches, currentMatch._id]);
+          if (currentIndex < matches.length - 1) {
+            setCurrentIndex(currentIndex + 1);
+          }
+          setDirection(null);
+        }
+      }, 300);
+    } catch (error) {
+      console.error("Swipe error:", error);
+      // Still move to next card even if API fails
+      setTimeout(() => {
         if (currentIndex < matches.length - 1) {
           setCurrentIndex(currentIndex + 1);
         }
         setDirection(null);
-      }
-    }, 300);
+      }, 300);
+    }
   };
 
   const handleUndo = () => {
@@ -127,6 +145,8 @@ export default function MatchesPage() {
       setCurrentIndex(currentIndex - 1);
       setDirection(null);
       setShowDetails(false);
+      // Remove last swiped match from array
+      setSwipedMatches(swipedMatches.slice(0, -1));
     }
   };
 
@@ -207,7 +227,32 @@ export default function MatchesPage() {
     return 1;
   };
 
-  if (!currentMatch) {
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  if (loading) {
+    return (
+      <div className={`min-h-screen ${darkMode ? "bg-[#1a1410]" : "bg-[#FFF9F5]"}`}>
+        <Navbar />
+        <div className="max-w-2xl mx-auto px-4 pt-24 flex items-center justify-center min-h-[70vh]">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className={darkMode ? 'text-orange-200' : 'text-gray-700'}>Finding your matches...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const currentMatch = matches[currentIndex];
+
+  if (!currentMatch || currentIndex >= matches.length) {
     return (
       <div className={`min-h-screen ${darkMode ? "bg-[#1a1410]" : "bg-[#FFF9F5]"}`}>
         <Navbar />
@@ -221,13 +266,17 @@ export default function MatchesPage() {
               Check back later for new language partners
             </p>
             <button
-              onClick={() => setCurrentIndex(0)}
+              onClick={() => {
+                setCurrentIndex(0);
+                fetchMatches();
+              }}
               className="px-6 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold active:scale-95 transition-all"
             >
-              Start Over
+              Refresh Matches
             </button>
           </div>
         </div>
+        <Footer />
       </div>
     );
   }
@@ -264,7 +313,7 @@ export default function MatchesPage() {
               style={{ opacity: dragOffset.x < -50 ? 1 : 0 }}
             >
               <div className="w-20 h-20 rounded-full bg-red-500 flex items-center justify-center shadow-2xl">
-                <ArrowRight className="w-10 h-10 text-white" />
+                <X className="w-10 h-10 text-white" />
               </div>
             </div>
             <div 
@@ -318,38 +367,71 @@ export default function MatchesPage() {
                     ? "bg-blue-900/30 text-blue-400 border border-blue-800/30" 
                     : "bg-blue-100 text-blue-700 border border-blue-300"
               }`}>
-                {currentMatch.matchType === "primary" ? "Primary Language Match" : "Secondary Language Match"}
+                {currentMatch.matchType === "primary" ? "Perfect Match" : "Good Match"}
               </span>
             </div>
 
             {/* Profile section */}
             <div className="flex flex-col items-center text-center mb-6">
-              <div className="w-20 h-20 rounded-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-bold text-4xl mb-4">
-                {currentMatch.avatar}
+              <div className="w-20 h-20 rounded-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-bold text-2xl mb-4">
+                {getInitials(currentMatch.name)}
               </div>
               <h2 className={`text-3xl font-bold mb-2 ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
                 {currentMatch.name}
               </h2>
+              <div className={`flex items-center gap-1 text-sm ${darkMode ? "text-orange-300/70" : "text-orange-600/70"}`}>
+                <MapPin className="w-4 h-4" />
+                <span>{currentMatch.city ? `${currentMatch.city}, ` : ''}{currentMatch.state}</span>
+              </div>
             </div>
 
-            {/* Languages to Learn */}
+            {/* Can Teach You */}
+            <div className="mb-4">
+              <h3 className={`text-sm font-semibold mb-3 text-center ${darkMode ? "text-orange-300" : "text-orange-700"}`}>
+                Can Teach You:
+              </h3>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {currentMatch.languagesKnow.map((lang, idx) => (
+                  <span
+                    key={idx}
+                    className={`px-4 py-2 rounded-full text-base font-medium ${
+                      darkMode 
+                        ? "bg-green-900/30 text-green-400 border border-green-800/30" 
+                        : "bg-green-100 text-green-700 border border-green-300"
+                    }`}
+                  >
+                    {lang.language} ({lang.fluency})
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Wants to Learn */}
             <div className="text-center">
               <h3 className={`text-sm font-semibold mb-3 ${darkMode ? "text-orange-300" : "text-orange-700"}`}>
                 Wants to Learn:
               </h3>
               <div className="flex flex-wrap gap-2 justify-center">
-                {currentMatch.learning.map((lang) => (
+                <span
+                  className={`px-4 py-2 rounded-full text-base font-medium ${
+                    darkMode 
+                      ? "bg-blue-900/30 text-blue-400 border border-blue-800/30" 
+                      : "bg-blue-100 text-blue-700 border border-blue-300"
+                  }`}
+                >
+                  {currentMatch.primaryLanguageToLearn}
+                </span>
+                {currentMatch.secondaryLanguageToLearn && (
                   <span
-                    key={lang}
                     className={`px-4 py-2 rounded-full text-base font-medium ${
                       darkMode 
                         ? "bg-blue-900/30 text-blue-400 border border-blue-800/30" 
                         : "bg-blue-100 text-blue-700 border border-blue-300"
                     }`}
                   >
-                    {lang}
+                    {currentMatch.secondaryLanguageToLearn}
                   </span>
-                ))}
+                )}
               </div>
             </div>
 
@@ -392,14 +474,14 @@ export default function MatchesPage() {
                     ? "bg-blue-900/30 text-blue-400 border border-blue-800/30" 
                     : "bg-blue-100 text-blue-700 border border-blue-300"
               }`}>
-                {currentMatch.matchType === "primary" ? "Primary Language Match" : "Secondary Language Match"}
+                {currentMatch.matchType === "primary" ? "Perfect Match" : "Good Match"}
               </span>
             </div>
 
             {/* Profile section */}
             <div className="flex items-start gap-4 mb-5">
               <div className="w-20 h-20 rounded-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-bold text-2xl shrink-0">
-                {currentMatch.avatar}
+                {getInitials(currentMatch.name)}
               </div>
               <div className="flex-1">
                 <h2 className={`text-2xl font-bold mb-1 ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
@@ -407,25 +489,27 @@ export default function MatchesPage() {
                 </h2>
                 <div className={`flex items-center gap-1 text-sm mb-2 ${darkMode ? "text-orange-300/70" : "text-orange-600/70"}`}>
                   <MapPin className="w-4 h-4" />
-                  <span>{currentMatch.location}</span>
+                  <span>{currentMatch.city ? `${currentMatch.city}, ` : ''}{currentMatch.state}, {currentMatch.country}</span>
                 </div>
                 <div className={`inline-block px-3 py-1 rounded-lg text-xs font-medium ${
                   darkMode ? "bg-orange-800/30 text-orange-300" : "bg-orange-100 text-orange-700"
                 }`}>
-                  {currentMatch.experience}
+                  {currentMatch.primaryRole === 'teacher' ? 'Primary Teacher' : 'Primary Learner'}
                 </div>
               </div>
             </div>
 
             {/* Bio */}
-            <div className="mb-5">
-              <h3 className={`text-sm font-semibold mb-2 ${darkMode ? "text-orange-300" : "text-orange-700"}`}>
-                About
-              </h3>
-              <p className={`text-sm ${darkMode ? "text-orange-200/80" : "text-orange-800"} leading-relaxed`}>
-                {currentMatch.bio}
-              </p>
-            </div>
+            {currentMatch.bio && (
+              <div className="mb-5">
+                <h3 className={`text-sm font-semibold mb-2 ${darkMode ? "text-orange-300" : "text-orange-700"}`}>
+                  About
+                </h3>
+                <p className={`text-sm ${darkMode ? "text-orange-200/80" : "text-orange-800"} leading-relaxed`}>
+                  {currentMatch.bio}
+                </p>
+              </div>
+            )}
 
             {/* Languages */}
             <div className="space-y-4 mb-5">
@@ -434,16 +518,16 @@ export default function MatchesPage() {
                   Can Teach You:
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {currentMatch.teaching.map((lang) => (
+                  {currentMatch.languagesKnow.map((lang, idx) => (
                     <span
-                      key={lang}
+                      key={idx}
                       className={`px-3 py-1.5 rounded-full text-sm font-medium ${
                         darkMode 
                           ? "bg-green-900/30 text-green-400 border border-green-800/30" 
                           : "bg-green-100 text-green-700 border border-green-300"
                       }`}
                     >
-                      {lang}
+                      {lang.language} • {lang.fluency}
                     </span>
                   ))}
                 </div>
@@ -453,40 +537,27 @@ export default function MatchesPage() {
                   Wants to Learn:
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {currentMatch.learning.map((lang) => (
+                  <span
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium ${
+                      darkMode 
+                        ? "bg-blue-900/30 text-blue-400 border border-blue-800/30" 
+                        : "bg-blue-100 text-blue-700 border border-blue-300"
+                    }`}
+                  >
+                    {currentMatch.primaryLanguageToLearn} (Primary)
+                  </span>
+                  {currentMatch.secondaryLanguageToLearn && (
                     <span
-                      key={lang}
                       className={`px-3 py-1.5 rounded-full text-sm font-medium ${
                         darkMode 
                           ? "bg-blue-900/30 text-blue-400 border border-blue-800/30" 
                           : "bg-blue-100 text-blue-700 border border-blue-300"
                       }`}
                     >
-                      {lang}
+                      {currentMatch.secondaryLanguageToLearn}
                     </span>
-                  ))}
+                  )}
                 </div>
-              </div>
-            </div>
-
-            {/* Interests */}
-            <div className="mb-6">
-              <h3 className={`text-sm font-semibold mb-2 ${darkMode ? "text-orange-300" : "text-orange-700"}`}>
-                Interests:
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {currentMatch.interests.map((interest) => (
-                  <span
-                    key={interest}
-                    className={`px-3 py-1.5 rounded-lg text-sm ${
-                      darkMode 
-                        ? "bg-orange-800/30 text-orange-300" 
-                        : "bg-orange-100 text-orange-700"
-                    }`}
-                  >
-                    {interest}
-                  </span>
-                ))}
               </div>
             </div>
 
@@ -500,13 +571,13 @@ export default function MatchesPage() {
                     : "bg-orange-100 text-orange-700 border border-orange-300 hover:bg-orange-200"
                 }`}
               >
-                Next
+                Pass
               </button>
               <button
                 onClick={() => handleSwipe('right')}
                 className="flex-1 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg"
               >
-                
+                <Heart className="w-5 h-5" />
                 Match to Learn
               </button>
             </div>
@@ -543,7 +614,7 @@ export default function MatchesPage() {
                     : "bg-white text-red-600 hover:bg-red-50 border-2 border-red-300 shadow-lg"
                 }`}
               >
-                <ArrowRight className="w-8 h-8" />
+                <X className="w-8 h-8" />
               </button>
 
               {/* Learn Together Button */}
@@ -551,7 +622,7 @@ export default function MatchesPage() {
                 onClick={() => handleSwipe('right')}
                 className="px-6 py-3.5 rounded-full bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold active:scale-95 transition-all flex items-center gap-2 shadow-xl"
               >
-                <BookOpen className="w-5 h-5" />
+                <Heart className="w-5 h-5" />
                 Match to Learn
               </button>
             </div>
@@ -559,7 +630,7 @@ export default function MatchesPage() {
             {/* Helper Text */}
             <div className="text-center">
               <p className={`text-sm ${darkMode ? "text-orange-300/50" : "text-orange-600/50"}`}>
-                Click <ArrowRight className="w-4 h-4 inline" /> to pass • Click card for details
+                Click <X className="w-4 h-4 inline" /> to pass • Click card for details
               </p>
             </div>
           </>
