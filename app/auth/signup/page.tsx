@@ -4,8 +4,12 @@ import Link from "next/link";
 import { Upload, User, Mail, GraduationCap, BookOpen } from "lucide-react";
 import { useDarkMode } from '@/lib/DarkModeContext';
 
+// Add this at the top
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
 export default function SignupPage() {
-  const { darkMode } = useDarkMode(); // Use context
+  const { darkMode } = useDarkMode();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -49,25 +53,52 @@ export default function SignupPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
+    setLoading(true);
 
-  const res = await fetch("http://localhost:4000/auth/signup", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(formData),
-  });
+    try {
+      // Validate that at least one language is filled
+      const validLanguages = formData.languagesKnow.filter(
+        lang => lang.language && lang.fluency
+      );
 
-  const data = await res.json();
+      if (validLanguages.length === 0) {
+        alert("Please add at least one language you know");
+        setLoading(false);
+        return;
+      }
 
-  if (!res.ok) {
-    alert(data.error || "Signup failed");
-    return;
-  }
+      const dataToSend = {
+        ...formData,
+        languagesKnow: validLanguages
+      };
 
-  window.location.href = "/auth/login";
-};
+      const res = await fetch(`${API_URL}/auth/signup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(dataToSend),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Signup failed");
+        setLoading(false);
+        return;
+      }
+
+      // Save token and redirect
+      localStorage.setItem("token", data.token);
+      alert("Signup successful! Redirecting...");
+      window.location.href = "/learn";
+    } catch (error) {
+      console.error("Signup error:", error);
+      alert("Network error. Please check your connection and try again.");
+      setLoading(false);
+    }
+  };
 
   return (
     <div className={`min-h-screen ${darkMode ? "bg-[#1a1410]" : "bg-[#FFF9F5]"}`}>
@@ -103,21 +134,6 @@ export default function SignupPage() {
             
             <div className="space-y-5">
               
-              {/* Profile Photo */}
-              <div>
-                <label className={`block text-sm font-semibold mb-2 ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
-                  Profile Photo (Optional)
-                </label>
-                <div className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
-                  darkMode 
-                    ? "border-orange-800/30 hover:border-orange-700/50" 
-                    : "border-orange-300 hover:border-orange-400"
-                }`}>
-                  <Upload className={`w-8 h-8 mx-auto mb-2 ${darkMode ? "text-orange-400" : "text-orange-600"}`} />
-                  <p className={`text-sm ${darkMode ? "text-orange-200/70" : "text-orange-700/70"}`}>Click to upload</p>
-                </div>
-              </div>
-
               {/* Name & Email */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
@@ -164,6 +180,7 @@ export default function SignupPage() {
                 <input
                   type="password"
                   required
+                  minLength={8}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   className={`w-full px-4 py-3 rounded-xl border focus:outline-none ${
@@ -388,9 +405,10 @@ export default function SignupPage() {
               {/* Submit */}
               <button
                 type="submit"
-                className="w-full py-4 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:scale-[1.02] transition-all shadow-lg"
+                disabled={loading}
+                className="w-full py-4 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:scale-[1.02] transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Complete Signup
+                {loading ? "Creating Account..." : "Complete Signup"}
               </button>
 
               <p className={`text-center text-sm ${darkMode ? "text-orange-200/70" : "text-orange-700/70"}`}>

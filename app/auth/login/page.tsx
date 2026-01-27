@@ -4,36 +4,49 @@ import Link from "next/link";
 import { Mail, Lock } from "lucide-react";
 import { useDarkMode } from '@/lib/DarkModeContext';
 
+// Add this at the top
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
 export default function SigninPage() {
-  const { darkMode } = useDarkMode(); // Use context
+  const { darkMode } = useDarkMode();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
- const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
-  const res = await fetch("http://localhost:4000/auth/login", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(formData),
-  });
+    try {
+      const res = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
 
-  const data = await res.json();
+      const data = await res.json();
 
-  if (!res.ok) {
-    alert(data.error || "Invalid email or password");
-    return;
-  }
+      if (!res.ok) {
+        alert(data.error || "Invalid email or password");
+        setLoading(false);
+        return;
+      }
 
-  // save token
-  localStorage.setItem("token", data.token);
-
-  window.location.href = "/learn";
-};
+      // Save token
+      localStorage.setItem("token", data.token);
+      
+      alert("Login successful! Redirecting...");
+      window.location.href = "/learn";
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Network error. Please check your connection and try again.");
+      setLoading(false);
+    }
+  };
 
   return (
     <div className={`min-h-screen flex items-center justify-center px-4 ${darkMode ? "bg-[#1a1410]" : "bg-[#FFF9F5]"}`}>
@@ -58,27 +71,6 @@ export default function SigninPage() {
           <div className="text-center mb-6">
             <h1 className={`text-2xl font-bold mb-2 ${darkMode ? "text-orange-50" : "text-orange-950"}`}>Welcome Back</h1>
             <p className={darkMode ? "text-orange-200/70" : "text-orange-700/70"}>Sign in to continue learning</p>
-          </div>
-
-          {/* Google Sign In */}
-          <button className={`w-full py-3 rounded-xl font-medium transition-all mb-4 flex items-center justify-center gap-2 ${
-            darkMode 
-              ? "border border-orange-800/30 bg-orange-900/20 text-orange-100 hover:bg-orange-900/30" 
-              : "border border-orange-300 bg-orange-50 text-orange-900 hover:bg-orange-100"
-          }`}>
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-              <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
-            Continue with Google
-          </button>
-
-          <div className="flex items-center gap-3 my-5">
-            <div className={`flex-1 h-px ${darkMode ? "bg-orange-800/30" : "bg-orange-300"}`}></div>
-            <span className={`text-sm ${darkMode ? "text-orange-200/70" : "text-orange-700/70"}`}>or</span>
-            <div className={`flex-1 h-px ${darkMode ? "bg-orange-800/30" : "bg-orange-300"}`}></div>
           </div>
 
           {/* Form */}
@@ -132,9 +124,10 @@ export default function SigninPage() {
 
             <button
               type="submit"
-              className="w-full py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:scale-[1.02] transition-all shadow-lg"
+              disabled={loading}
+              className="w-full py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:scale-[1.02] transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign In
+              {loading ? "Signing In..." : "Sign In"}
             </button>
           </form>
 
