@@ -112,9 +112,11 @@ export default function SignupPage() {
       <div className={`py-6 px-4 ${darkMode ? "border-b border-orange-900/30" : "border-b border-orange-200"}`}>
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center">
-              <span className="text-white text-sm font-bold">V</span>
-            </div>
+               <img
+                src="/logo.png"
+                alt="VartaLang logo"
+                className="w-20 h-auto object-cover"
+              />
             <span className={`font-bold ${darkMode ? "text-orange-100" : "text-orange-900"}`}>VartaLang</span>
           </Link>
           <Link href="/auth/login" className={`text-sm ${darkMode ? "text-orange-300 hover:text-orange-200" : "text-orange-600 hover:text-orange-700"}`}>
