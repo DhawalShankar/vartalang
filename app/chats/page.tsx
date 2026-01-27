@@ -71,7 +71,7 @@ function ChatsContent() {
   const [reportReason, setReportReason] = useState("");
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const currentUserId = localStorage.getItem("userId");
+  const currentUserId = typeof window !== 'undefined' ? localStorage.getItem("userId") : null;
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
@@ -93,7 +93,7 @@ function ChatsContent() {
     }
   }, [chatParam]);
 
-  // Socket.IO event listeners
+  // ✅ Socket.IO event listeners - FIXED
   useEffect(() => {
     if (!socket || !isConnected) {
       console.log("Socket not connected yet");
@@ -108,26 +108,31 @@ function ChatsContent() {
       socket.emit("join_chat", selectedChat);
     }
 
-    // Listen for new messages
+    // ✅ Listen for new messages
     const handleReceiveMessage = (data: any) => {
       console.log("📨 Received message via Socket.IO:", data);
       
       const { chatId, message } = data;
       
       // Update current chat detail if this is the active chat
-      if (selectedChat === chatId && currentChatDetail) {
+      if (selectedChat === chatId) {
         setCurrentChatDetail(prev => {
           if (!prev) return prev;
           
           // Check if message already exists (avoid duplicates)
           const messageExists = prev.messages.some(m => m._id === message._id);
-          if (messageExists) return prev;
+          if (messageExists) {
+            console.log("⚠️ Message already exists, skipping");
+            return prev;
+          }
+          
+          console.log("✅ Adding new message to UI");
           
           return {
             ...prev,
             messages: [...prev.messages, {
               _id: message._id,
-              sender: message.sender,
+              sender: message.sender.toString(), // ✅ Ensure string
               text: message.text,
               timestamp: message.timestamp,
               read: message.read
@@ -140,11 +145,11 @@ function ChatsContent() {
       fetchChats();
     };
 
-    // Listen for read receipts
+    // ✅ Listen for read receipts
     const handleMessagesRead = (data: any) => {
       console.log("✅ Messages marked as read:", data);
       
-      const { chatId, userId: readBy } = data;
+      const { chatId, readBy } = data;
       
       // Only update if someone else read our messages
       if (readBy !== currentUserId && selectedChat === chatId) {
@@ -194,7 +199,7 @@ function ChatsContent() {
         socket.emit("leave_chat", selectedChat);
       }
     };
-  }, [socket, isConnected, selectedChat, currentChatDetail, currentUserId]);
+  }, [socket, isConnected, selectedChat, currentUserId]); // ✅ Removed currentChatDetail
 
   const fetchChats = async () => {
     const token = localStorage.getItem("token");
@@ -294,6 +299,7 @@ function ChatsContent() {
             msg._id === tempMessage._id ? {
               ...msg,
               _id: data.messageData._id,
+              sender: data.messageData.sender.toString(), // ✅ Ensure string
               timestamp: data.messageData.timestamp
             } : msg
           )
@@ -313,7 +319,7 @@ function ChatsContent() {
         };
       });
       
-      setMessageInput(messageText); // Restore input
+      setMessageInput(messageText);
       alert("Failed to send message");
     } finally {
       setSending(false);
@@ -332,7 +338,6 @@ function ChatsContent() {
   };
 
   const handleBack = () => {
-    // Leave chat room
     if (selectedChat && socket && isConnected) {
       socket.emit("leave_chat", selectedChat);
     }
@@ -501,7 +506,7 @@ function ChatsContent() {
     <div className={`pt-20 min-h-screen ${darkMode ? "bg-[#1a1410]" : "bg-[#FFF9F5]"}`}>
       <Navbar />
       
-      {/* Socket Connection Status - DEBUG ONLY, remove in production */}
+      {/* Socket Connection Status */}
       <div className="fixed bottom-4 right-4 z-50">
         <div className={`px-3 py-1 rounded-full text-xs font-medium ${
           isConnected 
@@ -518,7 +523,6 @@ function ChatsContent() {
           {/* Chat List Sidebar */}
           <div className={`${showOnlyChat ? 'hidden md:block' : 'block'} rounded-3xl overflow-hidden ${darkMode ? "bg-orange-900/10 border border-orange-800/30" : "bg-white border border-orange-200 shadow-lg"}`}>
             
-            {/* Search */}
             <div className={`p-4 border-b ${darkMode ? 'border-orange-800/30' : 'border-orange-200'}`}>
               <h2 className={`text-xl font-bold mb-3 ${darkMode ? "text-orange-50" : "text-orange-950"}`}>
                 Messages
@@ -539,7 +543,6 @@ function ChatsContent() {
               </div>
             </div>
 
-            {/* Chat List */}
             <div className="overflow-y-auto h-[calc(100%-140px)]">
               {filteredChats.length === 0 ? (
                 <div className="p-8 text-center">
@@ -640,7 +643,6 @@ function ChatsContent() {
                       <MoreVertical className="w-5 h-5" />
                     </button>
 
-                    {/* Menu */}
                     {showMenu && (
                       <div className={`absolute top-12 right-0 rounded-xl shadow-xl border z-10 min-w-50 ${
                         darkMode ? "bg-orange-900/95 border-orange-800/30 backdrop-blur-sm" : "bg-white border-orange-200"
@@ -694,7 +696,6 @@ function ChatsContent() {
                   </div>
                 </div>
 
-                {/* Blocked Notice */}
                 {currentChatDetail.isBlocked && (
                   <div className={`p-3 text-center border-b ${
                     darkMode ? "bg-red-900/20 border-red-800/30 text-red-400" : "bg-red-50 border-red-200 text-red-700"
@@ -706,7 +707,7 @@ function ChatsContent() {
                   </div>
                 )}
 
-                {/* Messages */}
+                {/* ✅ Messages - FIXED ALIGNMENT & NAMES */}
                 <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${darkMode ? "bg-[#1a1410]/50" : "bg-orange-50/30"}`}>
                   {currentChatDetail.messages.length === 0 ? (
                     <div className="flex items-center justify-center h-full">
@@ -716,13 +717,22 @@ function ChatsContent() {
                     </div>
                   ) : (
                     currentChatDetail.messages.map((msg) => {
-                      const isMe = msg.sender === currentUserId;
+                      // ✅ CRITICAL FIX: Proper comparison with string conversion
+                      const isMe = msg.sender.toString() === currentUserId?.toString();
+                      
                       return (
                         <div
                           key={msg._id}
                           className={`flex ${isMe ? "justify-end" : "justify-start"}`}
                         >
                           <div className={`max-w-[70%] ${isMe ? "items-end" : "items-start"} flex flex-col`}>
+                            {/* ✅ Show sender name for received messages */}
+                            {!isMe && (
+                              <span className={`text-xs mb-1 px-2 font-medium ${darkMode ? "text-orange-300" : "text-orange-700"}`}>
+                                {currentChatDetail.user.name}
+                              </span>
+                            )}
+                            
                             <div
                               className={`px-4 py-2 rounded-2xl ${
                                 isMe
@@ -732,8 +742,9 @@ function ChatsContent() {
                                     : "bg-white text-orange-950 border border-orange-200"
                               }`}
                             >
-                              <p className="text-sm">{msg.text}</p>
+                              <p className="text-sm wrap-break-word">{msg.text}</p>
                             </div>
+                            
                             <div className="flex items-center gap-1 mt-1 px-2">
                               <span className={`text-xs ${darkMode ? "text-orange-300/50" : "text-orange-600/50"}`}>
                                 {formatTimestamp(msg.timestamp)}
