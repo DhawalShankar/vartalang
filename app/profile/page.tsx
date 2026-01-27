@@ -3,12 +3,15 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   User, Edit, Save, X, Camera, MapPin, Languages, 
-  GraduationCap, Award, BookOpen, Heart, Star,
+  GraduationCap, Award, BookOpen, Star,
   Settings, LogOut, Shield, Bell
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useDarkMode } from '@/lib/DarkModeContext';
+import { useAuth } from '@/lib/AuthContext';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 interface LanguageKnown {
   language: string;
@@ -16,93 +19,168 @@ interface LanguageKnown {
 }
 
 interface UserProfile {
+  _id: string;
   name: string;
   email: string;
-  profilePhoto: string;
-  bio: string;
+  profilePhoto?: string;
+  bio?: string;
   state: string;
-  city: string;
+  city?: string;
+  country: string;
   primaryLanguageToLearn: string;
-  secondaryLanguageToLearn: string;
+  secondaryLanguageToLearn?: string;
   languagesKnow: LanguageKnown[];
   primaryRole: 'learner' | 'teacher';
-  joinedDate: string;
-  totalConnections: number;
-  coursesCompleted: number;
-  hoursLearned: number;
+  createdAt: string;
+  totalConnections?: number;
+  coursesCompleted?: number;
+  hoursLearned?: number;
 }
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [editedProfile, setEditedProfile] = useState<UserProfile | null>(null);
- 
- 
+
 export default function ProfilePage() {
   const { darkMode } = useDarkMode();
+  const { setIsLoggedIn } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const handleLogout = () => {
-  localStorage.removeItem("token");
-  window.location.href = "/auth/login";
-  };
-  
- const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [editedProfile, setEditedProfile] = useState<UserProfile | null>(null);
 
   const languages = [
-    "Hindi", "English", "Tamil", "Telugu", "Kannada", "Malayalam",
-    "Bengali", "Gujarati", "Punjabi", "Marathi", "Odia", "Assamese"
+    "Hindi", "English", "Tamil", "Telugu", "Kannada", "Malayalam", "Maithili",
+    "Bengali", "Gujarati", "Punjabi", "Marathi", "Odia", "Assamese",
+    "Urdu", "Sanskrit", "French", "German", "Spanish", "Japanese", "Korean"
   ];
 
   const indianStates = [
-    "Andhra Pradesh", "Karnataka", "Kerala", "Tamil Nadu", "Telangana",
-    "Maharashtra", "Gujarat", "Rajasthan", "Uttar Pradesh", "West Bengal",
-    "Delhi", "Punjab", "Haryana", "Outside India"
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+    "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
+    "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
+    "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
+    "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+    "Delhi", "Jammu and Kashmir", "Ladakh", "Puducherry", "Outside India"
   ];
 
   const fluencyLevels = ["Beginner", "Intermediate", "Advanced", "Native"];
 
-  const handleSave = () => {
-    setProfile(editedProfile);
-    setIsEditing(false);
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      window.location.href = "/auth/login";
+      return;
+    }
+
+    fetch(`${API_URL}/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch profile");
+        return res.json();
+      })
+      .then((data) => {
+        setProfile(data.user);
+        setEditedProfile(data.user);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Profile fetch error:", error);
+        localStorage.removeItem("token");
+        window.location.href = "/auth/login";
+      });
+  }, []);
+
+  const handleSave = async () => {
+    if (!editedProfile) return;
+    
+    setSaving(true);
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await fetch(`${API_URL}/auth/update-profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(editedProfile),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to update profile");
+      }
+
+      const data = await res.json();
+      setProfile(data.user);
+      setEditedProfile(data.user);
+      setIsEditing(false);
+      alert("Profile updated successfully!");
+    } catch (error) {
+      console.error("Save error:", error);
+      alert("Failed to update profile. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
-  
 
   const handleCancel = () => {
     setEditedProfile(profile);
     setIsEditing(false);
   };
-  useEffect(() => {
-  const token = localStorage.getItem("token");
-  if (!token) return;
 
-  fetch(`${API_URL}/auth/me`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      setProfile(data.user);
-      setEditedProfile(data.user);
-    })
-    .catch(() => {
-      localStorage.removeItem("token");
-      window.location.href = "/auth/login";
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setIsLoggedIn(false);
+    window.location.href = "/auth/login";
+  };
+
+  const addLanguage = () => {
+    if (!editedProfile) return;
+    setEditedProfile({
+      ...editedProfile,
+      languagesKnow: [...editedProfile.languagesKnow, { language: "", fluency: "" }],
     });
-    }, []);
-    if (!profile || !editedProfile) {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      Loading profile...
-    </div>
-  );
-}
+  };
+
+  const removeLanguage = (index: number) => {
+    if (!editedProfile || editedProfile.languagesKnow.length <= 1) return;
+    const updated = editedProfile.languagesKnow.filter((_, i) => i !== index);
+    setEditedProfile({ ...editedProfile, languagesKnow: updated });
+  };
+
+  if (loading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-[#1a1410]' : 'bg-[#FFF9F5]'}`}>
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className={darkMode ? 'text-orange-200' : 'text-gray-700'}>Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile || !editedProfile) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-[#1a1410]' : 'bg-[#FFF9F5]'}`}>
+        <div className="text-center">
+          <p className={darkMode ? 'text-orange-200' : 'text-gray-700'}>Failed to load profile</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'bg-[#1a1410]' : 'bg-[#FFF9F5]'}`}>
       <Navbar />
-      
-      
 
-      <div className="py-27 px-4">
+      <div className="py-24 px-4">
         <div className="max-w-5xl mx-auto">
           
           {/* Profile Header Card */}
@@ -164,14 +242,16 @@ export default function ProfilePage() {
                     <>
                       <button
                         onClick={handleSave}
-                        className="px-6 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all flex items-center gap-2"
+                        disabled={saving}
+                        className="px-6 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50"
                       >
                         <Save className="w-4 h-4" />
-                        Save
+                        {saving ? "Saving..." : "Save"}
                       </button>
                       <button
                         onClick={handleCancel}
-                        className={`px-6 py-3 rounded-xl border font-semibold transition-all flex items-center gap-2 ${
+                        disabled={saving}
+                        className={`px-6 py-3 rounded-xl border font-semibold transition-all flex items-center gap-2 disabled:opacity-50 ${
                           darkMode 
                             ? 'border-orange-800/30 text-orange-200 hover:bg-orange-900/20' 
                             : 'border-orange-200 text-gray-700 hover:bg-orange-50'
@@ -195,9 +275,11 @@ export default function ProfilePage() {
                     <p className={`text-sm mb-3 ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
                       {profile.email}
                     </p>
-                    <p className={`text-base leading-relaxed ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-                      {profile.bio}
-                    </p>
+                    {profile.bio && (
+                      <p className={`text-base leading-relaxed ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
+                        {profile.bio}
+                      </p>
+                    )}
                   </>
                 ) : (
                   <div className="space-y-3">
@@ -214,7 +296,7 @@ export default function ProfilePage() {
                     />
                     <textarea
                       rows={3}
-                      value={editedProfile.bio}
+                      value={editedProfile.bio || ''}
                       onChange={(e) => setEditedProfile({ ...editedProfile, bio: e.target.value })}
                       className={`w-full px-4 py-3 rounded-xl border outline-none resize-none ${
                         darkMode 
@@ -233,7 +315,7 @@ export default function ProfilePage() {
                   darkMode ? 'bg-orange-900/20' : 'bg-orange-50'
                 }`}>
                   <div className={`text-2xl font-bold mb-1 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                    {profile.totalConnections}
+                    {profile.totalConnections || 0}
                   </div>
                   <div className={`text-xs ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>
                     Connections
@@ -243,7 +325,7 @@ export default function ProfilePage() {
                   darkMode ? 'bg-orange-900/20' : 'bg-orange-50'
                 }`}>
                   <div className={`text-2xl font-bold mb-1 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                    {profile.coursesCompleted}
+                    {profile.coursesCompleted || 0}
                   </div>
                   <div className={`text-xs ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>
                     Courses Done
@@ -253,7 +335,7 @@ export default function ProfilePage() {
                   darkMode ? 'bg-orange-900/20' : 'bg-orange-50'
                 }`}>
                   <div className={`text-2xl font-bold mb-1 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                    {profile.hoursLearned}h
+                    {profile.hoursLearned || 0}h
                   </div>
                   <div className={`text-xs ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>
                     Hours Learned
@@ -282,6 +364,12 @@ export default function ProfilePage() {
               {!isEditing ? (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
+                    <span className={`text-sm ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>Country</span>
+                    <span className={`font-semibold ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                      {profile.country}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
                     <span className={`text-sm ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>State</span>
                     <span className={`font-semibold ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
                       {profile.state}
@@ -300,6 +388,21 @@ export default function ProfilePage() {
                 <div className="space-y-3">
                   <div>
                     <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
+                      Country
+                    </label>
+                    <input
+                      type="text"
+                      value={editedProfile.country}
+                      onChange={(e) => setEditedProfile({ ...editedProfile, country: e.target.value })}
+                      className={`w-full px-4 py-3 rounded-xl border outline-none ${
+                        darkMode 
+                          ? 'bg-orange-900/20 border-orange-800/30 text-orange-50' 
+                          : 'bg-orange-50 border-orange-200 text-gray-900'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
                       State *
                     </label>
                     <select
@@ -312,7 +415,9 @@ export default function ProfilePage() {
                       }`}
                     >
                       {indianStates.map((state) => (
-                        <option key={state} value={state}>{state}</option>
+                        <option key={state} value={state} className={darkMode ? 'bg-[#1a1410]' : 'bg-white'}>
+                          {state}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -322,7 +427,7 @@ export default function ProfilePage() {
                     </label>
                     <input
                       type="text"
-                      value={editedProfile.city}
+                      value={editedProfile.city || ''}
                       onChange={(e) => setEditedProfile({ ...editedProfile, city: e.target.value })}
                       className={`w-full px-4 py-3 rounded-xl border outline-none ${
                         darkMode 
@@ -384,6 +489,7 @@ export default function ProfilePage() {
               ) : (
                 <div className="grid grid-cols-2 gap-3">
                   <button
+                    type="button"
                     onClick={() => setEditedProfile({ ...editedProfile, primaryRole: 'learner' })}
                     className={`p-4 rounded-xl border-2 transition-all ${
                       editedProfile.primaryRole === 'learner'
@@ -399,6 +505,7 @@ export default function ProfilePage() {
                     <p className={`text-sm font-medium ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>Learner</p>
                   </button>
                   <button
+                    type="button"
                     onClick={() => setEditedProfile({ ...editedProfile, primaryRole: 'teacher' })}
                     className={`p-4 rounded-xl border-2 transition-all ${
                       editedProfile.primaryRole === 'teacher'
@@ -457,33 +564,47 @@ export default function ProfilePage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3">
-                  <select
-                    value={editedProfile.primaryLanguageToLearn}
-                    onChange={(e) => setEditedProfile({ ...editedProfile, primaryLanguageToLearn: e.target.value })}
-                    className={`px-4 py-3 rounded-xl border outline-none ${
-                      darkMode 
-                        ? 'bg-orange-900/20 border-orange-800/30 text-orange-50' 
-                        : 'bg-orange-50 border-orange-200 text-gray-900'
-                    }`}
-                  >
-                    {languages.map((lang) => (
-                      <option key={lang} value={lang}>{lang} (Primary)</option>
-                    ))}
-                  </select>
-                  <select
-                    value={editedProfile.secondaryLanguageToLearn}
-                    onChange={(e) => setEditedProfile({ ...editedProfile, secondaryLanguageToLearn: e.target.value })}
-                    className={`px-4 py-3 rounded-xl border outline-none ${
-                      darkMode 
-                        ? 'bg-orange-900/20 border-orange-800/30 text-orange-50' 
-                        : 'bg-orange-50 border-orange-200 text-gray-900'
-                    }`}
-                  >
-                    <option value="">Secondary (Optional)</option>
-                    {languages.map((lang) => (
-                      <option key={lang} value={lang}>{lang}</option>
-                    ))}
-                  </select>
+                  <div>
+                    <label className={`block text-sm mb-1 ${darkMode ? 'text-orange-200' : 'text-gray-600'}`}>
+                      Primary *
+                    </label>
+                    <select
+                      value={editedProfile.primaryLanguageToLearn}
+                      onChange={(e) => setEditedProfile({ ...editedProfile, primaryLanguageToLearn: e.target.value })}
+                      className={`w-full px-4 py-3 rounded-xl border outline-none ${
+                        darkMode 
+                          ? 'bg-orange-900/20 border-orange-800/30 text-orange-50' 
+                          : 'bg-orange-50 border-orange-200 text-gray-900'
+                      }`}
+                    >
+                      {languages.map((lang) => (
+                        <option key={lang} value={lang} className={darkMode ? 'bg-[#1a1410]' : 'bg-white'}>
+                          {lang}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={`block text-sm mb-1 ${darkMode ? 'text-orange-200' : 'text-gray-600'}`}>
+                      Secondary (Optional)
+                    </label>
+                    <select
+                      value={editedProfile.secondaryLanguageToLearn || ''}
+                      onChange={(e) => setEditedProfile({ ...editedProfile, secondaryLanguageToLearn: e.target.value })}
+                      className={`w-full px-4 py-3 rounded-xl border outline-none ${
+                        darkMode 
+                          ? 'bg-orange-900/20 border-orange-800/30 text-orange-50' 
+                          : 'bg-orange-50 border-orange-200 text-gray-900'
+                      }`}
+                    >
+                      <option value="">None</option>
+                      {languages.map((lang) => (
+                        <option key={lang} value={lang} className={darkMode ? 'bg-[#1a1410]' : 'bg-white'}>
+                          {lang}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               )}
             </div>
@@ -512,7 +633,7 @@ export default function ProfilePage() {
               ) : (
                 <div className="space-y-3">
                   {editedProfile.languagesKnow.map((lang, i) => (
-                    <div key={i} className="grid grid-cols-2 gap-3">
+                    <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-3">
                       <select
                         value={lang.language}
                         onChange={(e) => {
@@ -526,8 +647,11 @@ export default function ProfilePage() {
                             : 'bg-orange-50 border-orange-200 text-gray-900'
                         }`}
                       >
+                        <option value="">Select language</option>
                         {languages.map((l) => (
-                          <option key={l} value={l}>{l}</option>
+                          <option key={l} value={l} className={darkMode ? 'bg-[#1a1410]' : 'bg-white'}>
+                            {l}
+                          </option>
                         ))}
                       </select>
                       <select
@@ -543,12 +667,35 @@ export default function ProfilePage() {
                             : 'bg-orange-50 border-orange-200 text-gray-900'
                         }`}
                       >
+                        <option value="">Select level</option>
                         {fluencyLevels.map((level) => (
-                          <option key={level} value={level}>{level}</option>
+                          <option key={level} value={level} className={darkMode ? 'bg-[#1a1410]' : 'bg-white'}>
+                            {level}
+                          </option>
                         ))}
                       </select>
+                      {editedProfile.languagesKnow.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeLanguage(i)}
+                          className={`px-3 py-2 rounded-xl ${
+                            darkMode 
+                              ? 'bg-red-900/20 text-red-400 hover:bg-red-900/30' 
+                              : 'bg-red-100 text-red-600 hover:bg-red-200'
+                          }`}
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      )}
                     </div>
                   ))}
+                  <button
+                    type="button"
+                    onClick={addLanguage}
+                    className={`text-sm font-medium ${darkMode ? 'text-orange-400 hover:text-orange-300' : 'text-orange-600 hover:text-orange-700'}`}
+                  >
+                    + Add another language
+                  </button>
                 </div>
               )}
             </div>
@@ -581,17 +728,16 @@ export default function ProfilePage() {
                 Privacy & Safety
               </button>
               <button
-  onClick={handleLogout}
-  className={`w-full px-4 py-3 rounded-xl text-left flex items-center gap-3 transition-all ${
-            darkMode 
-            ? 'hover:bg-red-900/20 text-red-400' 
-            : 'hover:bg-red-50 text-red-600'
-        }`}
-      >
-        <LogOut className="w-5 h-5" />
-        Log Out
-      </button>
-
+                onClick={handleLogout}
+                className={`w-full px-4 py-3 rounded-xl text-left flex items-center gap-3 transition-all ${
+                  darkMode 
+                    ? 'hover:bg-red-900/20 text-red-400' 
+                    : 'hover:bg-red-50 text-red-600'
+                }`}
+              >
+                <LogOut className="w-5 h-5" />
+                Log Out
+              </button>
             </div>
           </div>
 

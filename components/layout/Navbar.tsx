@@ -1,20 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Menu, X, Sun, Moon, Bell, User } from "lucide-react";
 import { useDarkMode } from "@/lib/DarkModeContext";
 import { useAuth } from "@/lib/AuthContext";
+
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { darkMode, setDarkMode } = useDarkMode();
+  const { isLoggedIn } = useAuth();
 
-  const { isLoggedIn} = useAuth();
-  const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-  
   return (
-    <nav  className={`fixed top-0 left-0 right-0 z-50 py-4 transition-opacity`}>
+    <nav className={`fixed top-0 left-0 right-0 z-50 py-4 transition-opacity`}>
       <div className="max-w-6xl mx-auto px-4 lg:px-6">
         <div
           className={`backdrop-blur-xl rounded-full border transition-all ${
@@ -26,14 +24,11 @@ export default function Navbar() {
           <div className="flex justify-between items-center px-5 h-14">
             {/* LOGO */}
             <Link href="/" className="flex items-center gap-2.5">
-             
-                <img
-                  src="/logo.png"
-                  alt="Vartalang Logo"
-                  className="w-17 h-auto"
-                />
-              
-
+              <img
+                src="/logo.png"
+                alt="Vartalang Logo"
+                className="w-17 h-auto"
+              />
               <span
                 className={`text-base font-bold ${
                   darkMode ? "text-orange-100" : "text-gray-800"
@@ -51,7 +46,7 @@ export default function Navbar() {
                   {[
                     { name: "Learn", href: "/learn" },
                     { name: "Chats", href: "/chats" },
-                    { name: "Matches", href: "/matches" }, 
+                    { name: "Matches", href: "/matches" },
                     { name: "Creators", href: "/creators" },
                   ].map((item) => (
                     <Link
@@ -172,33 +167,87 @@ export default function Navbar() {
             className={`mt-3 rounded-2xl border backdrop-blur-xl p-4 ${
               darkMode
                 ? "bg-[#2a1f1a]/90 border-orange-900/30"
-                : "bg-white/90 border-orange-100 text-gray-800/90"
+                : "bg-white/90 border-orange-100"
             }`}
           >
             <div className="flex flex-col gap-2">
               {isLoggedIn ? (
                 <>
-                  <Link className="mobile-link" href="/learn">
+                  <Link
+                    href="/learn"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
+                      darkMode
+                        ? "text-orange-200 hover:bg-orange-900/40"
+                        : "text-gray-700 hover:bg-orange-50"
+                    }`}
+                  >
                     Learn
                   </Link>
-                  <Link className="mobile-link" href="/chats">
+                  <Link
+                    href="/chats"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
+                      darkMode
+                        ? "text-orange-200 hover:bg-orange-900/40"
+                        : "text-gray-700 hover:bg-orange-50"
+                    }`}
+                  >
                     Chats
                   </Link>
-                  <Link className="mobile-link" href="/matches">
+                  <Link
+                    href="/matches"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
+                      darkMode
+                        ? "text-orange-200 hover:bg-orange-900/40"
+                        : "text-gray-700 hover:bg-orange-50"
+                    }`}
+                  >
                     Matches
                   </Link>
-                  <Link className="mobile-link" href="/creators">
+                  <Link
+                    href="/creators"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
+                      darkMode
+                        ? "text-orange-200 hover:bg-orange-900/40"
+                        : "text-gray-700 hover:bg-orange-50"
+                    }`}
+                  >
                     Creators
+                  </Link>
+                  <div className="h-px bg-linear-to-r from-transparent via-orange-500/30 to-transparent my-2"></div>
+                  <Link
+                    href="/profile"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all flex items-center justify-center gap-2 ${
+                      darkMode
+                        ? "text-orange-200 hover:bg-orange-900/40"
+                        : "text-gray-700 hover:bg-orange-50"
+                    }`}
+                  >
+                    <User className="w-4 h-4" />
+                    Profile
                   </Link>
                 </>
               ) : (
                 <>
-                  <Link className="mobile-link" href="/auth/login">
+                  <Link
+                    href="/auth/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
+                      darkMode
+                        ? "text-orange-200 hover:bg-orange-900/40"
+                        : "text-gray-700 hover:bg-orange-50"
+                    }`}
+                  >
                     Sign In
                   </Link>
                   <Link
                     href="/auth/signup"
-                    className="px-4 py-2 rounded-lg text-sm font-semibold text-center bg-linear-to-r from-orange-500 to-red-600 text-white"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="px-4 py-2.5 rounded-lg text-sm font-semibold text-center bg-linear-to-r from-orange-500 to-red-600 text-white"
                   >
                     Join Now
                   </Link>
@@ -208,23 +257,6 @@ export default function Navbar() {
           </div>
         )}
       </div>
-
-      <style jsx>{`
-        .mobile-link {
-          padding: 10px;
-          border-radius: 10px;
-          font-size: 14px;
-          font-weight: 600;
-          text-align: center;
-          transition: all 0.2s;
-          color: ${darkMode ? "#fed7aa" : "#374151"};
-        }
-        .mobile-link:hover {
-          background: ${darkMode
-            ? "rgba(124,45,18,0.4)"
-            : "rgba(255,237,213,0.8)"};
-        }
-      `}</style>
     </nav>
   );
 }

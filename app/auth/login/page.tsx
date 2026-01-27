@@ -1,14 +1,17 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Mail, Lock } from "lucide-react";
 import { useDarkMode } from '@/lib/DarkModeContext';
+import { useAuth } from '@/lib/AuthContext';
 
-// Add this at the top
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 export default function SigninPage() {
   const { darkMode } = useDarkMode();
+  const { setIsLoggedIn } = useAuth();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -36,11 +39,12 @@ export default function SigninPage() {
         return;
       }
 
-      // Save token
+      // Save token and update auth state
       localStorage.setItem("token", data.token);
+      setIsLoggedIn(true);
       
-      alert("Login successful! Redirecting...");
-      window.location.href = "/learn";
+      // Redirect to learn page
+      router.push("/learn");
     } catch (error) {
       console.error("Login error:", error);
       alert("Network error. Please check your connection and try again.");

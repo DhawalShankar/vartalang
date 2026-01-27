@@ -1,14 +1,17 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { Upload, User, Mail, GraduationCap, BookOpen } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Upload, GraduationCap, BookOpen } from "lucide-react";
 import { useDarkMode } from '@/lib/DarkModeContext';
+import { useAuth } from '@/lib/AuthContext';
 
-// Add this at the top
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 export default function SignupPage() {
   const { darkMode } = useDarkMode();
+  const { setIsLoggedIn } = useAuth();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -89,10 +92,12 @@ export default function SignupPage() {
         return;
       }
 
-      // Save token and redirect
+      // Save token and update auth state
       localStorage.setItem("token", data.token);
-      alert("Signup successful! Redirecting...");
-      window.location.href = "/learn";
+      setIsLoggedIn(true);
+      
+      // Redirect to learn page
+      router.push("/learn");
     } catch (error) {
       console.error("Signup error:", error);
       alert("Network error. Please check your connection and try again.");
