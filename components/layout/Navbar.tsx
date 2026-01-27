@@ -89,11 +89,14 @@ export default function Navbar() {
 
       const data = await res.json();
       
-      // Remove notification
-      setNotifications(notifications.filter(n => n._id !== notificationId));
+      // ✅ Remove notification from UI immediately
+      setNotifications(prev => prev.filter(n => n._id !== notificationId));
       setUnreadCount(prev => Math.max(0, prev - 1));
       
       alert("Match accepted! You can now chat.");
+      
+      // Close notification panel and redirect to chat
+      setShowNotifications(false);
       window.location.href = `/chats?chat=${data.chatId}`;
     } catch (error) {
       console.error("Accept match error:", error);
@@ -111,8 +114,8 @@ export default function Navbar() {
 
       if (!res.ok) throw new Error("Failed to reject match");
 
-      // Remove notification
-      setNotifications(notifications.filter(n => n._id !== notificationId));
+      // ✅ Remove notification from UI immediately
+      setNotifications(prev => prev.filter(n => n._id !== notificationId));
       setUnreadCount(prev => Math.max(0, prev - 1));
       
       alert("Match rejected");
@@ -232,13 +235,13 @@ export default function Navbar() {
                                   </div>
                                   <div className="flex gap-2">
                                     <button
-                                      onClick={() => handleAcceptMatch(notif.matchId._id, notif._id)}
+                                      onClick={() => handleAcceptMatch(notif.matchId._id || notif.matchId, notif._id)}
                                       className="flex-1 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition-all"
                                     >
                                       Accept
                                     </button>
                                     <button
-                                      onClick={() => handleRejectMatch(notif.matchId._id, notif._id)}
+                                      onClick={() => handleRejectMatch(notif.matchId._id || notif.matchId, notif._id)}
                                       className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
                                         darkMode 
                                           ? "bg-orange-900/30 text-orange-300 hover:bg-orange-900/50" 
@@ -261,6 +264,7 @@ export default function Navbar() {
                                     </p>
                                     <Link 
                                       href="/chats"
+                                      onClick={() => setShowNotifications(false)}
                                       className="text-xs text-orange-500 hover:underline"
                                     >
                                       Start chatting →

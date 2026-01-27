@@ -95,16 +95,16 @@ function ChatsContent() {
 
   // ✅ Socket.IO event listeners - FIXED
   useEffect(() => {
-    if (!socket || !isConnected) {
-      console.log("Socket not connected yet");
+    if (!socket || !isConnected || !currentUserId) {
+      console.log("Socket not ready or user not logged in");
       return;
     }
 
-    console.log("Setting up Socket.IO listeners");
+    console.log("✅ Setting up Socket.IO listeners for user:", currentUserId);
 
     // Join the current chat room
     if (selectedChat) {
-      console.log(`Joining chat room: ${selectedChat}`);
+      console.log(`📍 Joining chat room: ${selectedChat}`);
       socket.emit("join_chat", selectedChat);
     }
 
@@ -114,7 +114,7 @@ function ChatsContent() {
       
       const { chatId, message } = data;
       
-      // Update current chat detail if this is the active chat
+      // ✅ CRITICAL: Only update if this is the active chat
       if (selectedChat === chatId) {
         setCurrentChatDetail(prev => {
           if (!prev) return prev;
@@ -122,26 +122,28 @@ function ChatsContent() {
           // Check if message already exists (avoid duplicates)
           const messageExists = prev.messages.some(m => m._id === message._id);
           if (messageExists) {
-            console.log("⚠️ Message already exists, skipping");
+            console.log("⚠️ Message already exists, skipping duplicate");
             return prev;
           }
           
-          console.log("✅ Adding new message to UI");
+          console.log("✅ Adding new message to UI:", message);
           
           return {
             ...prev,
             messages: [...prev.messages, {
               _id: message._id,
-              sender: message.sender.toString(), // ✅ Ensure string
+              sender: message.sender.toString(),
               text: message.text,
               timestamp: message.timestamp,
               read: message.read
             }]
           };
         });
+      } else {
+        console.log(`📬 Message for different chat (${chatId}), updating chat list only`);
       }
       
-      // Update chat list
+      // Update chat list to show latest message
       fetchChats();
     };
 
@@ -188,18 +190,18 @@ function ChatsContent() {
 
     // Cleanup
     return () => {
-      console.log("Cleaning up Socket.IO listeners");
+      console.log("🧹 Cleaning up Socket.IO listeners");
       socket.off("receive_message", handleReceiveMessage);
       socket.off("messages_read", handleMessagesRead);
       socket.off("user_blocked", handleUserBlocked);
       socket.off("user_unblocked", handleUserUnblocked);
       
       if (selectedChat) {
-        console.log(`Leaving chat room: ${selectedChat}`);
+        console.log(`👋 Leaving chat room: ${selectedChat}`);
         socket.emit("leave_chat", selectedChat);
       }
     };
-  }, [socket, isConnected, selectedChat, currentUserId]); // ✅ Removed currentChatDetail
+  }, [socket, isConnected, selectedChat, currentUserId]);
 
   const fetchChats = async () => {
     const token = localStorage.getItem("token");
@@ -253,8 +255,9 @@ function ChatsContent() {
   const handleSendMessage = async () => {
     if (!messageInput.trim() || !selectedChat || sending) return;
 
+    const tempMessageId = `temp-${Date.now()}`;
     const tempMessage: Message = {
-      _id: `temp-${Date.now()}`,
+      _id: tempMessageId,
       sender: currentUserId || '',
       text: messageInput.trim(),
       timestamp: new Date().toISOString(),
@@ -290,17 +293,20 @@ function ChatsContent() {
 
       const data = await res.json();
       
-      // Replace temp message with real message
+      console.log("✅ Message sent successfully:", data.messageData);
+      
+      // Replace temp message with real message from server
       setCurrentChatDetail(prev => {
         if (!prev) return prev;
         return {
           ...prev,
           messages: prev.messages.map(msg => 
-            msg._id === tempMessage._id ? {
-              ...msg,
+            msg._id === tempMessageId ? {
               _id: data.messageData._id,
-              sender: data.messageData.sender.toString(), // ✅ Ensure string
-              timestamp: data.messageData.timestamp
+              sender: data.messageData.sender.toString(),
+              text: data.messageData.text,
+              timestamp: data.messageData.timestamp,
+              read: data.messageData.read
             } : msg
           )
         };
@@ -315,7 +321,7 @@ function ChatsContent() {
         if (!prev) return prev;
         return {
           ...prev,
-          messages: prev.messages.filter(msg => msg._id !== tempMessage._id)
+          messages: prev.messages.filter(msg => msg._id !== tempMessageId)
         };
       });
       
@@ -707,7 +713,7 @@ function ChatsContent() {
                   </div>
                 )}
 
-                {/* ✅ Messages - FIXED ALIGNMENT & NAMES */}
+                {/* ✅ Messages - FIXED ALIGNMENT */}
                 <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${darkMode ? "bg-[#1a1410]/50" : "bg-orange-50/30"}`}>
                   {currentChatDetail.messages.length === 0 ? (
                     <div className="flex items-center justify-center h-full">
@@ -717,7 +723,7 @@ function ChatsContent() {
                     </div>
                   ) : (
                     currentChatDetail.messages.map((msg) => {
-                      // ✅ CRITICAL FIX: Proper comparison with string conversion
+                      // ✅ CRITICAL FIX: Proper comparison
                       const isMe = msg.sender.toString() === currentUserId?.toString();
                       
                       return (
@@ -725,8 +731,8 @@ function ChatsContent() {
                           key={msg._id}
                           className={`flex ${isMe ? "justify-end" : "justify-start"}`}
                         >
-                          <div className={`max-w-[70%] ${isMe ? "items-end" : "items-start"} flex flex-col`}>
-                            {/* ✅ Show sender name for received messages */}
+                          <div className={`max-w-[70%] flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+                            {/* ✅ FIXED: Show correct name based on sender */}
                             {!isMe && (
                               <span className={`text-xs mb-1 px-2 font-medium ${darkMode ? "text-orange-300" : "text-orange-700"}`}>
                                 {currentChatDetail.user.name}
