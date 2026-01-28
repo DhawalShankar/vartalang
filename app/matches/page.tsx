@@ -6,12 +6,10 @@ import Footer from '@/components/layout/Footer';
 import { 
   Users, 
   MapPin,
-  BookOpen,
   RotateCcw,
   Info,
   ArrowLeft,
   ChevronRight,
-  ArrowRight,
   X,
   Heart
 } from "lucide-react";
@@ -31,7 +29,7 @@ interface Match {
   secondaryLanguageToLearn?: string;
   languagesKnow: Array<{ language: string; fluency: string }>;
   primaryRole: 'learner' | 'teacher';
-  matchType: 'primary' | 'secondary';
+  matchType?: 'primary' | 'secondary';
 }
 
 export default function MatchesPage() {
@@ -43,7 +41,7 @@ export default function MatchesPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
-  const [swipedMatches, setSwipedMatches] = useState<string[]>([]);
+  const [swiping, setSwiping] = useState(false); // ✅ ADDED
   
   // Swipe state
   const [touchStart, setTouchStart] = useState({ x: 0, y: 0 });
@@ -64,6 +62,27 @@ export default function MatchesPage() {
   useEffect(() => {
     fetchMatches();
   }, []);
+
+  // ✅ ADDED: Keyboard navigation
+  useEffect(() => {
+    if (showDetails || swiping) return;
+    
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        handleSwipe('right');
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        handleSwipe('left');
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        setShowDetails(true);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [currentIndex, showDetails, swiping]);
 
   const fetchMatches = async () => {
     const token = localStorage.getItem("token");
@@ -91,13 +110,14 @@ export default function MatchesPage() {
   };
 
   const handleSwipe = async (swipeDirection: 'left' | 'right') => {
-    if (!currentMatch) return;
+    if (!currentMatch || swiping) return; // ✅ FIXED: Prevent double swipes
 
+    setSwiping(true); // ✅ ADDED
     setDirection(swipeDirection);
     setShowDetails(false);
 
     const token = localStorage.getItem("token");
-    const action = swipeDirection === 'right' ? 'like' : 'pass';
+    const action = swipeDirection === 'right' ? 'like' : 'skip'; // ✅ FIXED: Changed 'pass' to 'skip'
 
     try {
       const res = await fetch(`${API_URL}/matches/swipe`, {
@@ -112,46 +132,44 @@ export default function MatchesPage() {
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to process swipe");
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to process swipe");
+      }
 
       const data = await res.json();
 
       setTimeout(() => {
         if (swipeDirection === 'right' && data.matched) {
-          // Redirect to chats
-          router.push(`/chats`);
+          // ✅ FIXED: Better match notification
+          const matchName = currentMatch.name;
+          setTimeout(() => {
+            alert(`🎉 It's a Match! You can now chat with ${matchName}`);
+            router.push(`/chats?chat=${data.chatId}`);
+          }, 100);
         } else {
-          setSwipedMatches([...swipedMatches, currentMatch._id]);
+          // Move to next card
           if (currentIndex < matches.length - 1) {
             setCurrentIndex(currentIndex + 1);
           }
           setDirection(null);
+          setSwiping(false);
         }
       }, 300);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Swipe error:", error);
-      // Still move to next card even if API fails
-      setTimeout(() => {
-        if (currentIndex < matches.length - 1) {
-          setCurrentIndex(currentIndex + 1);
-        }
-        setDirection(null);
-      }, 300);
-    }
-  };
-
-  const handleUndo = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
+      
+      // ✅ FIXED: Better error handling
+      alert(error.message || "Failed to process swipe. Please try again.");
+      
+      // Reset state, DON'T move to next card
       setDirection(null);
-      setShowDetails(false);
-      // Remove last swiped match from array
-      setSwipedMatches(swipedMatches.slice(0, -1));
+      setSwiping(false);
     }
   };
 
   const handleNext = () => {
-    if (currentIndex < matches.length - 1) {
+    if (currentIndex < matches.length - 1 && !swiping) {
       setDirection('left');
       setShowDetails(false);
       setTimeout(() => {
@@ -161,34 +179,29 @@ export default function MatchesPage() {
     }
   };
 
-  // Touch/Mouse handlers for swipe
-  const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
-    if (showDetails) return;
+  // ✅ FIXED: Use Pointer Events instead of separate Touch/Mouse events
+  const handlePointerStart = (e: React.PointerEvent) => {
+    if (showDetails || swiping) return;
+    e.preventDefault();
     
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    
-    setTouchStart({ x: clientX, y: clientY });
-    setTouchEnd({ x: clientX, y: clientY });
+    setTouchStart({ x: e.clientX, y: e.clientY });
+    setTouchEnd({ x: e.clientX, y: e.clientY });
     setIsDragging(true);
   };
 
-  const handleTouchMove = (e: React.TouchEvent | React.MouseEvent) => {
-    if (!isDragging || showDetails) return;
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDragging || showDetails || swiping) return;
     
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    setTouchEnd({ x: e.clientX, y: e.clientY });
     
-    setTouchEnd({ x: clientX, y: clientY });
-    
-    const deltaX = clientX - touchStart.x;
-    const deltaY = clientY - touchStart.y;
+    const deltaX = e.clientX - touchStart.x;
+    const deltaY = e.clientY - touchStart.y;
     
     setDragOffset({ x: deltaX, y: deltaY });
   };
 
-  const handleTouchEnd = () => {
-    if (!isDragging || showDetails) return;
+  const handlePointerEnd = () => {
+    if (!isDragging || showDetails || swiping) return;
     
     setIsDragging(false);
     
@@ -198,10 +211,8 @@ export default function MatchesPage() {
     // Check if it's a horizontal swipe (not vertical scroll)
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 100) {
       if (deltaX > 0) {
-        // Swipe right - match
         handleSwipe('right');
       } else {
-        // Swipe left - pass
         handleSwipe('left');
       }
     }
@@ -293,7 +304,7 @@ export default function MatchesPage() {
             Find Your Language Partner
           </h1>
           <p className={`text-sm ${darkMode ? "text-orange-200/70" : "text-orange-700/70"}`}>
-            {isMobile ? "Swipe right to match • Swipe left to pass" : "Tap card for details • Swipe to decide"}
+            {isMobile ? "Swipe right to match • Swipe left to pass" : "← → Arrow keys • Enter for details"}
           </p>
           <div className={`inline-flex items-center gap-2 mt-3 px-3 py-1.5 rounded-full ${
             darkMode ? "bg-orange-900/20 border border-orange-800/30" : "bg-orange-100 border border-orange-200"
@@ -331,17 +342,14 @@ export default function MatchesPage() {
         {!showDetails ? (
           <div
             ref={cardRef}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onMouseDown={handleTouchStart}
-            onMouseMove={handleTouchMove}
-            onMouseUp={handleTouchEnd}
-            onMouseLeave={() => {
-              if (isDragging) handleTouchEnd();
-            }}
+            onPointerDown={handlePointerStart}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerEnd}
+            onPointerCancel={handlePointerEnd}
             onClick={(e) => {
-              if (!isDragging && Math.abs(dragOffset.x) < 5) {
+              // ✅ FIXED: Better click detection
+              const totalDrag = Math.sqrt(dragOffset.x ** 2 + dragOffset.y ** 2);
+              if (!isDragging && !swiping && totalDrag < 10) {
                 setShowDetails(true);
               }
             }}
@@ -349,7 +357,7 @@ export default function MatchesPage() {
               darkMode 
                 ? "bg-orange-900/10 border border-orange-800/30" 
                 : "bg-white border border-orange-200 shadow-xl"
-            }`}
+            } ${swiping ? 'pointer-events-none' : ''}`}
             style={{
               transform: getCardTransform(),
               opacity: getCardOpacity(),
@@ -357,19 +365,21 @@ export default function MatchesPage() {
             }}
           >
             {/* Match type badge */}
-            <div className="mb-6">
-              <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${
-                currentMatch.matchType === "primary"
-                  ? darkMode 
-                    ? "bg-green-900/30 text-green-400 border border-green-800/30" 
-                    : "bg-green-100 text-green-700 border border-green-300"
-                  : darkMode 
-                    ? "bg-blue-900/30 text-blue-400 border border-blue-800/30" 
-                    : "bg-blue-100 text-blue-700 border border-blue-300"
-              }`}>
-                {currentMatch.matchType === "primary" ? "Perfect Match" : "Good Match"}
-              </span>
-            </div>
+            {currentMatch.matchType && (
+              <div className="mb-6">
+                <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${
+                  currentMatch.matchType === "primary"
+                    ? darkMode 
+                      ? "bg-green-900/30 text-green-400 border border-green-800/30" 
+                      : "bg-green-100 text-green-700 border border-green-300"
+                    : darkMode 
+                      ? "bg-blue-900/30 text-blue-400 border border-blue-800/30" 
+                      : "bg-blue-100 text-blue-700 border border-blue-300"
+                }`}>
+                  {currentMatch.matchType === "primary" ? "Perfect Match" : "Good Match"}
+                </span>
+              </div>
+            )}
 
             {/* Profile section */}
             <div className="flex flex-col items-center text-center mb-6">
@@ -438,7 +448,7 @@ export default function MatchesPage() {
             {/* Tap for more hint */}
             <div className="mt-8 text-center">
               <p className={`text-sm flex items-center justify-center gap-1 ${darkMode ? "text-orange-300/70" : "text-orange-600/70"}`}>
-                Tap to view full profile
+                {isMobile ? "Tap" : "Click"} to view full profile
                 <ChevronRight className="w-4 h-4" />
               </p>
             </div>
@@ -464,19 +474,21 @@ export default function MatchesPage() {
             </button>
 
             {/* Match type badge */}
-            <div className="mb-4">
-              <span className={`inline-block px-3 py-1.5 rounded-full text-sm font-semibold ${
-                currentMatch.matchType === "primary"
-                  ? darkMode 
-                    ? "bg-green-900/30 text-green-400 border border-green-800/30" 
-                    : "bg-green-100 text-green-700 border border-green-300"
-                  : darkMode 
-                    ? "bg-blue-900/30 text-blue-400 border border-blue-800/30" 
-                    : "bg-blue-100 text-blue-700 border border-blue-300"
-              }`}>
-                {currentMatch.matchType === "primary" ? "Perfect Match" : "Good Match"}
-              </span>
-            </div>
+            {currentMatch.matchType && (
+              <div className="mb-4">
+                <span className={`inline-block px-3 py-1.5 rounded-full text-sm font-semibold ${
+                  currentMatch.matchType === "primary"
+                    ? darkMode 
+                      ? "bg-green-900/30 text-green-400 border border-green-800/30" 
+                      : "bg-green-100 text-green-700 border border-green-300"
+                    : darkMode 
+                      ? "bg-blue-900/30 text-blue-400 border border-blue-800/30" 
+                      : "bg-blue-100 text-blue-700 border border-blue-300"
+                }`}>
+                  {currentMatch.matchType === "primary" ? "Perfect Match" : "Good Match"}
+                </span>
+              </div>
+            )}
 
             {/* Profile section */}
             <div className="flex items-start gap-4 mb-5">
@@ -565,17 +577,23 @@ export default function MatchesPage() {
             <div className="flex gap-3">
               <button
                 onClick={handleNext}
+                disabled={swiping}
                 className={`flex-1 py-3 rounded-xl font-semibold transition-all active:scale-95 ${
-                  darkMode 
-                    ? "bg-orange-900/20 text-orange-300 border border-orange-800/30 hover:bg-orange-900/30" 
-                    : "bg-orange-100 text-orange-700 border border-orange-300 hover:bg-orange-200"
+                  swiping
+                    ? "opacity-50 cursor-not-allowed"
+                    : darkMode 
+                      ? "bg-orange-900/20 text-orange-300 border border-orange-800/30 hover:bg-orange-900/30" 
+                      : "bg-orange-100 text-orange-700 border border-orange-300 hover:bg-orange-200"
                 }`}
               >
                 Pass
               </button>
               <button
                 onClick={() => handleSwipe('right')}
-                className="flex-1 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg"
+                disabled={swiping}
+                className={`flex-1 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg ${
+                  swiping ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 <Heart className="w-5 h-5" />
                 Match to Learn
@@ -588,30 +606,16 @@ export default function MatchesPage() {
         {!showDetails && !isMobile && (
           <>
             <div className="flex items-center justify-center gap-4 mb-4">
-              {/* Undo Button */}
-              <button
-                onClick={handleUndo}
-                disabled={currentIndex === 0}
-                className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${
-                  currentIndex === 0
-                    ? darkMode 
-                      ? "bg-orange-900/10 text-orange-500/30 cursor-not-allowed" 
-                      : "bg-orange-100/50 text-orange-400/30 cursor-not-allowed"
-                    : darkMode 
-                      ? "bg-orange-900/20 text-orange-400 hover:bg-orange-900/30 active:scale-95 border border-orange-800/30" 
-                      : "bg-white text-orange-600 hover:bg-orange-50 active:scale-95 border border-orange-300 shadow-lg"
-                }`}
-              >
-                <RotateCcw className="w-6 h-6" />
-              </button>
-
               {/* Pass Button */}
               <button
                 onClick={() => handleSwipe('left')}
+                disabled={swiping}
                 className={`w-16 h-16 rounded-full flex items-center justify-center transition-all active:scale-95 ${
-                  darkMode 
-                    ? "bg-red-900/20 text-red-400 hover:bg-red-900/30 border-2 border-red-800/30" 
-                    : "bg-white text-red-600 hover:bg-red-50 border-2 border-red-300 shadow-lg"
+                  swiping
+                    ? "opacity-50 cursor-not-allowed"
+                    : darkMode 
+                      ? "bg-red-900/20 text-red-400 hover:bg-red-900/30 border-2 border-red-800/30" 
+                      : "bg-white text-red-600 hover:bg-red-50 border-2 border-red-300 shadow-lg"
                 }`}
               >
                 <X className="w-8 h-8" />
@@ -620,7 +624,10 @@ export default function MatchesPage() {
               {/* Learn Together Button */}
               <button
                 onClick={() => handleSwipe('right')}
-                className="px-6 py-3.5 rounded-full bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold active:scale-95 transition-all flex items-center gap-2 shadow-xl"
+                disabled={swiping}
+                className={`px-6 py-3.5 rounded-full bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold active:scale-95 transition-all flex items-center gap-2 shadow-xl ${
+                  swiping ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 <Heart className="w-5 h-5" />
                 Match to Learn
@@ -630,27 +637,10 @@ export default function MatchesPage() {
             {/* Helper Text */}
             <div className="text-center">
               <p className={`text-sm ${darkMode ? "text-orange-300/50" : "text-orange-600/50"}`}>
-                Click <X className="w-4 h-4 inline" /> to pass • Click card for details
+                ← → Arrow keys to swipe • Click card for details
               </p>
             </div>
           </>
-        )}
-
-        {/* Mobile-only undo button */}
-        {!showDetails && isMobile && currentIndex > 0 && (
-          <div className="flex justify-center mb-4">
-            <button
-              onClick={handleUndo}
-              className={`px-4 py-2 rounded-full flex items-center gap-2 transition-all active:scale-95 ${
-                darkMode 
-                  ? "bg-orange-900/20 text-orange-400 border border-orange-800/30" 
-                  : "bg-white text-orange-600 border border-orange-300 shadow-lg"
-              }`}
-            >
-              <RotateCcw className="w-4 h-4" />
-              <span className="text-sm font-medium">Undo</span>
-            </button>
-          </div>
         )}
       </div>
       <Footer />
