@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Menu, X, Sun, Moon, Bell, User } from "lucide-react";
 import { useDarkMode } from "@/lib/DarkModeContext";
@@ -15,9 +15,11 @@ export default function Navbar() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<any[]>([]);
   
+  const notificationRef = useRef<HTMLDivElement>(null);
+  
   const { darkMode, setDarkMode } = useDarkMode();
   const { isLoggedIn } = useAuth();
-  const { socket } = useSocket();
+  const { socket, userId } = useSocket(); // ← Get userId from context
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -26,26 +28,58 @@ export default function Navbar() {
     }
   }, [isLoggedIn]);
 
-  // Listen for real-time notifications
+  // ✅ FIXED: Listen for real-time notifications with user ID check
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !userId) return;
 
-    socket.on("new_notification", (data) => {
+    const handleNewNotification = (data: any) => {
       console.log("New notification received:", data);
+      
+      // ✅ CRITICAL: Check if notification is for current user
+      if (data.userId !== userId) {
+        console.log("Not my notification, ignoring");
+        return;
+      }
+      
       setUnreadCount(prev => prev + 1);
       fetchNotifications();
-    });
+    };
 
-    socket.on("match_accepted", (data) => {
+    const handleMatchAccepted = (data: any) => {
       console.log("Match accepted:", data);
+      
+      // ✅ CRITICAL: Check if notification is for current user
+      if (data.userId !== userId) {
+        console.log("Not my match acceptance, ignoring");
+        return;
+      }
+      
+      setUnreadCount(prev => prev + 1);
       fetchNotifications();
-    });
+    };
+
+    socket.on("new_notification", handleNewNotification);
+    socket.on("match_accepted", handleMatchAccepted);
 
     return () => {
-      socket.off("new_notification");
-      socket.off("match_accepted");
+      socket.off("new_notification", handleNewNotification);
+      socket.off("match_accepted", handleMatchAccepted);
     };
-  }, [socket]);
+  }, [socket, userId]);
+
+  // ✅ FIXED: Close notification dropdown on outside click
+  useEffect(() => {
+    if (!showNotifications) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(e.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showNotifications]);
 
   const fetchUnreadCount = async () => {
     const token = localStorage.getItem("token");
@@ -89,13 +123,11 @@ export default function Navbar() {
 
       const data = await res.json();
       
-      // ✅ Remove notification from UI immediately
       setNotifications(prev => prev.filter(n => n._id !== notificationId));
       setUnreadCount(prev => Math.max(0, prev - 1));
       
       alert("Match accepted! You can now chat.");
       
-      // Close notification panel and redirect to chat
       setShowNotifications(false);
       window.location.href = `/chats?chat=${data.chatId}`;
     } catch (error) {
@@ -114,7 +146,6 @@ export default function Navbar() {
 
       if (!res.ok) throw new Error("Failed to reject match");
 
-      // ✅ Remove notification from UI immediately
       setNotifications(prev => prev.filter(n => n._id !== notificationId));
       setUnreadCount(prev => Math.max(0, prev - 1));
       
@@ -156,7 +187,6 @@ export default function Navbar() {
             <div className="hidden md:flex items-center gap-6">
               {isLoggedIn ? (
                 <>
-                  {/* Core Links */}
                   {[
                     { name: "Learn", href: "/learn" },
                     { name: "Chats", href: "/chats" },
@@ -177,7 +207,7 @@ export default function Navbar() {
                   ))}
 
                   {/* Notification */}
-                  <div className="relative">
+                  <div className="relative" ref={notificationRef}>
                     <button
                       onClick={() => setShowNotifications(!showNotifications)}
                       className={`p-2 rounded-full transition-all relative ${
@@ -217,19 +247,19 @@ export default function Navbar() {
                           </div>
                         ) : (
                           notifications.map((notif) => (
-                            <div key={notif._id} className={`p-4 border-b ${darkMode ? "border-orange-800/30" : "border-orange-200"}`}>
+                            <div key={notif._id} className={`p-4 border-b last:border-b-0 ${darkMode ? "border-orange-800/30" : "border-orange-200"}`}>
                               {notif.type === 'match_request' && (
                                 <>
                                   <div className="flex items-start gap-3 mb-3">
                                     <div className="w-10 h-10 rounded-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-semibold text-sm">
-                                      {notif.sender.name.slice(0, 2).toUpperCase()}
+                                      {notif.sender?.name?.slice(0, 2).toUpperCase() || "??"}
                                     </div>
                                     <div className="flex-1">
                                       <p className={`text-sm font-medium ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
-                                        {notif.sender.name} wants to match with you!
+                                        {notif.sender?.name || "Someone"} wants to match with you!
                                       </p>
                                       <p className={`text-xs ${darkMode ? "text-orange-300/70" : "text-orange-600/70"}`}>
-                                        Knows: {notif.sender.languagesKnow[0]?.language}
+                                        Knows: {notif.sender?.languagesKnow?.[0]?.language || "N/A"}
                                       </p>
                                     </div>
                                   </div>
@@ -260,7 +290,7 @@ export default function Navbar() {
                                   </div>
                                   <div>
                                     <p className={`text-sm font-medium ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
-                                      {notif.sender.name} accepted your match!
+                                      {notif.sender?.name || "Someone"} accepted your match!
                                     </p>
                                     <Link 
                                       href="/chats"
@@ -279,7 +309,6 @@ export default function Navbar() {
                     )}
                   </div>
 
-                  {/* Profile */}
                   <Link href="/profile">
                     <button
                       className={`p-2 rounded-full transition-all ${
@@ -317,7 +346,6 @@ export default function Navbar() {
                 </>
               )}
 
-              {/* Dark Mode Toggle */}
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 className={`p-2 rounded-full transition-all hover:scale-110 ${
@@ -336,6 +364,22 @@ export default function Navbar() {
 
             {/* MOBILE BUTTONS */}
             <div className="md:hidden flex items-center gap-2">
+              {isLoggedIn && (
+                <button
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className={`p-1.5 rounded-full relative ${
+                    darkMode ? "bg-orange-900/30" : "bg-orange-50"
+                  }`}
+                >
+                  <Bell className={`w-4 h-4 ${darkMode ? "text-orange-300" : "text-orange-700"}`} />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+                      {unreadCount > 9 ? '9' : unreadCount}
+                    </span>
+                  )}
+                </button>
+              )}
+              
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 className={`p-1.5 rounded-full ${
