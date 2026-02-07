@@ -73,7 +73,6 @@ function ChatsContent() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const currentUserId = typeof window !== 'undefined' ? localStorage.getItem("userId") : null;
 
-  // ✅ Debug: Log socket status changes
   useEffect(() => {
     console.log("🔌 Socket Status Changed:", {
       isConnected,
@@ -82,7 +81,6 @@ function ChatsContent() {
     });
   }, [isConnected, socket, currentUserId]);
 
-  // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -95,20 +93,17 @@ function ChatsContent() {
     fetchChats();
   }, []);
 
-  // ✅ FIXED: Handle chatParam - always refetch to ensure new matches are loaded
   useEffect(() => {
     const openChatFromUrl = async () => {
       if (!chatParam) return;
       
       console.log(`🎯 Opening chat from URL: ${chatParam}`);
       
-      // Always refetch chats when opening from URL to get latest data
       console.log(`🔄 Refetching chats to ensure latest data...`);
       await fetchChats();
       
-      // Then open the chat
       setSelectedChat(chatParam);
-      fetchChatMessages(chatParam);
+      await fetchChatMessages(chatParam);
     };
     
     if (chatParam && !loading) {
@@ -116,7 +111,6 @@ function ChatsContent() {
     }
   }, [chatParam, loading]);
 
-  // ✅ FIXED: Socket.IO event listeners with chat_ prefix
   useEffect(() => {
     if (!socket) {
       console.warn("⚠️ Socket instance not available");
@@ -135,30 +129,25 @@ function ChatsContent() {
 
     console.log("✅ Setting up Socket.IO listeners for user:", currentUserId);
 
-    // ✅ FIXED: Join the current chat room with chat_ prefix
     if (selectedChat) {
       console.log(`📍 Joining chat room: chat_${selectedChat}`);
       socket.emit("join_chat", `chat_${selectedChat}`);
     }
 
-    // ✅ Listen for new messages
     const handleReceiveMessage = (data: any) => {
       console.log("📨 Received message via Socket.IO:", data);
       
       const { chatId, message } = data;
       
-      // ✅ CRITICAL: Ignore messages sent by current user (already handled by optimistic update)
       if (message.sender.toString() === currentUserId?.toString()) {
         console.log("⚠️ Ignoring own message from socket (already added optimistically)");
         return;
       }
       
-      // ✅ CRITICAL: Only update if this is the active chat
       if (selectedChat === chatId) {
         setCurrentChatDetail(prev => {
           if (!prev) return prev;
           
-          // Check if message already exists (avoid duplicates)
           const messageExists = prev.messages.some(m => m._id === message._id);
           if (messageExists) {
             console.log("⚠️ Message already exists, skipping duplicate");
@@ -182,17 +171,14 @@ function ChatsContent() {
         console.log(`📬 Message for different chat (${chatId}), updating chat list only`);
       }
       
-      // Update chat list to show latest message
       fetchChats();
     };
 
-    // ✅ Listen for read receipts
     const handleMessagesRead = (data: any) => {
       console.log("✅ Messages marked as read:", data);
       
       const { chatId, readBy } = data;
       
-      // Only update if someone else read our messages
       if (readBy !== currentUserId && selectedChat === chatId) {
         setCurrentChatDetail(prev => {
           if (!prev) return prev;
@@ -207,7 +193,6 @@ function ChatsContent() {
       }
     };
 
-    // Listen for user blocked/unblocked
     const handleUserBlocked = (data: any) => {
       console.log("🚫 User blocked:", data);
       if (data.chatId === selectedChat && selectedChat) {
@@ -224,7 +209,6 @@ function ChatsContent() {
       fetchChats();
     };
 
-    // ✅ Listen for connection errors
     const handleConnectError = (error: any) => {
       console.error("❌ Socket connection error:", error);
     };
@@ -236,7 +220,6 @@ function ChatsContent() {
     const handleReconnect = () => {
       console.log("🔄 Socket reconnected, rejoining chat");
       if (selectedChat) {
-        // ✅ FIXED: Rejoin with chat_ prefix
         socket.emit("join_chat", `chat_${selectedChat}`);
       }
     };
@@ -249,7 +232,6 @@ function ChatsContent() {
     socket.on("disconnect", handleDisconnect);
     socket.on("connect", handleReconnect);
 
-    // Cleanup
     return () => {
       console.log("🧹 Cleaning up Socket.IO listeners");
       socket.off("receive_message", handleReceiveMessage);
@@ -261,7 +243,6 @@ function ChatsContent() {
       socket.off("connect", handleReconnect);
       
       if (selectedChat) {
-        // ✅ FIXED: Leave with chat_ prefix
         console.log(`👋 Leaving chat room: chat_${selectedChat}`);
         socket.emit("leave_chat", `chat_${selectedChat}`);
       }
@@ -288,11 +269,30 @@ function ChatsContent() {
       setChats(data.chats);
       setLoading(false);
       console.log(`✅ Fetched ${data.chats.length} chats`);
-      return data.chats; // ✅ Return chats for chaining
+      return data.chats;
     } catch (error) {
       console.error("Fetch chats error:", error);
       setLoading(false);
       return [];
+    }
+  };
+
+  // ✅ NEW: Delete all notifications for a specific chat
+  const deleteNotificationsForChat = async (chatId: string) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${API_URL}/notifications/chat/${chatId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        console.log(`✅ Deleted notifications for chat ${chatId}`);
+      }
+    } catch (error) {
+      console.error("Delete chat notifications error:", error);
     }
   };
 
@@ -311,7 +311,9 @@ function ChatsContent() {
       const data = await res.json();
       setCurrentChatDetail(data.chat);
       
-      // ✅ FIXED: Join the chat room via Socket.IO with chat_ prefix
+      // ✅ NEW: Delete notifications when opening chat
+      await deleteNotificationsForChat(chatId);
+      
       if (socket && isConnected) {
         console.log(`📍 Joining chat room: chat_${chatId}`);
         socket.emit("join_chat", `chat_${chatId}`);
@@ -335,7 +337,6 @@ function ChatsContent() {
       read: false
     };
 
-    // Optimistically add message to UI
     setCurrentChatDetail(prev => {
       if (!prev) return prev;
       return {
@@ -366,7 +367,6 @@ function ChatsContent() {
       
       console.log("✅ Message sent successfully:", data.messageData);
       
-      // Replace temp message with real message from server
       setCurrentChatDetail(prev => {
         if (!prev) return prev;
         return {
@@ -387,7 +387,6 @@ function ChatsContent() {
     } catch (error) {
       console.error("Send message error:", error);
       
-      // Remove temp message on error
       setCurrentChatDetail(prev => {
         if (!prev) return prev;
         return {
@@ -404,7 +403,6 @@ function ChatsContent() {
   };
 
   const handleChatClick = (chatId: string) => {
-    // ✅ FIXED: Leave previous chat room with chat_ prefix
     if (selectedChat && socket && isConnected) {
       console.log(`👋 Leaving previous chat: chat_${selectedChat}`);
       socket.emit("leave_chat", `chat_${selectedChat}`);
@@ -416,7 +414,6 @@ function ChatsContent() {
   };
 
   const handleBack = () => {
-    // ✅ FIXED: Leave chat room with chat_ prefix
     if (selectedChat && socket && isConnected) {
       console.log(`👋 Leaving chat: chat_${selectedChat}`);
       socket.emit("leave_chat", `chat_${selectedChat}`);
@@ -586,7 +583,6 @@ function ChatsContent() {
     <div className={`pt-20 min-h-screen ${darkMode ? "bg-[#1a1410]" : "bg-[#FFF9F5]"}`}>
       <Navbar />
       
-      {/* ✅ IMPROVED: Socket Connection Status with more details */}
       <div className="fixed bottom-4 right-4 z-50">
         <div 
           className={`px-3 py-1.5 rounded-full text-xs font-medium shadow-lg transition-all cursor-help ${
@@ -696,8 +692,8 @@ function ChatsContent() {
             </div>
           </div>
 
-          {/* Chat Window */}
-          <div className={`${showOnlyChat ? 'block' : 'hidden md:block'} md:col-span-2 rounded-3xl overflow-hidden flex flex-col ${darkMode ? "bg-orange-900/10 border border-orange-800/30" : "bg-white border border-orange-200 shadow-lg"}`}>
+          {/* ✅ FIXED: Chat Window - Simplified mobile visibility logic */}
+          <div className={`${selectedChat ? 'block' : 'hidden'} md:block md:col-span-2 rounded-3xl overflow-hidden flex flex-col ${darkMode ? "bg-orange-900/10 border border-orange-800/30" : "bg-white border border-orange-200 shadow-lg"}`}>
             
             {currentChatDetail ? (
               <>
