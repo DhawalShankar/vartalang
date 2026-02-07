@@ -157,7 +157,8 @@ export default function Navbar() {
                     { name: "Learn", href: "/learn" },
                     { name: "Chats", href: "/chats" },
                     { name: "Matches", href: "/matches" },
-                    { name: "Creators", href: "/creators" },
+                    { name: "About", href: "/about" },
+                    // { name: "Creators", href: "/creators" },
                   ].map((item) => (
                     <Link
                       key={item.name}
@@ -439,7 +440,7 @@ export default function Navbar() {
                   >
                     Matches
                   </Link>
-                  <Link
+                  {/* <Link
                     href="/creators"
                     onClick={() => setMobileMenuOpen(false)}
                     className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
@@ -449,7 +450,7 @@ export default function Navbar() {
                     }`}
                   >
                     Creators
-                  </Link>
+                  </Link> */}
                   <div className="h-px bg-linear-to-r from-transparent via-orange-500/30 to-transparent my-2"></div>
                   <Link
                     href="/profile"
