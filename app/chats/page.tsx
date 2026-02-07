@@ -73,6 +73,15 @@ function ChatsContent() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const currentUserId = typeof window !== 'undefined' ? localStorage.getItem("userId") : null;
 
+  // ✅ Debug: Log socket status changes
+  useEffect(() => {
+    console.log("🔌 Socket Status Changed:", {
+      isConnected,
+      socketExists: !!socket,
+      currentUserId
+    });
+  }, [isConnected, socket, currentUserId]);
+
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -93,10 +102,20 @@ function ChatsContent() {
     }
   }, [chatParam]);
 
-  // ✅ Socket.IO event listeners - FIXED
+  // ✅ FIXED: Socket.IO event listeners with better error handling
   useEffect(() => {
-    if (!socket || !isConnected || !currentUserId) {
-      console.log("Socket not ready or user not logged in");
+    if (!socket) {
+      console.warn("⚠️ Socket instance not available");
+      return;
+    }
+
+    if (!isConnected) {
+      console.warn("⚠️ Socket not connected yet");
+      return;
+    }
+
+    if (!currentUserId) {
+      console.warn("⚠️ User ID not available");
       return;
     }
 
@@ -174,6 +193,7 @@ function ChatsContent() {
       if (data.chatId === selectedChat && selectedChat) {
         fetchChatMessages(selectedChat);
       }
+      fetchChats();
     };
 
     const handleUserUnblocked = (data: any) => {
@@ -181,12 +201,32 @@ function ChatsContent() {
       if (data.chatId === selectedChat && selectedChat) {
         fetchChatMessages(selectedChat);
       }
+      fetchChats();
+    };
+
+    // ✅ Listen for connection errors
+    const handleConnectError = (error: any) => {
+      console.error("❌ Socket connection error:", error);
+    };
+
+    const handleDisconnect = (reason: string) => {
+      console.warn("🔌 Socket disconnected:", reason);
+    };
+
+    const handleReconnect = () => {
+      console.log("🔄 Socket reconnected, rejoining chat");
+      if (selectedChat) {
+        socket.emit("join_chat", selectedChat);
+      }
     };
 
     socket.on("receive_message", handleReceiveMessage);
     socket.on("messages_read", handleMessagesRead);
     socket.on("user_blocked", handleUserBlocked);
     socket.on("user_unblocked", handleUserUnblocked);
+    socket.on("connect_error", handleConnectError);
+    socket.on("disconnect", handleDisconnect);
+    socket.on("connect", handleReconnect);
 
     // Cleanup
     return () => {
@@ -195,6 +235,9 @@ function ChatsContent() {
       socket.off("messages_read", handleMessagesRead);
       socket.off("user_blocked", handleUserBlocked);
       socket.off("user_unblocked", handleUserUnblocked);
+      socket.off("connect_error", handleConnectError);
+      socket.off("disconnect", handleDisconnect);
+      socket.off("connect", handleReconnect);
       
       if (selectedChat) {
         console.log(`👋 Leaving chat room: ${selectedChat}`);
@@ -245,7 +288,10 @@ function ChatsContent() {
       
       // Join the chat room via Socket.IO
       if (socket && isConnected) {
+        console.log(`📍 Joining chat room: ${chatId}`);
         socket.emit("join_chat", chatId);
+      } else {
+        console.warn("⚠️ Cannot join chat room - socket not connected");
       }
     } catch (error) {
       console.error("Fetch messages error:", error);
@@ -339,7 +385,7 @@ function ChatsContent() {
     }
     
     setSelectedChat(chatId);
-    router.push(`/chats?chat=${chatId}`);
+    router.push(`/chats?chat=${chatId}`, { scroll: false });
     fetchChatMessages(chatId);
   };
 
@@ -350,7 +396,7 @@ function ChatsContent() {
     
     setSelectedChat(null);
     setCurrentChatDetail(null);
-    router.push('/chats');
+    router.push('/chats', { scroll: false });
   };
 
   const handleBlockUser = async () => {
@@ -512,14 +558,23 @@ function ChatsContent() {
     <div className={`pt-20 min-h-screen ${darkMode ? "bg-[#1a1410]" : "bg-[#FFF9F5]"}`}>
       <Navbar />
       
-      {/* Socket Connection Status */}
+      {/* ✅ IMPROVED: Socket Connection Status with more details */}
       <div className="fixed bottom-4 right-4 z-50">
-        <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-          isConnected 
-            ? "bg-green-500 text-white" 
-            : "bg-red-500 text-white"
-        }`}>
-          {isConnected ? "🟢 Connected" : "🔴 Disconnected"}
+        <div 
+          className={`px-3 py-1.5 rounded-full text-xs font-medium shadow-lg transition-all cursor-help ${
+            isConnected 
+              ? "bg-green-500 text-white" 
+              : "bg-red-500 text-white animate-pulse"
+          }`}
+          title={isConnected 
+            ? "Real-time messaging active" 
+            : "Reconnecting... Messages will be delayed"
+          }
+        >
+          <div className="flex items-center gap-1.5">
+            <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-white" : "bg-white/70"}`} />
+            {isConnected ? "Connected" : "Reconnecting..."}
+          </div>
         </div>
       </div>
 
@@ -713,7 +768,7 @@ function ChatsContent() {
                   </div>
                 )}
 
-                {/* ✅ Messages - FIXED ALIGNMENT */}
+                {/* Messages */}
                 <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${darkMode ? "bg-[#1a1410]/50" : "bg-orange-50/30"}`}>
                   {currentChatDetail.messages.length === 0 ? (
                     <div className="flex items-center justify-center h-full">
@@ -723,7 +778,6 @@ function ChatsContent() {
                     </div>
                   ) : (
                     currentChatDetail.messages.map((msg) => {
-                      // ✅ CRITICAL FIX: Proper comparison
                       const isMe = msg.sender.toString() === currentUserId?.toString();
                       
                       return (
@@ -732,7 +786,6 @@ function ChatsContent() {
                           className={`flex ${isMe ? "justify-end" : "justify-start"}`}
                         >
                           <div className={`max-w-[70%] flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-                            {/* ✅ FIXED: Show correct name based on sender */}
                             {!isMe && (
                               <span className={`text-xs mb-1 px-2 font-medium ${darkMode ? "text-orange-300" : "text-orange-700"}`}>
                                 {currentChatDetail.user.name}
