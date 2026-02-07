@@ -95,25 +95,24 @@ function ChatsContent() {
     fetchChats();
   }, []);
 
-  // ✅ FIXED: Handle chatParam - refetch chats if needed and wait for loading to complete
+  // ✅ FIXED: Handle chatParam - always refetch to ensure new matches are loaded
   useEffect(() => {
-    if (chatParam && !loading) {
+    const openChatFromUrl = async () => {
+      if (!chatParam) return;
+      
       console.log(`🎯 Opening chat from URL: ${chatParam}`);
       
-      // Check if this chat exists in our chats list
-      const chatExists = chats.some(c => c.id === chatParam);
+      // Always refetch chats when opening from URL to get latest data
+      console.log(`🔄 Refetching chats to ensure latest data...`);
+      await fetchChats();
       
-      if (!chatExists) {
-        console.log(`⚠️ Chat ${chatParam} not in list, refetching chats...`);
-        // Refetch chats to get the new match chat
-        fetchChats().then(() => {
-          setSelectedChat(chatParam);
-          fetchChatMessages(chatParam);
-        });
-      } else {
-        setSelectedChat(chatParam);
-        fetchChatMessages(chatParam);
-      }
+      // Then open the chat
+      setSelectedChat(chatParam);
+      fetchChatMessages(chatParam);
+    };
+    
+    if (chatParam && !loading) {
+      openChatFromUrl();
     }
   }, [chatParam, loading]);
 
@@ -147,6 +146,12 @@ function ChatsContent() {
       console.log("📨 Received message via Socket.IO:", data);
       
       const { chatId, message } = data;
+      
+      // ✅ CRITICAL: Ignore messages sent by current user (already handled by optimistic update)
+      if (message.sender.toString() === currentUserId?.toString()) {
+        console.log("⚠️ Ignoring own message from socket (already added optimistically)");
+        return;
+      }
       
       // ✅ CRITICAL: Only update if this is the active chat
       if (selectedChat === chatId) {
