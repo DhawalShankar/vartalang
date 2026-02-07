@@ -98,7 +98,7 @@ export default function Navbar() {
     }
   };
 
-  // ✅ NEW: Delete notification and navigate to chat
+  // ✅ Delete notification and navigate to chat
   const handleNotificationClick = async (notificationId: string, chatId: string) => {
     const token = localStorage.getItem("token");
     
@@ -119,25 +119,6 @@ export default function Navbar() {
       router.push(`/chats?chat=${chatId}`);
     } catch (error) {
       console.error("Delete notification error:", error);
-    }
-  };
-
-  // ✅ Mark notification as read without deleting
-  const handleMarkAsRead = async (notificationId: string) => {
-    const token = localStorage.getItem("token");
-    
-    try {
-      await fetch(`${API_URL}/notifications/${notificationId}/read`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      setNotifications(prev => prev.map(n => 
-        n._id === notificationId ? { ...n, read: true } : n
-      ));
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch (error) {
-      console.error("Mark as read error:", error);
     }
   };
 
@@ -330,14 +311,28 @@ export default function Navbar() {
             }`}>
               <div className="flex items-center justify-between">
                 <h3 className={`font-bold ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
-                  Notifications
+                  Messages
                 </h3>
                 {notifications.length > 0 && (
                   <button
-                    onClick={() => {
-                      setNotifications([]);
-                      setUnreadCount(0);
-                      setShowNotifications(false);
+                    onClick={async () => {
+                      const token = localStorage.getItem("token");
+                      try {
+                        // Delete all notifications
+                        await Promise.all(
+                          notifications.map(notif => 
+                            fetch(`${API_URL}/notifications/${notif._id}`, {
+                              method: "DELETE",
+                              headers: { Authorization: `Bearer ${token}` },
+                            })
+                          )
+                        );
+                        setNotifications([]);
+                        setUnreadCount(0);
+                        setShowNotifications(false);
+                      } catch (error) {
+                        console.error("Clear all error:", error);
+                      }
                     }}
                     className={`text-xs ${darkMode ? "text-orange-400 hover:text-orange-300" : "text-orange-600 hover:text-orange-700"}`}
                   >
@@ -349,26 +344,26 @@ export default function Navbar() {
 
             {notifications.length === 0 ? (
               <div className="p-8 text-center">
-                <Bell className={`w-12 h-12 mx-auto mb-2 ${darkMode ? "text-orange-400/50" : "text-orange-600/50"}`} />
+                <MessageCircle className={`w-12 h-12 mx-auto mb-2 ${darkMode ? "text-orange-400/50" : "text-orange-600/50"}`} />
                 <p className={`text-sm ${darkMode ? "text-orange-200/70" : "text-orange-700/70"}`}>
-                  No notifications
+                  No new messages
                 </p>
               </div>
             ) : (
               notifications.map((notif) => (
                 <div 
                   key={notif._id} 
-                  className={`p-4 border-b last:border-b-0 ${
+                  className={`border-b last:border-b-0 ${
                     darkMode ? "border-orange-800/30" : "border-orange-200"
                   } ${
                     !notif.read ? (darkMode ? "bg-orange-900/20" : "bg-orange-50/50") : ""
                   }`}
                 >
-                  {/* ✅ NEW MESSAGE NOTIFICATION */}
+                  {/* ✅ CHAT MESSAGE NOTIFICATION */}
                   {notif.type === 'new_message' && (
                     <button
                       onClick={() => handleNotificationClick(notif._id, notif.chatId)}
-                      className="w-full text-left hover:opacity-80 transition-opacity"
+                      className="w-full text-left hover:opacity-80 transition-opacity p-4"
                     >
                       <div className="flex items-start gap-3">
                         <div className="w-10 h-10 rounded-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-semibold text-sm shrink-0">
@@ -376,78 +371,18 @@ export default function Navbar() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <MessageCircle className="w-4 h-4 text-orange-500 shrink-0" />
                             <p className={`text-sm font-semibold truncate ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
                               {notif.sender?.name || "Someone"}
                             </p>
+                            {!notif.read && (
+                              <div className="w-2 h-2 rounded-full bg-orange-500 shrink-0"></div>
+                            )}
                           </div>
                           <p className={`text-sm line-clamp-2 ${darkMode ? "text-orange-200/80" : "text-orange-800"}`}>
                             {notif.message || "Sent you a message"}
                           </p>
                           <p className={`text-xs mt-1 ${darkMode ? "text-orange-300/50" : "text-orange-600/50"}`}>
                             {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                        </div>
-                        {!notif.read && (
-                          <div className="w-2 h-2 rounded-full bg-orange-500 shrink-0 mt-2"></div>
-                        )}
-                      </div>
-                    </button>
-                  )}
-
-                  {/* MATCH REQUEST NOTIFICATION (keeping for reference) */}
-                  {notif.type === 'match_request' && (
-                    <>
-                      <div className="flex items-start gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-semibold text-sm">
-                          {notif.sender?.name?.slice(0, 2).toUpperCase() || "??"}
-                        </div>
-                        <div className="flex-1">
-                          <p className={`text-sm font-medium ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
-                            {notif.sender?.name || "Someone"} wants to match with you!
-                          </p>
-                          <p className={`text-xs ${darkMode ? "text-orange-300/70" : "text-orange-600/70"}`}>
-                            Knows: {notif.sender?.languagesKnow?.[0]?.language || "N/A"}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => {/* handle accept */}}
-                          className="flex-1 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition-all"
-                        >
-                          Accept
-                        </button>
-                        <button
-                          onClick={() => {/* handle reject */}}
-                          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
-                            darkMode 
-                              ? "bg-orange-900/30 text-orange-300 hover:bg-orange-900/50" 
-                              : "bg-orange-100 text-orange-700 hover:bg-orange-200"
-                          }`}
-                        >
-                          Decline
-                        </button>
-                      </div>
-                    </>
-                  )}
-
-                  {/* MATCH ACCEPTED NOTIFICATION (keeping for reference) */}
-                  {notif.type === 'match_accepted' && (
-                    <button
-                      onClick={() => notif.chatId && handleNotificationClick(notif._id, notif.chatId)}
-                      className="w-full text-left hover:opacity-80 transition-opacity"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white">
-                          ✓
-                        </div>
-                        <div>
-                          <p className={`text-sm font-medium ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
-                            {notif.sender?.name || "Someone"} accepted your match!
-                          </p>
-                          <p className="text-xs text-orange-500 hover:underline">
-                            Click to start chatting →
                           </p>
                         </div>
                       </div>
