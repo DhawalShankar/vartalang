@@ -102,7 +102,7 @@ function ChatsContent() {
     }
   }, [chatParam]);
 
-  // ✅ FIXED: Socket.IO event listeners with better error handling
+  // ✅ FIXED: Socket.IO event listeners with chat_ prefix
   useEffect(() => {
     if (!socket) {
       console.warn("⚠️ Socket instance not available");
@@ -121,10 +121,10 @@ function ChatsContent() {
 
     console.log("✅ Setting up Socket.IO listeners for user:", currentUserId);
 
-    // Join the current chat room
+    // ✅ FIXED: Join the current chat room with chat_ prefix
     if (selectedChat) {
-      console.log(`📍 Joining chat room: ${selectedChat}`);
-      socket.emit("join_chat", selectedChat);
+      console.log(`📍 Joining chat room: chat_${selectedChat}`);
+      socket.emit("join_chat", `chat_${selectedChat}`);
     }
 
     // ✅ Listen for new messages
@@ -216,7 +216,8 @@ function ChatsContent() {
     const handleReconnect = () => {
       console.log("🔄 Socket reconnected, rejoining chat");
       if (selectedChat) {
-        socket.emit("join_chat", selectedChat);
+        // ✅ FIXED: Rejoin with chat_ prefix
+        socket.emit("join_chat", `chat_${selectedChat}`);
       }
     };
 
@@ -240,8 +241,9 @@ function ChatsContent() {
       socket.off("connect", handleReconnect);
       
       if (selectedChat) {
-        console.log(`👋 Leaving chat room: ${selectedChat}`);
-        socket.emit("leave_chat", selectedChat);
+        // ✅ FIXED: Leave with chat_ prefix
+        console.log(`👋 Leaving chat room: chat_${selectedChat}`);
+        socket.emit("leave_chat", `chat_${selectedChat}`);
       }
     };
   }, [socket, isConnected, selectedChat, currentUserId]);
@@ -286,10 +288,10 @@ function ChatsContent() {
       const data = await res.json();
       setCurrentChatDetail(data.chat);
       
-      // Join the chat room via Socket.IO
+      // ✅ FIXED: Join the chat room via Socket.IO with chat_ prefix
       if (socket && isConnected) {
-        console.log(`📍 Joining chat room: ${chatId}`);
-        socket.emit("join_chat", chatId);
+        console.log(`📍 Joining chat room: chat_${chatId}`);
+        socket.emit("join_chat", `chat_${chatId}`);
       } else {
         console.warn("⚠️ Cannot join chat room - socket not connected");
       }
@@ -379,9 +381,10 @@ function ChatsContent() {
   };
 
   const handleChatClick = (chatId: string) => {
-    // Leave previous chat room
+    // ✅ FIXED: Leave previous chat room with chat_ prefix
     if (selectedChat && socket && isConnected) {
-      socket.emit("leave_chat", selectedChat);
+      console.log(`👋 Leaving previous chat: chat_${selectedChat}`);
+      socket.emit("leave_chat", `chat_${selectedChat}`);
     }
     
     setSelectedChat(chatId);
@@ -390,8 +393,10 @@ function ChatsContent() {
   };
 
   const handleBack = () => {
+    // ✅ FIXED: Leave chat room with chat_ prefix
     if (selectedChat && socket && isConnected) {
-      socket.emit("leave_chat", selectedChat);
+      console.log(`👋 Leaving chat: chat_${selectedChat}`);
+      socket.emit("leave_chat", `chat_${selectedChat}`);
     }
     
     setSelectedChat(null);
