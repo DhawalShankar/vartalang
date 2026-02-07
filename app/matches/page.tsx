@@ -6,12 +6,16 @@ import Footer from '@/components/layout/Footer';
 import { 
   Users, 
   MapPin,
-  RotateCcw,
   Info,
   ArrowLeft,
   ChevronRight,
   X,
-  Heart
+  Heart,
+  Shield,
+  BookOpen,
+  Sparkles,
+  CheckCircle2,
+  ArrowRight
 } from "lucide-react";
 import { useDarkMode } from '@/lib/DarkModeContext';
 
@@ -41,7 +45,14 @@ export default function MatchesPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
-  const [swiping, setSwiping] = useState(false); // ✅ ADDED
+  const [swiping, setSwiping] = useState(false);
+  
+  // Pledge Modal State
+  const [showPledgeModal, setShowPledgeModal] = useState(false);
+  const [isAgreed, setIsAgreed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [pendingMatch, setPendingMatch] = useState<{ matchId: string; chatId: string } | null>(null);
   
   // Swipe state
   const [touchStart, setTouchStart] = useState({ x: 0, y: 0 });
@@ -63,9 +74,8 @@ export default function MatchesPage() {
     fetchMatches();
   }, []);
 
-  // ✅ ADDED: Keyboard navigation
   useEffect(() => {
-    if (showDetails || swiping) return;
+    if (showDetails || swiping || showPledgeModal) return;
     
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight') {
@@ -82,7 +92,7 @@ export default function MatchesPage() {
     
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentIndex, showDetails, swiping]);
+  }, [currentIndex, showDetails, swiping, showPledgeModal]);
 
   const fetchMatches = async () => {
     const token = localStorage.getItem("token");
@@ -110,14 +120,26 @@ export default function MatchesPage() {
   };
 
   const handleSwipe = async (swipeDirection: 'left' | 'right') => {
-    if (!currentMatch || swiping) return; // ✅ FIXED: Prevent double swipes
+    if (!currentMatch || swiping) return;
 
-    setSwiping(true); // ✅ ADDED
+    setSwiping(true);
     setDirection(swipeDirection);
     setShowDetails(false);
 
+    // If swiping left (skip), just move to next card WITHOUT storing in database
+    if (swipeDirection === 'left') {
+      setTimeout(() => {
+        if (currentIndex < matches.length - 1) {
+          setCurrentIndex(currentIndex + 1);
+        }
+        setDirection(null);
+        setSwiping(false);
+      }, 300);
+      return;
+    }
+
+    // If swiping right (like), call the API
     const token = localStorage.getItem("token");
-    const action = swipeDirection === 'right' ? 'like' : 'skip'; // ✅ FIXED: Changed 'pass' to 'skip'
 
     try {
       const res = await fetch(`${API_URL}/matches/swipe`, {
@@ -128,7 +150,7 @@ export default function MatchesPage() {
         },
         body: JSON.stringify({
           targetUserId: currentMatch._id,
-          action,
+          action: 'like',
         }),
       });
 
@@ -140,15 +162,17 @@ export default function MatchesPage() {
       const data = await res.json();
 
       setTimeout(() => {
-        if (swipeDirection === 'right' && data.matched) {
-          // ✅ FIXED: Better match notification
-          const matchName = currentMatch.name;
-          setTimeout(() => {
-            alert(`🎉 It's a Match! You can now chat with ${matchName}`);
-            router.push(`/chats?chat=${data.chatId}`);
-          }, 100);
+        if (data.matched) {
+          // Store match info and show pledge modal
+          setPendingMatch({
+            matchId: currentMatch._id,
+            chatId: data.chatId
+          });
+          setShowPledgeModal(true);
+          setDirection(null);
+          setSwiping(false);
         } else {
-          // Move to next card
+          // Move to next card if not matched
           if (currentIndex < matches.length - 1) {
             setCurrentIndex(currentIndex + 1);
           }
@@ -158,11 +182,7 @@ export default function MatchesPage() {
       }, 300);
     } catch (error: any) {
       console.error("Swipe error:", error);
-      
-      // ✅ FIXED: Better error handling
       alert(error.message || "Failed to process swipe. Please try again.");
-      
-      // Reset state, DON'T move to next card
       setDirection(null);
       setSwiping(false);
     }
@@ -179,9 +199,8 @@ export default function MatchesPage() {
     }
   };
 
-  // ✅ FIXED: Use Pointer Events instead of separate Touch/Mouse events
   const handlePointerStart = (e: React.PointerEvent) => {
-    if (showDetails || swiping) return;
+    if (showDetails || swiping || showPledgeModal) return;
     e.preventDefault();
     
     setTouchStart({ x: e.clientX, y: e.clientY });
@@ -190,7 +209,7 @@ export default function MatchesPage() {
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDragging || showDetails || swiping) return;
+    if (!isDragging || showDetails || swiping || showPledgeModal) return;
     
     setTouchEnd({ x: e.clientX, y: e.clientY });
     
@@ -201,14 +220,13 @@ export default function MatchesPage() {
   };
 
   const handlePointerEnd = () => {
-    if (!isDragging || showDetails || swiping) return;
+    if (!isDragging || showDetails || swiping || showPledgeModal) return;
     
     setIsDragging(false);
     
     const deltaX = touchEnd.x - touchStart.x;
     const deltaY = touchEnd.y - touchStart.y;
     
-    // Check if it's a horizontal swipe (not vertical scroll)
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 100) {
       if (deltaX > 0) {
         handleSwipe('right');
@@ -218,6 +236,45 @@ export default function MatchesPage() {
     }
     
     setDragOffset({ x: 0, y: 0 });
+  };
+
+  const handlePledgeSubmit = async () => {
+    if (!isAgreed || !pendingMatch) {
+      alert("Please accept the pledge to continue");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const token = localStorage.getItem("token");
+
+      // Record pledge acceptance
+      await fetch(`${API_URL}/matches/accept-pledge`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          matchId: pendingMatch.matchId,
+          acceptedAt: new Date().toISOString(),
+        }),
+      });
+
+      // Show success animation
+      setShowSuccess(true);
+
+      // Redirect to chat after animation
+      setTimeout(() => {
+        router.push(`/chats?chat=${pendingMatch.chatId}`);
+      }, 2000);
+
+    } catch (error) {
+      console.error("Pledge submission error:", error);
+      alert("Failed to submit pledge. Please try again.");
+      setIsSubmitting(false);
+    }
   };
 
   const getCardTransform = () => {
@@ -347,7 +404,6 @@ export default function MatchesPage() {
             onPointerUp={handlePointerEnd}
             onPointerCancel={handlePointerEnd}
             onClick={(e) => {
-              // ✅ FIXED: Better click detection
               const totalDrag = Math.sqrt(dragOffset.x ** 2 + dragOffset.y ** 2);
               if (!isDragging && !swiping && totalDrag < 10) {
                 setShowDetails(true);
@@ -644,6 +700,228 @@ export default function MatchesPage() {
         )}
       </div>
       <Footer />
+
+      {/* Pledge Modal */}
+      {showPledgeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          {showSuccess ? (
+            /* Success Screen */
+            <div className="text-center px-4 animate-scale-in">
+              <div className="w-24 h-24 rounded-full bg-linear-to-br from-green-500 to-emerald-600 flex items-center justify-center mx-auto mb-6 shadow-2xl">
+                <CheckCircle2 className="w-12 h-12 text-white" />
+              </div>
+              <h2 className={`text-3xl font-bold mb-3 ${darkMode ? "text-orange-100" : "text-white"}`}>
+                Pledge Accepted! 🎉
+              </h2>
+              <p className={`text-lg ${darkMode ? "text-orange-200/80" : "text-white/90"}`}>
+                Welcome to your learning journey with {currentMatch.name}
+              </p>
+              <div className="mt-6">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/20 text-orange-400">
+                  <Sparkles className="w-4 h-4 animate-pulse" />
+                  <span className="text-sm font-medium">Redirecting to chat...</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Pledge Modal Content */
+            <div className={`max-w-2xl w-full max-h-[90vh] overflow-y-auto rounded-2xl p-6 md:p-8 animate-slide-up ${
+              darkMode ? "bg-[#1a1410]" : "bg-[#FFF9F5]"
+            }`}>
+              {/* Close Button */}
+              <button
+                onClick={() => {
+                  setShowPledgeModal(false);
+                  setIsAgreed(false);
+                  setPendingMatch(null);
+                }}
+                className={`absolute top-4 right-4 p-2 rounded-full transition-colors ${
+                  darkMode ? "hover:bg-orange-900/30 text-orange-300" : "hover:bg-orange-100 text-orange-700"
+                }`}
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              {/* Header */}
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-linear-to-br from-orange-500 to-red-600 mb-4 shadow-lg">
+                  <Heart className="w-8 h-8 text-white fill-white" />
+                </div>
+                <h2 className={`text-3xl md:text-4xl font-bold mb-2 ${darkMode ? "text-orange-100" : "text-orange-950"}`}>
+                  VartaLang Pledge
+                </h2>
+                <p className={`text-base ${darkMode ? "text-orange-200/70" : "text-orange-700/70"}`}>
+                  A commitment to respectful and meaningful learning
+                </p>
+              </div>
+
+              {/* Congratulations Card */}
+              <div className={`rounded-xl p-5 mb-6 ${
+                darkMode 
+                  ? "bg-linear-to-br from-orange-900/20 to-red-900/20 border border-orange-800/30" 
+                  : "bg-linear-to-br from-orange-50 to-red-50 border border-orange-200"
+              }`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="w-5 h-5 text-orange-500" />
+                  <h3 className={`text-lg font-bold ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
+                    Congratulations on Your Match!
+                  </h3>
+                </div>
+                <p className={`text-sm ${darkMode ? "text-orange-200/80" : "text-orange-800"}`}>
+                  You're about to start an incredible language learning journey with <span className="font-semibold">{currentMatch.name}</span>. 
+                  Before you begin chatting, please read and accept our community pledge.
+                </p>
+              </div>
+
+              {/* Core Values Icons */}
+              <div className="grid grid-cols-3 gap-3 mb-6">
+                <div className="text-center">
+                  <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-2 ${
+                    darkMode ? "bg-orange-900/30" : "bg-orange-100"
+                  }`}>
+                    <Shield className="w-6 h-6 text-orange-500" />
+                  </div>
+                  <p className={`text-xs font-medium ${darkMode ? "text-orange-300" : "text-orange-700"}`}>
+                    Respect
+                  </p>
+                </div>
+                <div className="text-center">
+                  <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-2 ${
+                    darkMode ? "bg-orange-900/30" : "bg-orange-100"
+                  }`}>
+                    <BookOpen className="w-6 h-6 text-orange-500" />
+                  </div>
+                  <p className={`text-xs font-medium ${darkMode ? "text-orange-300" : "text-orange-700"}`}>
+                    Dedication
+                  </p>
+                </div>
+                <div className="text-center">
+                  <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-2 ${
+                    darkMode ? "bg-orange-900/30" : "bg-orange-100"
+                  }`}>
+                    <Users className="w-6 h-6 text-orange-500" />
+                  </div>
+                  <p className={`text-xs font-medium ${darkMode ? "text-orange-300" : "text-orange-700"}`}>
+                    Community
+                  </p>
+                </div>
+              </div>
+
+              {/* Pledge Text */}
+              <div className={`space-y-3 text-sm leading-relaxed mb-6 ${
+                darkMode ? "text-orange-100" : "text-orange-900"
+              }`}>
+                <p className="font-semibold">
+                  I pledge that on VartaLang, I will communicate with respect, honesty, and empathy.
+                </p>
+                <p>
+                  I will follow all community rules and uphold the values of dignity and safety.
+                </p>
+                <p>
+                  I will not hurt anyone's feelings through words, intent, or behavior. I will treat every 
+                  learner and teacher with patience, cultural sensitivity, and kindness.
+                </p>
+                <p>
+                  I commit to learning devotedly and dedicatedly, to teaching sincerely where I can, and to 
+                  using this platform only for meaningful language learning.
+                </p>
+                <p className="font-semibold">
+                  I understand that language is not just skill, but trust and humanity. I pledge to protect that trust.
+                </p>
+              </div>
+
+              {/* Divider */}
+              <div className={`my-6 border-t ${darkMode ? "border-orange-800/30" : "border-orange-200"}`}></div>
+
+              {/* Acceptance Checkbox */}
+              <div className="space-y-4">
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <div className="relative shrink-0 mt-0.5">
+                    <input
+                      type="checkbox"
+                      checked={isAgreed}
+                      onChange={(e) => setIsAgreed(e.target.checked)}
+                      className="peer w-6 h-6 rounded-md border-2 border-orange-500 appearance-none cursor-pointer transition-all checked:bg-linear-to-br checked:from-orange-500 checked:to-red-600 checked:border-transparent focus:ring-2 focus:ring-orange-500/50 focus:ring-offset-2"
+                    />
+                    <CheckCircle2 className="absolute top-0 left-0 w-6 h-6 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`text-sm font-semibold ${darkMode ? "text-orange-100" : "text-orange-900"} group-hover:text-orange-500 transition-colors`}>
+                      I have read and agree to uphold the VartaLang Pledge
+                    </p>
+                    <p className={`text-xs mt-1 ${darkMode ? "text-orange-300/70" : "text-orange-700/70"}`}>
+                      By checking this box, you commit to respectful and meaningful language exchange
+                    </p>
+                  </div>
+                </label>
+
+                {/* Move to Chats Button */}
+                <button
+                  onClick={handlePledgeSubmit}
+                  disabled={!isAgreed || isSubmitting}
+                  className={`w-full py-3 rounded-xl font-semibold text-base transition-all flex items-center justify-center gap-2 ${
+                    !isAgreed || isSubmitting
+                      ? darkMode
+                        ? "bg-orange-900/20 text-orange-500/50 cursor-not-allowed border border-orange-800/30"
+                        : "bg-orange-100 text-orange-400 cursor-not-allowed border border-orange-200"
+                      : "bg-linear-to-r from-orange-500 to-red-600 text-white shadow-lg hover:shadow-xl active:scale-[0.98] hover:from-orange-600 hover:to-red-700"
+                  }`}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span>Accepting Pledge...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Heart className="w-5 h-5" />
+                      <span>Move to Chats</span>
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
+                </button>
+
+                {/* Helper Text */}
+                {!isAgreed && (
+                  <p className={`text-xs text-center ${darkMode ? "text-orange-400/70" : "text-orange-600/70"}`}>
+                    Please accept the pledge to continue
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slide-up {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes scale-in {
+          from { transform: scale(0); }
+          to { transform: scale(1); }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-out;
+        }
+        .animate-slide-up {
+          animation: slide-up 0.4s ease-out;
+        }
+        .animate-scale-in {
+          animation: scale-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+      `}</style>
     </div>
   );
 }

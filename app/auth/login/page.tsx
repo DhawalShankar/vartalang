@@ -41,6 +41,7 @@ export default function SigninPage() {
 
       // Save token and update auth state
       localStorage.setItem("token", data.token);
+      localStorage.setItem("userId", data.userId); 
       setIsLoggedIn(true);
       
       // Redirect to learn page
