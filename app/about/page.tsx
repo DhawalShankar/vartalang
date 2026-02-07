@@ -47,10 +47,10 @@ export default function AboutPage() {
   }, []);
 
   const stats = [
-    { value: '12M+', label: 'Active Learners', icon: Users },
+    { value: '+', label: 'Active Learners', icon: Users },
     { value: '14', label: 'Languages', icon: Globe },
     { value: '98%', label: 'Safety Score', icon: Shield },
-    { value: '2.5K+', label: 'Resources', icon: BookOpen }
+    { value: '+', label: 'Resources', icon: BookOpen }
   ];
 
   const timeline = [
@@ -63,7 +63,7 @@ export default function AboutPage() {
       color: 'from-amber-500 to-orange-500'
     },
     {
-      year: '2020',
+      year: '2023',
       title: 'Digital Awakening',
       subtitle: 'Research & ideation begins',
       description: 'Recognized the linguistic friction holding back millions across India. Language wasn\'t just education—it was employment, mobility, and connection.',
@@ -71,7 +71,7 @@ export default function AboutPage() {
       color: 'from-orange-500 to-red-500'
     },
     {
-      year: '2023',
+      year: '2026',
       title: 'VartaLang Born',
       subtitle: 'Platform development',
       description: 'Built on respect, safety, and real human connections. Not entertainment. Not just textbooks. A bridge between cultures.',
@@ -79,7 +79,7 @@ export default function AboutPage() {
       color: 'from-red-500 to-pink-500'
     },
     {
-      year: '2024',
+      year: 'Present',
       title: 'India\'s Language Bridge',
       subtitle: 'Growing organically',
       description: 'Thousands learning daily through real conversations. Every connection strengthens our linguistic fabric.',
@@ -126,10 +126,10 @@ export default function AboutPage() {
       badge: 'Not a Dating App',
       title: 'Pure Language Exchange',
       points: [
-        'No swiping, no flirting features',
-        'Profile verification required',
-        'Behavior monitoring & moderation',
-        'Cultural sensitivity training'
+        'Make your Varta Profile',
+        'Match to Learn their language',
+        'Chat with them on the platform',
+        'Learn from our curated resources'
       ]
     },
     {
