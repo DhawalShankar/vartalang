@@ -31,7 +31,7 @@ export default function LearnPage() {
       nativeName: 'हिंदी',
       slug: 'hindi',
       icon: '🇮🇳',
-      learners: '2.5M+',
+      learners: '+',
       difficulty: 'Beginner',
       category: 'north',
       color: 'from-orange-500 to-red-500',
@@ -43,156 +43,156 @@ export default function LearnPage() {
       nativeName: 'தமிழ்',
       slug: 'tamil',
       icon: '🌴',
-      learners: '1.8M+',
+      learners: '+',
       difficulty: 'Intermediate',
       category: 'south',
       color: 'from-red-500 to-pink-500',
       description: 'Classical Dravidian language',
-      resources: 198
+      // resources: 198
     },
     {
       name: 'Telugu',
       nativeName: 'తెలుగు',
       slug: 'telugu',
       icon: '🎭',
-      learners: '1.6M+',
+      learners: '+',
       difficulty: 'Intermediate',
       category: 'south',
       color: 'from-yellow-500 to-orange-500',
       description: 'Sweet language of the South',
-      resources: 176
+      // resources: 176
     },
     {
       name: 'Bengali',
       nativeName: 'বাংলা',
       slug: 'bengali',
       icon: '📚',
-      learners: '1.4M+',
+      learners: '+',
       difficulty: 'Beginner',
       category: 'east',
       color: 'from-green-500 to-teal-500',
       description: 'Language of poetry and literature',
-      resources: 167
+      // resources: 167
     },
     {
       name: 'Marathi',
       nativeName: 'मराठी',
       slug: 'marathi',
       icon: '🏛️',
-      learners: '1.2M+',
+      // learners: '1.2M+',
       difficulty: 'Beginner',
       category: 'west',
       color: 'from-purple-500 to-pink-500',
       description: 'Official language of Maharashtra',
-      resources: 154
+      // resources: 154
     },
     {
       name: 'Gujarati',
       nativeName: 'ગુજરાતી',
       slug: 'gujarati',
       icon: '🪔',
-      learners: '1.1M+',
+      // learners: '1.1M+',
       difficulty: 'Beginner',
       category: 'west',
       color: 'from-blue-500 to-indigo-500',
       description: 'Language of entrepreneurship',
-      resources: 143
+      // resources: 143
     },
     {
       name: 'Kannada',
       nativeName: 'ಕನ್ನಡ',
       slug: 'kannada',
       icon: '☕',
-      learners: '980K+',
+      // learners: '980K+',
       difficulty: 'Intermediate',
       category: 'south',
       color: 'from-red-600 to-orange-600',
       description: 'Language of Karnataka',
-      resources: 132
+      // resources: 132
     },
     {
       name: 'Malayalam',
       nativeName: 'മലയാളം',
       slug: 'malayalam',
       icon: '🌊',
-      learners: '850K+',
+      // learners: '850K+',
       difficulty: 'Advanced',
       category: 'south',
       color: 'from-cyan-500 to-blue-500',
       description: 'Language of Kerala',
-      resources: 128
+      // resources: 128
     },
     {
       name: 'Punjabi',
       nativeName: 'ਪੰਜਾਬੀ',
       slug: 'punjabi',
       icon: '🥁',
-      learners: '780K+',
+      // learners: '780K+',
       difficulty: 'Beginner',
       category: 'north',
       color: 'from-orange-600 to-yellow-500',
       description: 'Language of Punjab',
-      resources: 115
+      // resources: 115
     },
     {
       name: 'Odia',
       nativeName: 'ଓଡ଼ିଆ',
       slug: 'odia',
       icon: '🏛️',
-      learners: '420K+',
+      // learners: '420K+',
       difficulty: 'Intermediate',
       category: 'east',
       color: 'from-teal-500 to-green-500',
       description: 'Classical language of Odisha',
-      resources: 94
+      // resources: 94
     },
     {
       name: 'Assamese',
       nativeName: 'অসমীয়া',
       slug: 'assamese',
       icon: '🎋',
-      learners: '380K+',
+      // learners: '380K+',
       difficulty: 'Intermediate',
       category: 'east',
       color: 'from-emerald-500 to-green-600',
       description: 'Language of Assam',
-      resources: 87
+      // resources: 87
     },
     {
       name: 'Urdu',
       nativeName: 'اردو',
       slug: 'urdu',
       icon: '📜',
-      learners: '650K+',
+      // learners: '650K+',
       difficulty: 'Intermediate',
       category: 'north',
       color: 'from-indigo-500 to-purple-500',
       description: 'Language of poetry and shayari',
-      resources: 156
+      // resources: 156
     },
     {
       name: 'English',
       nativeName: 'English',
       slug: 'english',
       icon: '🌍',
-      learners: '3.2M+',
+      // learners: '3.2M+',
       difficulty: 'Beginner',
       category: 'global',
       color: 'from-gray-600 to-gray-800',
       description: 'Global language of opportunity',
-      resources: 312
+      // resources: 312
     },
     {
       name: 'Sanskrit',
       nativeName: 'संस्कृत',
       slug: 'sanskrit',
       icon: '🕉️',
-      learners: '290K+',
+      // learners: '290K+',
       difficulty: 'Advanced',
       category: 'classical',
       color: 'from-amber-600 to-orange-700',
       description: 'Ancient language of wisdom',
-      resources: 168
+      // resources: 168
     }
   ];
 
@@ -270,8 +270,8 @@ export default function LearnPage() {
           <div className="flex flex-wrap justify-center gap-8 mb-12">
             {[
               { icon: Globe, label: '14 Languages', value: 'Available' },
-              { icon: Users, label: '12M+ Learners', value: 'Active' },
-              { icon: Book, label: '2,500+ Resources', value: 'Curated' }
+              { icon: Users, label: 'Learners', value: 'Active' },
+              { icon: Book, label: 'Resources', value: 'Curated' }
             ].map((stat, i) => (
               <div key={i} className="flex items-center gap-3">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
@@ -296,7 +296,7 @@ export default function LearnPage() {
       </section>
 
       {/* Filters Section */}
-      <section className="sticky top-20 z-40 px-4 pb-6">
+      <section className=" px-4 pb-6">
         <div className={`max-w-6xl mx-auto p-6 rounded-2xl border backdrop-blur-lg ${
           darkMode 
             ? 'bg-[#1a1410]/95 border-orange-800/30 shadow-2xl' 
