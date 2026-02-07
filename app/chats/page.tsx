@@ -95,12 +95,27 @@ function ChatsContent() {
     fetchChats();
   }, []);
 
+  // ✅ FIXED: Handle chatParam - refetch chats if needed and wait for loading to complete
   useEffect(() => {
-    if (chatParam) {
-      setSelectedChat(chatParam);
-      fetchChatMessages(chatParam);
+    if (chatParam && !loading) {
+      console.log(`🎯 Opening chat from URL: ${chatParam}`);
+      
+      // Check if this chat exists in our chats list
+      const chatExists = chats.some(c => c.id === chatParam);
+      
+      if (!chatExists) {
+        console.log(`⚠️ Chat ${chatParam} not in list, refetching chats...`);
+        // Refetch chats to get the new match chat
+        fetchChats().then(() => {
+          setSelectedChat(chatParam);
+          fetchChatMessages(chatParam);
+        });
+      } else {
+        setSelectedChat(chatParam);
+        fetchChatMessages(chatParam);
+      }
     }
-  }, [chatParam]);
+  }, [chatParam, loading]);
 
   // ✅ FIXED: Socket.IO event listeners with chat_ prefix
   useEffect(() => {
@@ -267,9 +282,12 @@ function ChatsContent() {
       const data = await res.json();
       setChats(data.chats);
       setLoading(false);
+      console.log(`✅ Fetched ${data.chats.length} chats`);
+      return data.chats; // ✅ Return chats for chaining
     } catch (error) {
       console.error("Fetch chats error:", error);
       setLoading(false);
+      return [];
     }
   };
 
