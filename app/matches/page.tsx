@@ -161,25 +161,26 @@ export default function MatchesPage() {
 
       const data = await res.json();
 
-      setTimeout(() => {
-        if (data.matched) {
-          // Store match info and show pledge modal
-          setPendingMatch({
-            matchId: currentMatch._id,
-            chatId: data.chatId
-          });
-          setShowPledgeModal(true);
-          setDirection(null);
-          setSwiping(false);
-        } else {
-          // Move to next card if not matched
+      // ✅ FIXED: If matched, show pledge modal IMMEDIATELY without delay
+      if (data.matched) {
+        // Immediately reset states and show modal
+        setSwiping(false);
+        setDirection(null);
+        setPendingMatch({
+          matchId: currentMatch._id,
+          chatId: data.chatId
+        });
+        setShowPledgeModal(true);
+      } else {
+        // Move to next card if not matched (with animation delay)
+        setTimeout(() => {
           if (currentIndex < matches.length - 1) {
             setCurrentIndex(currentIndex + 1);
           }
           setDirection(null);
           setSwiping(false);
-        }
-      }, 300);
+        }, 300);
+      }
     } catch (error: any) {
       console.error("Swipe error:", error);
       alert(error.message || "Failed to process swipe. Please try again.");
