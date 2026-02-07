@@ -45,14 +45,14 @@ export default function MatchesPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
-  const [swiping, setSwiping] = useState(false);
+  const [animating, setAnimating] = useState(false); // Changed from 'swiping' to 'animating'
   
   // Pledge Modal State
   const [showPledgeModal, setShowPledgeModal] = useState(false);
   const [isAgreed, setIsAgreed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [pendingMatch, setPendingMatch] = useState<{ matchId: string; chatId: string } | null>(null);
+  const [pendingMatch, setPendingMatch] = useState<{ matchId: string } | null>(null);
   
   // Swipe state
   const [touchStart, setTouchStart] = useState({ x: 0, y: 0 });
@@ -75,7 +75,7 @@ export default function MatchesPage() {
   }, []);
 
   useEffect(() => {
-    if (showDetails || swiping || showPledgeModal) return;
+    if (showDetails || animating || showPledgeModal) return;
     
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight') {
@@ -92,7 +92,7 @@ export default function MatchesPage() {
     
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentIndex, showDetails, swiping, showPledgeModal]);
+  }, [currentIndex, showDetails, animating, showPledgeModal]);
 
   const fetchMatches = async () => {
     const token = localStorage.getItem("token");
@@ -119,89 +119,49 @@ export default function MatchesPage() {
     }
   };
 
-  const handleSwipe = async (swipeDirection: 'left' | 'right') => {
-    if (!currentMatch || swiping) return;
+  const handleSwipe = (swipeDirection: 'left' | 'right') => {
+    if (!currentMatch || animating || showPledgeModal) return;
 
-    setSwiping(true);
-    setDirection(swipeDirection);
     setShowDetails(false);
 
-    // If swiping left (skip), just move to next card WITHOUT storing in database
+    // If swiping left (skip), just animate and move to next card
     if (swipeDirection === 'left') {
+      setAnimating(true);
+      setDirection(swipeDirection);
+      
       setTimeout(() => {
         if (currentIndex < matches.length - 1) {
           setCurrentIndex(currentIndex + 1);
         }
         setDirection(null);
-        setSwiping(false);
+        setAnimating(false);
       }, 300);
       return;
     }
 
-    // If swiping right (like), call the API
-    const token = localStorage.getItem("token");
-
-    try {
-      const res = await fetch(`${API_URL}/matches/swipe`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          targetUserId: currentMatch._id,
-          action: 'like',
-        }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to process swipe");
-      }
-
-      const data = await res.json();
-
-      // ✅ FIXED: If matched, show pledge modal IMMEDIATELY without delay
-      if (data.matched) {
-        // Immediately reset states and show modal
-        setSwiping(false);
-        setDirection(null);
-        setPendingMatch({
-          matchId: currentMatch._id,
-          chatId: data.chatId
-        });
-        setShowPledgeModal(true);
-      } else {
-        // Move to next card if not matched (with animation delay)
-        setTimeout(() => {
-          if (currentIndex < matches.length - 1) {
-            setCurrentIndex(currentIndex + 1);
-          }
-          setDirection(null);
-          setSwiping(false);
-        }, 300);
-      }
-    } catch (error: any) {
-      console.error("Swipe error:", error);
-      alert(error.message || "Failed to process swipe. Please try again.");
-      setDirection(null);
-      setSwiping(false);
-    }
+    // If swiping right (like), show pledge modal IMMEDIATELY
+    // Do NOT call API yet - only store match in state
+    setPendingMatch({
+      matchId: currentMatch._id
+    });
+    setShowPledgeModal(true);
   };
 
   const handleNext = () => {
-    if (currentIndex < matches.length - 1 && !swiping) {
+    if (currentIndex < matches.length - 1 && !animating) {
       setDirection('left');
       setShowDetails(false);
+      setAnimating(true);
       setTimeout(() => {
         setCurrentIndex(currentIndex + 1);
         setDirection(null);
+        setAnimating(false);
       }, 300);
     }
   };
 
   const handlePointerStart = (e: React.PointerEvent) => {
-    if (showDetails || swiping || showPledgeModal) return;
+    if (showDetails || animating || showPledgeModal) return;
     e.preventDefault();
     
     setTouchStart({ x: e.clientX, y: e.clientY });
@@ -210,7 +170,7 @@ export default function MatchesPage() {
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDragging || showDetails || swiping || showPledgeModal) return;
+    if (!isDragging || showDetails || animating || showPledgeModal) return;
     
     setTouchEnd({ x: e.clientX, y: e.clientY });
     
@@ -221,7 +181,7 @@ export default function MatchesPage() {
   };
 
   const handlePointerEnd = () => {
-    if (!isDragging || showDetails || swiping || showPledgeModal) return;
+    if (!isDragging || showDetails || animating || showPledgeModal) return;
     
     setIsDragging(false);
     
@@ -250,6 +210,30 @@ export default function MatchesPage() {
     try {
       const token = localStorage.getItem("token");
 
+      // NOW we call the swipe API to create the match and get chatId
+      const swipeRes = await fetch(`${API_URL}/matches/swipe`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          targetUserId: pendingMatch.matchId,
+          action: 'like',
+        }),
+      });
+
+      if (!swipeRes.ok) {
+        const errorData = await swipeRes.json();
+        throw new Error(errorData.error || "Failed to create match");
+      }
+
+      const swipeData = await swipeRes.json();
+
+      if (!swipeData.matched || !swipeData.chatId) {
+        throw new Error("Match creation failed");
+      }
+
       // Record pledge acceptance
       await fetch(`${API_URL}/matches/accept-pledge`, {
         method: "POST",
@@ -268,14 +252,33 @@ export default function MatchesPage() {
 
       // Redirect to chat after animation
       setTimeout(() => {
-        router.push(`/chats?chat=${pendingMatch.chatId}`);
+        router.push(`/chats?chat=${swipeData.chatId}`);
       }, 2000);
 
     } catch (error) {
       console.error("Pledge submission error:", error);
-      alert("Failed to submit pledge. Please try again.");
+      alert("Failed to create match. Please try again.");
       setIsSubmitting(false);
+      setShowSuccess(false);
     }
+  };
+
+  const handleClosePledgeModal = () => {
+    setShowPledgeModal(false);
+    setIsAgreed(false);
+    setPendingMatch(null);
+    
+    // Animate the card away after closing modal
+    setAnimating(true);
+    setDirection('right');
+    
+    setTimeout(() => {
+      if (currentIndex < matches.length - 1) {
+        setCurrentIndex(currentIndex + 1);
+      }
+      setDirection(null);
+      setAnimating(false);
+    }, 300);
   };
 
   const getCardTransform = () => {
@@ -406,7 +409,7 @@ export default function MatchesPage() {
             onPointerCancel={handlePointerEnd}
             onClick={(e) => {
               const totalDrag = Math.sqrt(dragOffset.x ** 2 + dragOffset.y ** 2);
-              if (!isDragging && !swiping && totalDrag < 10) {
+              if (!isDragging && !animating && totalDrag < 10) {
                 setShowDetails(true);
               }
             }}
@@ -414,7 +417,7 @@ export default function MatchesPage() {
               darkMode 
                 ? "bg-orange-900/10 border border-orange-800/30" 
                 : "bg-white border border-orange-200 shadow-xl"
-            } ${swiping ? 'pointer-events-none' : ''}`}
+            } ${animating ? 'pointer-events-none' : ''}`}
             style={{
               transform: getCardTransform(),
               opacity: getCardOpacity(),
@@ -634,9 +637,9 @@ export default function MatchesPage() {
             <div className="flex gap-3">
               <button
                 onClick={handleNext}
-                disabled={swiping}
+                disabled={animating}
                 className={`flex-1 py-3 rounded-xl font-semibold transition-all active:scale-95 ${
-                  swiping
+                  animating
                     ? "opacity-50 cursor-not-allowed"
                     : darkMode 
                       ? "bg-orange-900/20 text-orange-300 border border-orange-800/30 hover:bg-orange-900/30" 
@@ -647,9 +650,9 @@ export default function MatchesPage() {
               </button>
               <button
                 onClick={() => handleSwipe('right')}
-                disabled={swiping}
+                disabled={animating}
                 className={`flex-1 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg ${
-                  swiping ? "opacity-50 cursor-not-allowed" : ""
+                  animating ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
                 <Heart className="w-5 h-5" />
@@ -666,9 +669,9 @@ export default function MatchesPage() {
               {/* Pass Button */}
               <button
                 onClick={() => handleSwipe('left')}
-                disabled={swiping}
+                disabled={animating}
                 className={`w-16 h-16 rounded-full flex items-center justify-center transition-all active:scale-95 ${
-                  swiping
+                  animating
                     ? "opacity-50 cursor-not-allowed"
                     : darkMode 
                       ? "bg-red-900/20 text-red-400 hover:bg-red-900/30 border-2 border-red-800/30" 
@@ -681,9 +684,9 @@ export default function MatchesPage() {
               {/* Learn Together Button */}
               <button
                 onClick={() => handleSwipe('right')}
-                disabled={swiping}
+                disabled={animating}
                 className={`px-6 py-3.5 rounded-full bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold active:scale-95 transition-all flex items-center gap-2 shadow-xl ${
-                  swiping ? "opacity-50 cursor-not-allowed" : ""
+                  animating ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
                 <Heart className="w-5 h-5" />
@@ -726,16 +729,12 @@ export default function MatchesPage() {
             </div>
           ) : (
             /* Pledge Modal Content */
-            <div className={`max-w-2xl w-full max-h-[90vh] overflow-y-auto rounded-2xl p-6 md:p-8 animate-slide-up ${
+            <div className={`max-w-2xl w-full max-h-[90vh] overflow-y-auto rounded-2xl p-6 md:p-8 relative animate-slide-up ${
               darkMode ? "bg-[#1a1410]" : "bg-[#FFF9F5]"
             }`}>
               {/* Close Button */}
               <button
-                onClick={() => {
-                  setShowPledgeModal(false);
-                  setIsAgreed(false);
-                  setPendingMatch(null);
-                }}
+                onClick={handleClosePledgeModal}
                 className={`absolute top-4 right-4 p-2 rounded-full transition-colors ${
                   darkMode ? "hover:bg-orange-900/30 text-orange-300" : "hover:bg-orange-100 text-orange-700"
                 }`}
@@ -871,7 +870,7 @@ export default function MatchesPage() {
                   {isSubmitting ? (
                     <>
                       <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      <span>Accepting Pledge...</span>
+                      <span>Creating Match...</span>
                     </>
                   ) : (
                     <>
