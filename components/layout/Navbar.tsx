@@ -155,8 +155,9 @@ export default function Navbar() {
                 <>
                   {[
                     { name: "Learn", href: "/learn" },
-                    { name: "Chats", href: "/chats" },
                     { name: "Matches", href: "/matches" },
+                    { name: "Chats", href: "/chats" },
+                    { name: "Practice", href: "/practice" },
                     { name: "About", href: "/about" },
                     // { name: "Creators", href: "/creators" },
                   ].map((item) => (
@@ -419,6 +420,17 @@ export default function Navbar() {
                     Learn
                   </Link>
                   <Link
+                    href="/matches"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
+                      darkMode
+                        ? "text-orange-200 hover:bg-orange-900/40"
+                        : "text-gray-700 hover:bg-orange-50"
+                    }`}
+                  >
+                    Matches
+                  </Link>
+                  <Link
                     href="/chats"
                     onClick={() => setMobileMenuOpen(false)}
                     className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
@@ -430,7 +442,7 @@ export default function Navbar() {
                     Chats
                   </Link>
                   <Link
-                    href="/matches"
+                    href="/practice"
                     onClick={() => setMobileMenuOpen(false)}
                     className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
                       darkMode
@@ -438,7 +450,18 @@ export default function Navbar() {
                         : "text-gray-700 hover:bg-orange-50"
                     }`}
                   >
-                    Matches
+                    Practice
+                  </Link>
+                  <Link
+                    href="/about"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
+                      darkMode
+                        ? "text-orange-200 hover:bg-orange-900/40"
+                        : "text-gray-700 hover:bg-orange-50"
+                    }`}
+                  >
+                    About
                   </Link>
                   {/* <Link
                     href="/creators"

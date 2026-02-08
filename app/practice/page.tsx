@@ -271,7 +271,7 @@ export default function PracticePage() {
                 onChange={(e) => setSelectedLanguage(e.target.value)}
                 className={`px-4 py-2 rounded-xl border font-medium outline-none ${
                   darkMode 
-                    ? "bg-orange-900/30 border-orange-800/30 text-orange-100" 
+                    ? "bg-orange-900/30 border-orange-800/30 text-orange-900" 
                     : "bg-white border-orange-300 text-orange-900"
                 }`}
               >
