@@ -20,6 +20,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { useDarkMode } from '@/lib/DarkModeContext';
+import Footer from "@/components/layout/Footer";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
@@ -272,7 +273,7 @@ export default function PracticePage() {
                 className={`px-4 py-2 rounded-xl border font-medium outline-none ${
                   darkMode 
                     ? "bg-orange-900 border-orange-800/30 text-orange-200" 
-                    : "bg-orange-900 border-orange-300 text-orange-200"
+                    : "bg-orange-200 border-orange-300 text-orange-900"
                 }`}
               >
                 {languages.map(lang => (
@@ -559,6 +560,7 @@ export default function PracticePage() {
           </div>
         )}
       </div>
+       <Footer />
     </div>
   );
 }
