@@ -168,27 +168,21 @@ export default function VartaLangJobsBoard() {
     setFilteredJobs(filtered);
   };
 
-  // ⭐ ULTRA SIMPLE VALIDATION - SIRF 3 CHECKS! ⭐
   const validateForm = (): boolean => {
     const errors: FormErrors = {};
 
-    // Check 1: Title empty nahi hona chahiye
     if (formData.title.trim().length === 0) {
       errors.title = "Job title is required";
     }
 
-    // Check 2: Description empty nahi hona chahiye
     if (formData.description.trim().length === 0) {
       errors.description = "Description is required";
     }
 
-    // Check 3: Email basic format check
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.contactEmail)) {
       errors.contactEmail = "Please enter a valid email";
     }
-
-    // BAS ITNA HI! NO OTHER CHECKS!
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -196,7 +190,7 @@ export default function VartaLangJobsBoard() {
 
   const handlePostJob = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`API URL: ${API_URL}`); 
+    
     setFormErrors({});
 
     if (!validateForm()) {
@@ -291,8 +285,6 @@ export default function VartaLangJobsBoard() {
     const days = Math.ceil((new Date(expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
     return days > 0 ? days : 0;
   };
-
-  const getCharCount = (text: string) => text.length;
 
   if (loading) {
     return (
@@ -807,15 +799,16 @@ export default function VartaLangJobsBoard() {
         </div>
       )}
 
-      {/* Post Job Modal */}
+      {/* Post Job Modal - FIXED SCROLLING VERSION */}
       {showPostModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className={`max-w-3xl w-full my-8 rounded-2xl border ${
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className={`max-w-3xl w-full max-h-[90vh] rounded-2xl border overflow-hidden flex flex-col ${
             darkMode 
               ? 'bg-[#1a1410] border-orange-800/30' 
               : 'bg-white border-orange-100'
           }`}>
-            <div className="p-6 border-b border-orange-800/30">
+            {/* Fixed Header */}
+            <div className="p-6 border-b border-orange-800/30 shrink-0">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className={`text-2xl font-bold ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
@@ -839,309 +832,312 @@ export default function VartaLangJobsBoard() {
               </div>
             </div>
 
-            <form onSubmit={handlePostJob} className="p-6 space-y-6">
-              {formErrors.general && (
-                <div className={`p-4 rounded-xl border ${
-                  darkMode 
-                    ? 'bg-red-900/10 border-red-800/30' 
-                    : 'bg-red-50 border-red-200'
-                }`}>
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className={`w-5 h-5 mt-0.5 shrink-0 ${
-                      darkMode ? 'text-red-400' : 'text-red-600'
-                    }`} />
-                    <p className={`text-sm ${darkMode ? 'text-red-200' : 'text-red-900'}`}>
-                      {formErrors.general}
-                    </p>
+            {/* Scrollable Form Content */}
+            <div className="overflow-y-auto flex-1">
+              <form onSubmit={handlePostJob} className="p-6 space-y-6">
+                {formErrors.general && (
+                  <div className={`p-4 rounded-xl border ${
+                    darkMode 
+                      ? 'bg-red-900/10 border-red-800/30' 
+                      : 'bg-red-50 border-red-200'
+                  }`}>
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className={`w-5 h-5 mt-0.5 shrink-0 ${
+                        darkMode ? 'text-red-400' : 'text-red-600'
+                      }`} />
+                      <p className={`text-sm ${darkMode ? 'text-red-200' : 'text-red-900'}`}>
+                        {formErrors.general}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
-
-              {showSuccessMessage && (
-                <div className={`p-4 rounded-xl border ${
-                  darkMode 
-                    ? 'bg-green-900/10 border-green-800/30' 
-                    : 'bg-green-50 border-green-200'
-                }`}>
-                  <div className="flex items-start gap-3">
-                    <CheckCircle className={`w-5 h-5 mt-0.5 shrink-0 ${
-                      darkMode ? 'text-green-400' : 'text-green-600'
-                    }`} />
-                    <p className={`text-sm font-medium ${darkMode ? 'text-green-200' : 'text-green-900'}`}>
-                      Job posted successfully! It will be live for 7 days.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
-                  Job Title *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="e.g., Hindi Translator for Legal Documents"
-                  className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${
-                    formErrors.title
-                      ? darkMode
-                        ? 'border-red-500 bg-red-900/10'
-                        : 'border-red-500 bg-red-50'
-                      : darkMode 
-                        ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
-                        : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
-                  }`}
-                />
-                {formErrors.title && (
-                  <p className={`text-xs mt-1 ${darkMode ? 'text-red-400' : 'text-red-600'}`}>
-                    {formErrors.title}
-                  </p>
                 )}
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
-                    Language Required *
-                  </label>
-                  <select
-                    value={formData.language}
-                    onChange={(e) => setFormData({ ...formData, language: e.target.value })}
-                    className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${
-                      darkMode 
-                        ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 focus:border-orange-600' 
-                        : 'bg-white border-orange-100 text-gray-900 focus:border-orange-400'
-                    }`}
-                  >
-                    {languages.map(lang => (
-                      <option key={lang} value={lang}>{lang}</option>
-                    ))}
-                  </select>
-                </div>
+                {showSuccessMessage && (
+                  <div className={`p-4 rounded-xl border ${
+                    darkMode 
+                      ? 'bg-green-900/10 border-green-800/30' 
+                      : 'bg-green-50 border-green-200'
+                  }`}>
+                    <div className="flex items-start gap-3">
+                      <CheckCircle className={`w-5 h-5 mt-0.5 shrink-0 ${
+                        darkMode ? 'text-green-400' : 'text-green-600'
+                      }`} />
+                      <p className={`text-sm font-medium ${darkMode ? 'text-green-200' : 'text-green-900'}`}>
+                        Job posted successfully! It will be live for 7 days.
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
-                    Proficiency Level *
+                    Job Title *
                   </label>
-                  <select
-                    value={formData.proficiencyLevel}
-                    onChange={(e) => setFormData({ ...formData, proficiencyLevel: e.target.value })}
+                  <input
+                    type="text"
+                    required
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="e.g., Hindi Translator for Legal Documents"
                     className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${
-                      darkMode 
-                        ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 focus:border-orange-600' 
-                        : 'bg-white border-orange-100 text-gray-900 focus:border-orange-400'
+                      formErrors.title
+                        ? darkMode
+                          ? 'border-red-500 bg-red-900/10'
+                          : 'border-red-500 bg-red-50'
+                        : darkMode 
+                          ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
+                          : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
                     }`}
-                  >
-                    {proficiencyLevels.map(level => (
-                      <option key={level} value={level}>{level}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
-                  Type of Work *
-                </label>
-                <select
-                  value={formData.jobType}
-                  onChange={(e) => setFormData({ ...formData, jobType: e.target.value })}
-                  className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${
-                    darkMode 
-                      ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 focus:border-orange-600' 
-                      : 'bg-white border-orange-100 text-gray-900 focus:border-orange-400'
-                  }`}
-                >
-                  {jobTypes.map(type => (
-                    <option key={type.value} value={type.value}>{type.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
-                  Company / Organization Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.companyName}
-                  onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                  placeholder="Your company name"
-                  className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${
-                    darkMode 
-                      ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
-                      : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
-                  }`}
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
-                  Location *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="e.g., Mumbai, India or Remote"
-                  className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${
-                    darkMode 
-                      ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
-                      : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
-                  }`}
-                />
-              </div>
-
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="isRemote"
-                  checked={formData.isRemote}
-                  onChange={(e) => setFormData({ ...formData, isRemote: e.target.checked })}
-                  className="w-5 h-5 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
-                />
-                <label htmlFor="isRemote" className={`text-sm font-medium ${
-                  darkMode ? 'text-orange-200' : 'text-gray-700'
-                }`}>
-                  This is a remote position
-                </label>
-              </div>
-
-              <div>
-                <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
-                  Job Description *
-                </label>
-                <textarea
-                  rows={5}
-                  required
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Describe the role and what the candidate will do..."
-                  className={`w-full px-4 py-3 rounded-xl border outline-none transition-all resize-none ${
-                    formErrors.description
-                      ? darkMode
-                        ? 'border-red-500 bg-red-900/10'
-                        : 'border-red-500 bg-red-50'
-                      : darkMode 
-                        ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
-                        : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
-                  }`}
-                />
-                {formErrors.description && (
-                  <p className={`text-xs mt-1 ${darkMode ? 'text-red-400' : 'text-red-600'}`}>
-                    {formErrors.description}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
-                  Key Responsibilities (Optional)
-                </label>
-                <textarea
-                  rows={4}
-                  value={formData.responsibilities}
-                  onChange={(e) => setFormData({ ...formData, responsibilities: e.target.value })}
-                  placeholder="One responsibility per line"
-                  className={`w-full px-4 py-3 rounded-xl border outline-none transition-all resize-none ${
-                    darkMode 
-                      ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
-                      : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
-                  }`}
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
-                  Requirements (Optional)
-                </label>
-                <textarea
-                  rows={4}
-                  value={formData.requirements}
-                  onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
-                  placeholder="One requirement per line"
-                  className={`w-full px-4 py-3 rounded-xl border outline-none transition-all resize-none ${
-                    darkMode 
-                      ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
-                      : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
-                  }`}
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
-                  Official Contact Email *
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={formData.contactEmail}
-                  onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
-                  placeholder="hr@yourcompany.com"
-                  className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${
-                    formErrors.contactEmail
-                      ? darkMode
-                        ? 'border-red-500 bg-red-900/10'
-                        : 'border-red-500 bg-red-50'
-                      : darkMode 
-                        ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
-                        : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
-                  }`}
-                />
-                {formErrors.contactEmail && (
-                  <p className={`text-xs mt-1 ${darkMode ? 'text-red-400' : 'text-red-600'}`}>
-                    {formErrors.contactEmail}
-                  </p>
-                )}
-                <p className={`text-xs mt-2 ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                  This email will be publicly visible. Candidates will contact you directly.
-                </p>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="submit"
-                  disabled={submitting || showSuccessMessage}
-                  className="flex-1 px-6 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Posting...
-                    </>
-                  ) : showSuccessMessage ? (
-                    <>
-                      <CheckCircle className="w-5 h-5" />
-                      Posted Successfully!
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-5 h-5" />
-                      Post Job (Free for 7 Days)
-                    </>
+                  />
+                  {formErrors.title && (
+                    <p className={`text-xs mt-1 ${darkMode ? 'text-red-400' : 'text-red-600'}`}>
+                      {formErrors.title}
+                    </p>
                   )}
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => {
-                    setShowPostModal(false);
-                    setFormErrors({});
-                  }}
-                  disabled={submitting}
-                  className={`px-6 py-3 rounded-xl border font-medium transition-all disabled:opacity-50 ${
-                    darkMode 
-                      ? 'border-orange-800/30 text-orange-200 hover:bg-orange-900/20' 
-                      : 'border-orange-200 text-gray-700 hover:bg-orange-50'
-                  }`}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
+                      Language Required *
+                    </label>
+                    <select
+                      value={formData.language}
+                      onChange={(e) => setFormData({ ...formData, language: e.target.value })}
+                      className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${
+                        darkMode 
+                          ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 focus:border-orange-600' 
+                          : 'bg-white border-orange-100 text-gray-900 focus:border-orange-400'
+                      }`}
+                    >
+                      {languages.map(lang => (
+                        <option key={lang} value={lang}>{lang}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
+                      Proficiency Level *
+                    </label>
+                    <select
+                      value={formData.proficiencyLevel}
+                      onChange={(e) => setFormData({ ...formData, proficiencyLevel: e.target.value })}
+                      className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${
+                        darkMode 
+                          ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 focus:border-orange-600' 
+                          : 'bg-white border-orange-100 text-gray-900 focus:border-orange-400'
+                      }`}
+                    >
+                      {proficiencyLevels.map(level => (
+                        <option key={level} value={level}>{level}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
+                    Type of Work *
+                  </label>
+                  <select
+                    value={formData.jobType}
+                    onChange={(e) => setFormData({ ...formData, jobType: e.target.value })}
+                    className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${
+                      darkMode 
+                        ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 focus:border-orange-600' 
+                        : 'bg-white border-orange-100 text-gray-900 focus:border-orange-400'
+                    }`}
+                  >
+                    {jobTypes.map(type => (
+                      <option key={type.value} value={type.value}>{type.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
+                    Company / Organization Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.companyName}
+                    onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                    placeholder="Your company name"
+                    className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${
+                      darkMode 
+                        ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
+                        : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
+                    Location *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    placeholder="e.g., Mumbai, India or Remote"
+                    className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${
+                      darkMode 
+                        ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
+                        : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
+                    }`}
+                  />
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="isRemote"
+                    checked={formData.isRemote}
+                    onChange={(e) => setFormData({ ...formData, isRemote: e.target.checked })}
+                    className="w-5 h-5 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                  />
+                  <label htmlFor="isRemote" className={`text-sm font-medium ${
+                    darkMode ? 'text-orange-200' : 'text-gray-700'
+                  }`}>
+                    This is a remote position
+                  </label>
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
+                    Job Description *
+                  </label>
+                  <textarea
+                    rows={5}
+                    required
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Describe the role and what the candidate will do..."
+                    className={`w-full px-4 py-3 rounded-xl border outline-none transition-all resize-none ${
+                      formErrors.description
+                        ? darkMode
+                          ? 'border-red-500 bg-red-900/10'
+                          : 'border-red-500 bg-red-50'
+                        : darkMode 
+                          ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
+                          : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
+                    }`}
+                  />
+                  {formErrors.description && (
+                    <p className={`text-xs mt-1 ${darkMode ? 'text-red-400' : 'text-red-600'}`}>
+                      {formErrors.description}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
+                    Key Responsibilities (Optional)
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={formData.responsibilities}
+                    onChange={(e) => setFormData({ ...formData, responsibilities: e.target.value })}
+                    placeholder="One responsibility per line"
+                    className={`w-full px-4 py-3 rounded-xl border outline-none transition-all resize-none ${
+                      darkMode 
+                        ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
+                        : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
+                    Requirements (Optional)
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={formData.requirements}
+                    onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
+                    placeholder="One requirement per line"
+                    className={`w-full px-4 py-3 rounded-xl border outline-none transition-all resize-none ${
+                      darkMode 
+                        ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
+                        : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
+                    Official Contact Email *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={formData.contactEmail}
+                    onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
+                    placeholder="hr@yourcompany.com"
+                    className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${
+                      formErrors.contactEmail
+                        ? darkMode
+                          ? 'border-red-500 bg-red-900/10'
+                          : 'border-red-500 bg-red-50'
+                        : darkMode 
+                          ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
+                          : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
+                    }`}
+                  />
+                  {formErrors.contactEmail && (
+                    <p className={`text-xs mt-1 ${darkMode ? 'text-red-400' : 'text-red-600'}`}>
+                      {formErrors.contactEmail}
+                    </p>
+                  )}
+                  <p className={`text-xs mt-2 ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                    This email will be publicly visible. Candidates will contact you directly.
+                  </p>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="submit"
+                    disabled={submitting || showSuccessMessage}
+                    className="flex-1 px-6 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Posting...
+                      </>
+                    ) : showSuccessMessage ? (
+                      <>
+                        <CheckCircle className="w-5 h-5" />
+                        Posted Successfully!
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-5 h-5" />
+                        Post Job (Free for 7 Days)
+                      </>
+                    )}
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setShowPostModal(false);
+                      setFormErrors({});
+                    }}
+                    disabled={submitting}
+                    className={`px-6 py-3 rounded-xl border font-medium transition-all disabled:opacity-50 ${
+                      darkMode 
+                        ? 'border-orange-800/30 text-orange-200 hover:bg-orange-900/20' 
+                        : 'border-orange-200 text-gray-700 hover:bg-orange-50'
+                    }`}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
