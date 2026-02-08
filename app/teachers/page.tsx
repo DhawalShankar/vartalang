@@ -184,7 +184,7 @@ export default function CreatorsPage() {
       setLoading(false);
     } catch (error) {
       console.error("Error checking teacher access:", error);
-      alert("Failed to load teacher dashboard");
+      alert("Failed to load teachers dashboard");
       router.push("/learn");
     }
   };
@@ -1137,7 +1137,7 @@ export default function CreatorsPage() {
       <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-[#1a1410]' : 'bg-[#FFF9F5]'}`}>
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className={darkMode ? 'text-orange-200' : 'text-gray-700'}>Loading teacher dashboard...</p>
+          <p className={darkMode ? 'text-orange-200' : 'text-gray-700'}>Loading teachers dashboard...</p>
         </div>
       </div>
     );
@@ -1165,7 +1165,7 @@ export default function CreatorsPage() {
                   : 'bg-orange-50 border-orange-200 text-orange-700'
               }`}>
                 <GraduationCap className="w-4 h-4" />
-                <span className="text-sm font-semibold">Teacher Dashboard</span>
+                <span className="text-sm font-semibold">Teachers Dashboard</span>
               </div>
               <h1 className={`text-4xl md:text-5xl font-bold mb-3 ${
                 darkMode ? 'text-orange-50' : 'text-gray-900'
@@ -1232,7 +1232,7 @@ export default function CreatorsPage() {
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {[
               { id: 'overview', label: 'Overview', icon: BarChart3 },
-              { id: 'feedback', label: 'Pronunciation Feedback', icon: Mic, badge: stats.pendingFeedbacks },
+              { id: 'feedback', label: 'Pronunciation Feedback ', icon: Mic, badge: stats.pendingFeedbacks },
               { id: 'mentorship', label: 'Mentorship', icon: MessageSquare },
               { id: 'courses', label: 'Courses', icon: BookOpen },
               { id: 'notes', label: 'Notes & Resources', icon: FileText },
@@ -1331,7 +1331,7 @@ export default function CreatorsPage() {
                         className={`w-full p-3 rounded-lg text-left transition-all ${darkMode ? 'bg-orange-900/20 hover:bg-orange-900/30' : 'bg-orange-50 hover:bg-orange-100'}`}
                       >
                         <p className={`text-sm font-medium ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-                          {stats.pendingFeedbacks} Pronunciation Feedback{stats.pendingFeedbacks > 1 ? 's' : ''} Pending
+                          {stats.pendingFeedbacks} Pronunciation Feedback {stats.pendingFeedbacks > 1 ? 's' : ''} Pending
                         </p>
                         <p className={`text-xs ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
                           Review student recordings
