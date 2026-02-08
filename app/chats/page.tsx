@@ -697,8 +697,8 @@ function ChatsContent() {
             
             {currentChatDetail ? (
               <>
-                {/* Chat Header */}
-                <div className={`p-4 border-b flex items-center justify-between ${darkMode ? "border-orange-800/30" : "border-orange-200"}`}>
+                  {/* Chat Header - Sticky */}
+                  <div className={`sticky top-0 z-10 p-4 border-b flex items-center justify-between ${darkMode ? "bg-orange-900/10 border-orange-800/30 backdrop-blur-sm" : "bg-white border-orange-200 backdrop-blur-sm"}`}>
                   <div className="flex items-center gap-3">
                     <button
                       onClick={handleBack}

@@ -208,12 +208,12 @@ export default function AboutPage() {
           <h1 className={`text-5xl md:text-7xl font-bold mb-6 leading-tight ${
             darkMode ? 'text-orange-50' : 'text-gray-900'
           }`}>
-            We don't teach languages.
+            We don't just teach languages.
             <br />
             <span className={`bg-linear-to-r ${
               darkMode ? 'from-orange-400 to-red-400' : 'from-orange-600 to-red-600'
             } bg-clip-text text-transparent`}>
-              We connect speakers.
+              We connect people.
             </span>
           </h1>
 
@@ -226,7 +226,7 @@ export default function AboutPage() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Link href="/auth/signup" className="group px-8 py-4 rounded-full font-semibold text-base bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-xl transition-all hover:scale-105 inline-flex items-center justify-center gap-2">
+            <Link href="/matches" className="group px-8 py-4 rounded-full font-semibold text-base bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-xl transition-all hover:scale-105 inline-flex items-center justify-center gap-2">
               Start Learning
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>

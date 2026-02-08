@@ -230,13 +230,13 @@ export default function ProfilePage() {
                         <Edit className="w-4 h-4" />
                         Edit Profile
                       </button>
-                      <button className={`px-4 py-3 rounded-xl border transition-all ${
+                      {/* <button className={`px-4 py-3 rounded-xl border transition-all ${
                         darkMode 
                           ? 'border-orange-800/30 text-orange-200 hover:bg-orange-900/20' 
                           : 'border-orange-200 text-gray-700 hover:bg-orange-50'
                       }`}>
                         <Settings className="w-5 h-5" />
-                      </button>
+                      </button> */}
                     </>
                   ) : (
                     <>
@@ -310,7 +310,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Quick Stats */}
-              <div className="grid grid-cols-3 gap-4">
+              {/* <div className="grid grid-cols-3 gap-4">
                 <div className={`p-4 rounded-xl text-center ${
                   darkMode ? 'bg-orange-900/20' : 'bg-orange-50'
                 }`}>
@@ -341,7 +341,7 @@ export default function ProfilePage() {
                     Hours Learned
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -711,7 +711,7 @@ export default function ProfilePage() {
               Account
             </h3>
             <div className="space-y-2">
-              <button className={`w-full px-4 py-3 rounded-xl text-left flex items-center gap-3 transition-all ${
+              {/* <button className={`w-full px-4 py-3 rounded-xl text-left flex items-center gap-3 transition-all ${
                 darkMode 
                   ? 'hover:bg-orange-900/20 text-orange-200' 
                   : 'hover:bg-orange-50 text-gray-700'
@@ -726,7 +726,7 @@ export default function ProfilePage() {
               }`}>
                 <Shield className="w-5 h-5" />
                 Privacy & Safety
-              </button>
+              </button> */}
               <button
                 onClick={handleLogout}
                 className={`w-full px-4 py-3 rounded-xl text-left flex items-center gap-3 transition-all ${
