@@ -793,7 +793,7 @@ function ChatsContent() {
                 )}
 
                 {/* Messages */}
-                <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${darkMode ? "bg-[#1a1410]/50" : "bg-orange-50/30"}`}>
+                <div className={`flex-1 overflow-y-auto p-4 space-y-4 min-h-0 ${darkMode ? "bg-[#1a1410]/50" : "bg-orange-50/30"}`}>
                   {currentChatDetail.messages.length === 0 ? (
                     <div className="flex items-center justify-center h-full">
                       <p className={`text-sm ${darkMode ? "text-orange-300/70" : "text-orange-600/70"}`}>
