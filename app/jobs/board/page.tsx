@@ -196,7 +196,7 @@ export default function VartaLangJobsBoard() {
 
   const handlePostJob = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    alert(`API URL: ${API_URL}`); 
     setFormErrors({});
 
     if (!validateForm()) {
