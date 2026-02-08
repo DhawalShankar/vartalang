@@ -1,8 +1,10 @@
+// components/layout/Navbar.tsx
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Menu, X, Sun, Moon, Bell, User, MessageCircle } from "lucide-react";
+import { Menu, X, Sun, Moon, Bell, User, MessageCircle, GraduationCap } from "lucide-react";
 import { useDarkMode } from "@/lib/DarkModeContext";
 import { useAuth } from "@/lib/AuthContext";
 import { useSocket } from "@/lib/SocketContext";
@@ -16,6 +18,9 @@ export default function Navbar() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<any[]>([]);
   
+  // ✅ ADD THIS - Track user role
+  const [userRole, setUserRole] = useState<'learner' | 'teacher' | null>(null);
+  
   const notificationRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   
@@ -23,21 +28,43 @@ export default function Navbar() {
   const { isLoggedIn } = useAuth();
   const { socket, userId } = useSocket();
 
+  // ✅ ADD THIS - Fetch user profile to get role
   useEffect(() => {
     if (isLoggedIn) {
+      fetchUserProfile();
       fetchUnreadCount();
       fetchNotifications();
+    } else {
+      setUserRole(null); // Reset role when logged out
     }
   }, [isLoggedIn]);
 
-  // ✅ Listen for real-time chat message notifications
+  // ✅ ADD THIS FUNCTION - Fetch user profile
+  const fetchUserProfile = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${API_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      if (!res.ok) throw new Error("Failed to fetch profile");
+      
+      const data = await res.json();
+      setUserRole(data.user.primaryRole); // Set the role
+    } catch (error) {
+      console.error("Fetch profile error:", error);
+    }
+  };
+
+  // Listen for real-time chat message notifications
   useEffect(() => {
     if (!socket || !userId) return;
 
     const handleNewMessage = (data: any) => {
       console.log("New message notification received:", data);
       
-      // Check if notification is for current user
       if (data.recipientId !== userId) {
         console.log("Not my message notification, ignoring");
         return;
@@ -54,7 +81,7 @@ export default function Navbar() {
     };
   }, [socket, userId]);
 
-  // ✅ Close notification dropdown on outside click
+  // Close notification dropdown on outside click
   useEffect(() => {
     if (!showNotifications) return;
 
@@ -98,22 +125,18 @@ export default function Navbar() {
     }
   };
 
-  // ✅ Delete notification and navigate to chat
   const handleNotificationClick = async (notificationId: string, chatId: string) => {
     const token = localStorage.getItem("token");
     
     try {
-      // Delete notification from database
       await fetch(`${API_URL}/notifications/${notificationId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Update local state
       setNotifications(prev => prev.filter(n => n._id !== notificationId));
       setUnreadCount(prev => Math.max(0, prev - 1));
       
-      // Close dropdown and navigate
       setShowNotifications(false);
       setMobileMenuOpen(false);
       router.push(`/chats?chat=${chatId}`);
@@ -159,7 +182,6 @@ export default function Navbar() {
                     { name: "Chats", href: "/chats" },
                     { name: "Practice", href: "/practice" },
                     { name: "About", href: "/about" },
-                    // { name: "Creators", href: "/creators" },
                   ].map((item) => (
                     <Link
                       key={item.name}
@@ -173,6 +195,21 @@ export default function Navbar() {
                       {item.name}
                     </Link>
                   ))}
+
+                  {/* ✅ CONDITIONALLY SHOW TEACHERS LINK - Only for teachers */}
+                  {userRole === 'teacher' && (
+                    <Link
+                      href="/creators"
+                      className={`text-sm font-semibold transition-colors flex items-center gap-1.5 ${
+                        darkMode
+                          ? "text-orange-200 hover:text-orange-100"
+                          : "text-gray-700 hover:text-gray-900"
+                      }`}
+                    >
+                      <GraduationCap className="w-4 h-4" />
+                      Teachers
+                    </Link>
+                  )}
 
                   {/* Notification Bell - Desktop */}
                   <div className="relative">
@@ -295,18 +332,13 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* ✅ NOTIFICATION DROPDOWN - Works for both desktop and mobile */}
+        {/* NOTIFICATION DROPDOWN */}
         {showNotifications && isLoggedIn && (
           <div 
             ref={notificationRef}
             className={`absolute right-4 md:right-auto md:left-auto mt-3 w-[calc(100%-2rem)] md:w-96 max-h-[80vh] md:max-h-96 overflow-y-auto rounded-2xl shadow-2xl border z-50 ${
               darkMode ? "bg-[#2a1f1a]/95 border-orange-800/30 backdrop-blur-sm" : "bg-white border-orange-200"
             }`}
-            style={{
-              // Position for desktop (align with bell icon)
-              right: window.innerWidth >= 768 ? 'auto' : undefined,
-              left: window.innerWidth >= 768 ? 'auto' : undefined,
-            }}
           >
             <div className={`p-4 border-b sticky top-0 z-10 ${
               darkMode ? "border-orange-800/30 bg-[#2a1f1a]/95" : "border-orange-200 bg-white"
@@ -320,7 +352,6 @@ export default function Navbar() {
                     onClick={async () => {
                       const token = localStorage.getItem("token");
                       try {
-                        // Delete all notifications
                         await Promise.all(
                           notifications.map(notif => 
                             fetch(`${API_URL}/notifications/${notif._id}`, {
@@ -361,7 +392,6 @@ export default function Navbar() {
                     !notif.read ? (darkMode ? "bg-orange-900/20" : "bg-orange-50/50") : ""
                   }`}
                 >
-                  {/* ✅ CHAT MESSAGE NOTIFICATION */}
                   {notif.type === 'new_message' && (
                     <button
                       onClick={() => handleNotificationClick(notif._id, notif.chatId)}
@@ -463,17 +493,23 @@ export default function Navbar() {
                   >
                     About
                   </Link>
-                  {/* <Link
-                    href="/creators"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
-                      darkMode
-                        ? "text-orange-200 hover:bg-orange-900/40"
-                        : "text-gray-700 hover:bg-orange-50"
-                    }`}
-                  >
-                    Creators
-                  </Link> */}
+
+                  {/* ✅ CONDITIONALLY SHOW TEACHERS LINK IN MOBILE - Only for teachers */}
+                  {userRole === 'teacher' && (
+                    <Link
+                      href="/creators"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all flex items-center justify-center gap-2 ${
+                        darkMode
+                          ? "text-orange-200 hover:bg-orange-900/40"
+                          : "text-gray-700 hover:bg-orange-50"
+                      }`}
+                    >
+                      <GraduationCap className="w-4 h-4" />
+                      Teachers
+                    </Link>
+                  )}
+
                   <div className="h-px bg-linear-to-r from-transparent via-orange-500/30 to-transparent my-2"></div>
                   <Link
                     href="/profile"
