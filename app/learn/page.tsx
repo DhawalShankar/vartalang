@@ -1,14 +1,13 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { 
   BookOpen, 
   ArrowRight, 
   Sparkles, 
   Globe, 
-  Heart,
   Search,
-  TrendingUp,
   Users,
   Award,
   Play,
@@ -21,9 +20,21 @@ import { useDarkMode } from '@/lib/DarkModeContext';
 
 export default function LearnPage() {
   const { darkMode } = useDarkMode();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLevel, setSelectedLevel] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [isAuthenticating, setIsAuthenticating] = useState(true);
+
+  // Authentication check
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/auth/login");
+      return;
+    }
+    setIsAuthenticating(false);
+  }, [router]);
 
   const languages = [
     {
@@ -48,7 +59,7 @@ export default function LearnPage() {
       category: 'south',
       color: 'from-red-500 to-pink-500',
       description: 'Classical Dravidian language',
-      // resources: 198
+      resources: 198
     },
     {
       name: 'Telugu',
@@ -60,7 +71,7 @@ export default function LearnPage() {
       category: 'south',
       color: 'from-yellow-500 to-orange-500',
       description: 'Sweet language of the South',
-      // resources: 176
+      resources: 176
     },
     {
       name: 'Bengali',
@@ -72,127 +83,127 @@ export default function LearnPage() {
       category: 'east',
       color: 'from-green-500 to-teal-500',
       description: 'Language of poetry and literature',
-      // resources: 167
+      resources: 167
     },
     {
       name: 'Marathi',
       nativeName: 'मराठी',
       slug: 'marathi',
       icon: '🏛️',
-      // learners: '1.2M+',
+      learners: '+',
       difficulty: 'Beginner',
       category: 'west',
       color: 'from-purple-500 to-pink-500',
       description: 'Official language of Maharashtra',
-      // resources: 154
+      resources: 154
     },
     {
       name: 'Gujarati',
       nativeName: 'ગુજરાતી',
       slug: 'gujarati',
       icon: '🪔',
-      // learners: '1.1M+',
+      learners: '+',
       difficulty: 'Beginner',
       category: 'west',
       color: 'from-blue-500 to-indigo-500',
       description: 'Language of entrepreneurship',
-      // resources: 143
+      resources: 143
     },
     {
       name: 'Kannada',
       nativeName: 'ಕನ್ನಡ',
       slug: 'kannada',
       icon: '☕',
-      // learners: '980K+',
+      learners: '+',
       difficulty: 'Intermediate',
       category: 'south',
       color: 'from-red-600 to-orange-600',
       description: 'Language of Karnataka',
-      // resources: 132
+      resources: 132
     },
     {
       name: 'Malayalam',
       nativeName: 'മലയാളം',
       slug: 'malayalam',
       icon: '🌊',
-      // learners: '850K+',
+      learners: '+',
       difficulty: 'Advanced',
       category: 'south',
       color: 'from-cyan-500 to-blue-500',
       description: 'Language of Kerala',
-      // resources: 128
+      resources: 128
     },
     {
       name: 'Punjabi',
       nativeName: 'ਪੰਜਾਬੀ',
       slug: 'punjabi',
       icon: '🥁',
-      // learners: '780K+',
+      learners: '+',
       difficulty: 'Beginner',
       category: 'north',
       color: 'from-orange-600 to-yellow-500',
       description: 'Language of Punjab',
-      // resources: 115
+      resources: 115
     },
     {
       name: 'Odia',
       nativeName: 'ଓଡ଼ିଆ',
       slug: 'odia',
       icon: '🏛️',
-      // learners: '420K+',
+      learners: '+',
       difficulty: 'Intermediate',
       category: 'east',
       color: 'from-teal-500 to-green-500',
       description: 'Classical language of Odisha',
-      // resources: 94
+      resources: 94
     },
     {
       name: 'Assamese',
       nativeName: 'অসমীয়া',
       slug: 'assamese',
       icon: '🎋',
-      // learners: '380K+',
+      learners: '+',
       difficulty: 'Intermediate',
       category: 'east',
       color: 'from-emerald-500 to-green-600',
       description: 'Language of Assam',
-      // resources: 87
+      resources: 87
     },
     {
       name: 'Urdu',
       nativeName: 'اردو',
       slug: 'urdu',
       icon: '📜',
-      // learners: '650K+',
+      learners: '+',
       difficulty: 'Intermediate',
       category: 'north',
       color: 'from-indigo-500 to-purple-500',
       description: 'Language of poetry and shayari',
-      // resources: 156
+      resources: 156
     },
     {
       name: 'English',
       nativeName: 'English',
       slug: 'english',
       icon: '🌍',
-      // learners: '3.2M+',
+      learners: '+',
       difficulty: 'Beginner',
       category: 'global',
       color: 'from-gray-600 to-gray-800',
       description: 'Global language of opportunity',
-      // resources: 312
+      resources: 312
     },
     {
       name: 'Sanskrit',
       nativeName: 'संस्कृत',
       slug: 'sanskrit',
       icon: '🕉️',
-      // learners: '290K+',
+      learners: '+',
       difficulty: 'Advanced',
       category: 'classical',
       color: 'from-amber-600 to-orange-700',
       description: 'Ancient language of wisdom',
-      // resources: 168
+      resources: 168
     }
   ];
 
@@ -220,6 +231,21 @@ export default function LearnPage() {
     const matchesCategory = selectedCategory === 'all' || lang.category === selectedCategory;
     return matchesSearch && matchesLevel && matchesCategory;
   });
+
+  // Show loading while authenticating
+  if (isAuthenticating) {
+    return (
+      <div className={`min-h-screen ${darkMode ? 'bg-[#1a1410]' : 'bg-[#FFF9F5]'}`}>
+        <Navbar />
+        <div className="pt-20 flex items-center justify-center min-h-[70vh]">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className={darkMode ? 'text-orange-200' : 'text-gray-700'}>Checking authentication...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'bg-[#1a1410]' : 'bg-[#FFF9F5]'}`}>
@@ -603,17 +629,17 @@ export default function LearnPage() {
           </p>
 
           <Link
-            href="/auth/signup"
+            href="/find-partner"
             className="inline-flex items-center gap-2 px-10 py-4 rounded-full font-semibold text-base
             bg-linear-to-r from-orange-500 to-red-600 text-white
             hover:shadow-xl hover:scale-105 transition-all"
           >
-            Join VartaLang
+            Find Learning Partner
             <ArrowRight className="w-5 h-5" />
           </Link>
 
           <p className={`mt-6 text-sm ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
-            Free to start • No credit card required
+            Start conversations • Practice daily
           </p>
         </div>
       </section>
