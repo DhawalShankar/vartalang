@@ -199,7 +199,7 @@ export default function Navbar() {
                   {/* ✅ CONDITIONALLY SHOW TEACHERS LINK - Only for teachers */}
                   {userRole === 'teacher' && (
                     <Link
-                      href="/creators"
+                      href="/teachers"
                       className={`text-sm font-semibold transition-colors flex items-center gap-1.5 ${
                         darkMode
                           ? "text-orange-200 hover:text-orange-100"
@@ -497,7 +497,7 @@ export default function Navbar() {
                   {/* ✅ CONDITIONALLY SHOW TEACHERS LINK IN MOBILE - Only for teachers */}
                   {userRole === 'teacher' && (
                     <Link
-                      href="/creators"
+                      href="/teachers"
                       onClick={() => setMobileMenuOpen(false)}
                       className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all flex items-center justify-center gap-2 ${
                         darkMode
