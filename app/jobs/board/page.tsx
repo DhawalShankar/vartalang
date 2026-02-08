@@ -50,6 +50,13 @@ interface JobFormData {
   contactEmail: string;
 }
 
+interface FormErrors {
+  title?: string;
+  description?: string;
+  contactEmail?: string;
+  general?: string;
+}
+
 export default function VartaLangJobsBoard() {
   const { darkMode } = useDarkMode();
   const router = useRouter();
@@ -61,6 +68,8 @@ export default function VartaLangJobsBoard() {
   const [showPostModal, setShowPostModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -119,7 +128,9 @@ export default function VartaLangJobsBoard() {
       const res = await fetch(`${API_URL}/jobs/listings`);
       if (res.ok) {
         const data = await res.json();
-        setJobs(data.jobs);
+        setJobs(data.jobs || []);
+      } else {
+        console.error("Failed to fetch jobs");
       }
     } catch (error) {
       console.error("Error fetching jobs:", error);
@@ -163,16 +174,84 @@ export default function VartaLangJobsBoard() {
     setFilteredJobs(filtered);
   };
 
+  // Client-side validation
+  const validateForm = (): boolean => {
+    const errors: FormErrors = {};
+
+    // Title validation
+    if (formData.title.trim().length < 5) {
+      errors.title = "Job title must be at least 5 characters long";
+    } else if (formData.title.trim().length > 200) {
+      errors.title = "Job title cannot exceed 200 characters";
+    }
+
+    // Description validation
+    if (formData.description.trim().length < 50) {
+      errors.description = "Description must be at least 50 characters long";
+    } else if (formData.description.trim().length > 5000) {
+      errors.description = "Description cannot exceed 5000 characters";
+    }
+
+    // Email validation
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(formData.contactEmail)) {
+      errors.contactEmail = "Please enter a valid email address";
+    }
+
+    // Check for disposable email domains
+    const disposableDomains = ['tempmail.com', 'guerrillamail.com', 'mailinator.com', '10minutemail.com', 'throwaway.email'];
+    const emailDomain = formData.contactEmail.split('@')[1]?.toLowerCase();
+    if (emailDomain && disposableDomains.includes(emailDomain)) {
+      errors.contactEmail = "Disposable email addresses are not allowed";
+    }
+
+    // Check for language-related keywords
+    const text = `${formData.title} ${formData.description}`.toLowerCase();
+    const languageKeywords = ['translat', 'interpret', 'language', 'bilingual', 'multilingual', 'fluent', 'proficiency', 'linguistic', 'teach', 'tutor'];
+    const hasLanguageKeyword = languageKeywords.some(keyword => text.includes(keyword));
+    
+    if (!hasLanguageKeyword) {
+      errors.general = "Your job posting should clearly indicate that language skills are the PRIMARY requirement. Include keywords like 'translation', 'interpreter', 'bilingual', 'language proficiency', etc.";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handlePostJob = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Clear previous errors
+    setFormErrors({});
+
+    // Validate form
+    if (!validateForm()) {
+      return;
+    }
+
     setSubmitting(true);
 
     try {
-      // Convert comma-separated strings to arrays
+      // Process responsibilities and requirements
+      const processedResponsibilities = formData.responsibilities
+        .split('\n')
+        .map(r => r.trim().replace(/^[•\-*]\s*/, '')) // Remove bullet points if present
+        .filter(r => r.length > 0);
+
+      const processedRequirements = formData.requirements
+        .split('\n')
+        .map(r => r.trim().replace(/^[•\-*]\s*/, '')) // Remove bullet points if present
+        .filter(r => r.length > 0);
+
       const jobData = {
         ...formData,
-        responsibilities: formData.responsibilities.split('\n').filter(r => r.trim()),
-        requirements: formData.requirements.split('\n').filter(r => r.trim())
+        title: formData.title.trim(),
+        companyName: formData.companyName.trim(),
+        location: formData.location.trim(),
+        description: formData.description.trim(),
+        contactEmail: formData.contactEmail.trim().toLowerCase(),
+        responsibilities: processedResponsibilities,
+        requirements: processedRequirements
       };
 
       const res = await fetch(`${API_URL}/jobs/listings`, {
@@ -183,31 +262,44 @@ export default function VartaLangJobsBoard() {
         body: JSON.stringify(jobData)
       });
 
+      const data = await res.json();
+
       if (res.ok) {
-        alert('Job posted successfully! It will be live for 7 days.');
-        setShowPostModal(false);
-        fetchJobs();
-        // Reset form
-        setFormData({
-          title: '',
-          language: 'Hindi',
-          proficiencyLevel: 'Intermediate',
-          jobType: 'translation',
-          companyName: '',
-          location: '',
-          isRemote: false,
-          description: '',
-          responsibilities: '',
-          requirements: '',
-          contactEmail: ''
-        });
+        // Show success message
+        setShowSuccessMessage(true);
+        
+        // Close modal after a delay
+        setTimeout(() => {
+          setShowPostModal(false);
+          setShowSuccessMessage(false);
+          fetchJobs();
+          
+          // Reset form
+          setFormData({
+            title: '',
+            language: 'Hindi',
+            proficiencyLevel: 'Intermediate',
+            jobType: 'translation',
+            companyName: '',
+            location: '',
+            isRemote: false,
+            description: '',
+            responsibilities: '',
+            requirements: '',
+            contactEmail: ''
+          });
+        }, 2000);
       } else {
-        const error = await res.json();
-        alert(error.error || 'Failed to post job');
+        // Display server error
+        setFormErrors({
+          general: data.error || 'Failed to post job. Please try again.'
+        });
       }
     } catch (error) {
       console.error("Error posting job:", error);
-      alert('Error posting job. Please try again.');
+      setFormErrors({
+        general: 'Network error. Please check your connection and try again.'
+      });
     } finally {
       setSubmitting(false);
     }
@@ -230,6 +322,8 @@ export default function VartaLangJobsBoard() {
     const days = Math.ceil((new Date(expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
     return days > 0 ? days : 0;
   };
+
+  const getCharCount = (text: string) => text.length;
 
   if (loading) {
     return (
@@ -581,7 +675,9 @@ export default function VartaLangJobsBoard() {
               ? 'bg-[#1a1410] border-orange-800/30' 
               : 'bg-white border-orange-100'
           }`}>
-            <div className="sticky top-0 p-6 border-b border-orange-800/30 backdrop-blur-lg bg-opacity-90">
+            <div className={`sticky top-0 p-6 border-b backdrop-blur-lg ${
+              darkMode ? 'bg-[#1a1410]/95 border-orange-800/30' : 'bg-white/95 border-orange-100'
+            }`}>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <h2 className={`text-2xl font-bold mb-2 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
@@ -654,7 +750,7 @@ export default function VartaLangJobsBoard() {
               </div>
 
               {/* Responsibilities */}
-              {selectedJob.responsibilities.length > 0 && (
+              {selectedJob.responsibilities && selectedJob.responsibilities.length > 0 && (
                 <div>
                   <h3 className={`text-lg font-bold mb-3 flex items-center gap-2 ${
                     darkMode ? 'text-orange-50' : 'text-gray-900'
@@ -678,7 +774,7 @@ export default function VartaLangJobsBoard() {
               )}
 
               {/* Requirements */}
-              {selectedJob.requirements.length > 0 && (
+              {selectedJob.requirements && selectedJob.requirements.length > 0 && (
                 <div>
                   <h3 className={`text-lg font-bold mb-3 flex items-center gap-2 ${
                     darkMode ? 'text-orange-50' : 'text-gray-900'
@@ -718,7 +814,7 @@ export default function VartaLangJobsBoard() {
                 </p>
                 <a
                   href={`mailto:${selectedJob.contactEmail}`}
-                  className="flex items-center gap-2 px-6 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all w-fit"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all"
                 >
                   <Send className="w-5 h-5" />
                   {selectedJob.contactEmail}
@@ -775,7 +871,10 @@ export default function VartaLangJobsBoard() {
                   </p>
                 </div>
                 <button 
-                  onClick={() => setShowPostModal(false)}
+                  onClick={() => {
+                    setShowPostModal(false);
+                    setFormErrors({});
+                  }}
                   className={`p-2 rounded-lg hover:bg-orange-900/20 transition-all ${
                     darkMode ? 'text-orange-200' : 'text-gray-700'
                   }`}
@@ -786,6 +885,42 @@ export default function VartaLangJobsBoard() {
             </div>
 
             <form onSubmit={handlePostJob} className="p-6 space-y-6">
+              {/* Error Messages */}
+              {formErrors.general && (
+                <div className={`p-4 rounded-xl border ${
+                  darkMode 
+                    ? 'bg-red-900/10 border-red-800/30' 
+                    : 'bg-red-50 border-red-200'
+                }`}>
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className={`w-5 h-5 mt-0.5 shrink-0 ${
+                      darkMode ? 'text-red-400' : 'text-red-600'
+                    }`} />
+                    <p className={`text-sm ${darkMode ? 'text-red-200' : 'text-red-900'}`}>
+                      {formErrors.general}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Success Message */}
+              {showSuccessMessage && (
+                <div className={`p-4 rounded-xl border ${
+                  darkMode 
+                    ? 'bg-green-900/10 border-green-800/30' 
+                    : 'bg-green-50 border-green-200'
+                }`}>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className={`w-5 h-5 mt-0.5 shrink-0 ${
+                      darkMode ? 'text-green-400' : 'text-green-600'
+                    }`} />
+                    <p className={`text-sm font-medium ${darkMode ? 'text-green-200' : 'text-green-900'}`}>
+                      Job posted successfully! It will be live for 7 days.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Job Title */}
               <div>
                 <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
@@ -798,11 +933,23 @@ export default function VartaLangJobsBoard() {
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="e.g., Hindi Translator for Legal Documents"
                   className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${
-                    darkMode 
-                      ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
-                      : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
+                    formErrors.title
+                      ? darkMode
+                        ? 'border-red-500 bg-red-900/10'
+                        : 'border-red-500 bg-red-50'
+                      : darkMode 
+                        ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
+                        : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
                   }`}
                 />
+                {formErrors.title && (
+                  <p className={`text-xs mt-1 ${darkMode ? 'text-red-400' : 'text-red-600'}`}>
+                    {formErrors.title}
+                  </p>
+                )}
+                <p className={`text-xs mt-1 ${darkMode ? 'text-orange-300/50' : 'text-gray-500'}`}>
+                  {getCharCount(formData.title)}/200 characters
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -931,49 +1078,71 @@ export default function VartaLangJobsBoard() {
                   required
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Describe the role, what the candidate will do, and why language skill is essential..."
+                  placeholder="Describe the role, what the candidate will do, and why language skill is essential. Include keywords like 'translation', 'bilingual', 'interpreter', etc."
                   className={`w-full px-4 py-3 rounded-xl border outline-none transition-all resize-none ${
-                    darkMode 
-                      ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
-                      : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
+                    formErrors.description
+                      ? darkMode
+                        ? 'border-red-500 bg-red-900/10'
+                        : 'border-red-500 bg-red-50'
+                      : darkMode 
+                        ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
+                        : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
                   }`}
                 />
+                {formErrors.description && (
+                  <p className={`text-xs mt-1 ${darkMode ? 'text-red-400' : 'text-red-600'}`}>
+                    {formErrors.description}
+                  </p>
+                )}
+                <p className={`text-xs mt-1 ${
+                  getCharCount(formData.description) < 50
+                    ? darkMode ? 'text-orange-400' : 'text-orange-600'
+                    : darkMode ? 'text-orange-300/50' : 'text-gray-500'
+                }`}>
+                  {getCharCount(formData.description)}/5000 characters (minimum 50)
+                </p>
               </div>
 
               {/* Responsibilities */}
               <div>
                 <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
-                  Key Responsibilities
+                  Key Responsibilities (Optional)
                 </label>
                 <textarea
                   rows={4}
                   value={formData.responsibilities}
                   onChange={(e) => setFormData({ ...formData, responsibilities: e.target.value })}
-                  placeholder="Enter each responsibility on a new line&#10;• Translate legal documents from English to Hindi&#10;• Review and edit translations for accuracy&#10;• Coordinate with legal team"
+                  placeholder="Enter each responsibility on a new line:&#10;Translate legal documents from English to Hindi&#10;Review and edit translations for accuracy&#10;Coordinate with legal team"
                   className={`w-full px-4 py-3 rounded-xl border outline-none transition-all resize-none ${
                     darkMode 
                       ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
                       : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
                   }`}
                 />
+                <p className={`text-xs mt-1 ${darkMode ? 'text-orange-300/50' : 'text-gray-500'}`}>
+                  One responsibility per line (no bullet points needed)
+                </p>
               </div>
 
               {/* Requirements */}
               <div>
                 <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
-                  Requirements
+                  Requirements (Optional)
                 </label>
                 <textarea
                   rows={4}
                   value={formData.requirements}
                   onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
-                  placeholder="Enter each requirement on a new line&#10;• Native or near-native Hindi proficiency&#10;• 3+ years of translation experience&#10;• Bachelor's degree in relevant field"
+                  placeholder="Enter each requirement on a new line:&#10;Native or near-native Hindi proficiency&#10;3+ years of translation experience&#10;Bachelor's degree in relevant field"
                   className={`w-full px-4 py-3 rounded-xl border outline-none transition-all resize-none ${
                     darkMode 
                       ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
                       : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
                   }`}
                 />
+                <p className={`text-xs mt-1 ${darkMode ? 'text-orange-300/50' : 'text-gray-500'}`}>
+                  One requirement per line (no bullet points needed)
+                </p>
               </div>
 
               {/* Contact Email */}
@@ -988,11 +1157,20 @@ export default function VartaLangJobsBoard() {
                   onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
                   placeholder="hr@yourcompany.com"
                   className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${
-                    darkMode 
-                      ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
-                      : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
+                    formErrors.contactEmail
+                      ? darkMode
+                        ? 'border-red-500 bg-red-900/10'
+                        : 'border-red-500 bg-red-50'
+                      : darkMode 
+                        ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
+                        : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
                   }`}
                 />
+                {formErrors.contactEmail && (
+                  <p className={`text-xs mt-1 ${darkMode ? 'text-red-400' : 'text-red-600'}`}>
+                    {formErrors.contactEmail}
+                  </p>
+                )}
                 <p className={`text-xs mt-2 ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
                   This email will be publicly visible. Candidates will contact you directly.
                 </p>
@@ -1019,13 +1197,18 @@ export default function VartaLangJobsBoard() {
               <div className="flex gap-3 pt-4">
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={submitting || showSuccessMessage}
                   className="flex-1 px-6 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {submitting ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
                       Posting...
+                    </>
+                  ) : showSuccessMessage ? (
+                    <>
+                      <CheckCircle className="w-5 h-5" />
+                      Posted Successfully!
                     </>
                   ) : (
                     <>
@@ -1036,8 +1219,12 @@ export default function VartaLangJobsBoard() {
                 </button>
                 <button 
                   type="button"
-                  onClick={() => setShowPostModal(false)}
-                  className={`px-6 py-3 rounded-xl border font-medium transition-all ${
+                  onClick={() => {
+                    setShowPostModal(false);
+                    setFormErrors({});
+                  }}
+                  disabled={submitting}
+                  className={`px-6 py-3 rounded-xl border font-medium transition-all disabled:opacity-50 ${
                     darkMode 
                       ? 'border-orange-800/30 text-orange-200 hover:bg-orange-900/20' 
                       : 'border-orange-200 text-gray-700 hover:bg-orange-50'
