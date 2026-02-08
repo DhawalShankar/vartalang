@@ -181,6 +181,7 @@ export default function Navbar() {
                     { name: "Matches", href: "/matches" },
                     { name: "Chats", href: "/chats" },
                     { name: "Practice", href: "/practice" },
+                    { name: "Jobs", href: "/jobs" },
                     { name: "About", href: "/about" },
                   ].map((item) => (
                     <Link
@@ -481,6 +482,17 @@ export default function Navbar() {
                     }`}
                   >
                     Practice
+                  </Link>
+                  <Link
+                    href="/jobs"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
+                      darkMode
+                        ? "text-orange-200 hover:bg-orange-900/40"
+                        : "text-gray-700 hover:bg-orange-50"
+                    }`}
+                  >
+                    Jobs
                   </Link>
                   <Link
                     href="/about"
