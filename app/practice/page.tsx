@@ -272,7 +272,7 @@ export default function PracticePage() {
                 className={`px-4 py-2 rounded-xl border font-medium outline-none ${
                   darkMode 
                     ? "bg-orange-900/30 border-orange-800/30 text-orange-900" 
-                    : "bg-white border-orange-300 text-orange-900"
+                    : "bg-orange-900 border-orange-300 text-orange-200"
                 }`}
               >
                 {languages.map(lang => (
@@ -310,7 +310,7 @@ export default function PracticePage() {
               </p>
             </div>
 
-            <div className={`rounded-2xl p-4 ${darkMode ? "bg-orange-900/10 border border-orange-800/30" : "bg-white border border-orange-200"}`}>
+            {/* <div className={`rounded-2xl p-4 ${darkMode ? "bg-orange-900/10 border border-orange-800/30" : "bg-white border border-orange-200"}`}>
               <div className="flex items-center gap-2 mb-2">
                 <MessageSquare className={`w-5 h-5 ${darkMode ? "text-purple-400" : "text-purple-600"}`} />
                 <span className={`text-sm font-medium ${darkMode ? "text-orange-200/70" : "text-orange-700/70"}`}>
@@ -320,9 +320,9 @@ export default function PracticePage() {
               <p className={`text-2xl font-bold ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
                 {progress.mentorReviews}
               </p>
-            </div>
+            </div> */}
 
-            <div className={`rounded-2xl p-4 ${darkMode ? "bg-orange-900/10 border border-orange-800/30" : "bg-white border border-orange-200"}`}>
+            {/* <div className={`rounded-2xl p-4 ${darkMode ? "bg-orange-900/10 border border-orange-800/30" : "bg-white border border-orange-200"}`}>
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp className={`w-5 h-5 ${darkMode ? "text-blue-400" : "text-blue-600"}`} />
                 <span className={`text-sm font-medium ${darkMode ? "text-orange-200/70" : "text-orange-700/70"}`}>
@@ -332,9 +332,9 @@ export default function PracticePage() {
               <p className={`text-2xl font-bold ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
                 {progress.totalSessions}
               </p>
-            </div>
+            </div> */}
 
-            <div className={`rounded-2xl p-4 ${darkMode ? "bg-orange-900/10 border border-orange-800/30" : "bg-white border border-orange-200"}`}>
+            {/* <div className={`rounded-2xl p-4 ${darkMode ? "bg-orange-900/10 border border-orange-800/30" : "bg-white border border-orange-200"}`}>
               <div className="flex items-center gap-2 mb-2">
                 <Clock className={`w-5 h-5 ${darkMode ? "text-orange-400" : "text-orange-600"}`} />
                 <span className={`text-sm font-medium ${darkMode ? "text-orange-200/70" : "text-orange-700/70"}`}>
@@ -344,7 +344,7 @@ export default function PracticePage() {
               <p className={`text-2xl font-bold ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
                 {progress.todaysPractice} min
               </p>
-            </div>
+            </div> */}
           </div>
         )}
 
