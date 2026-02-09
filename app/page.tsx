@@ -154,7 +154,7 @@ export default function VartaLangLanding() {
               {
                 emoji: '🎨',
                 problem: 'A Tamil craftsperson can\'t access Gujarati markets',
-                reason: 'language barrier'
+                reason: `can't communicate the message clearly`
               }
             ].map((item, i) => (
               <div 
@@ -230,7 +230,7 @@ export default function VartaLangLanding() {
                 title: 'Find Jobs Where Language IS the Skill',
                 desc: 'Customer service roles, sales positions, tourism guides, teaching opportunities—real jobs where your language abilities are the primary requirement.',
                 cta: 'Browse jobs',
-                link: '/jobs',
+                link: '/jobs/board',
                 live: true
               },
               {
@@ -254,7 +254,7 @@ export default function VartaLangLanding() {
                 title: 'Post Jobs for FREE (7 Days)',
                 desc: 'Employers: Need Tamil-speaking staff? Gujarati helpers? Post free for a week, reach motivated candidates.',
                 cta: 'Post a job',
-                link: '/jobs',
+                link: '/jobs/board',
                 live: true
               },
               {
@@ -380,7 +380,7 @@ export default function VartaLangLanding() {
         </div>
       </section>
 
-      {/* Social Proof */}
+      {/* Social Proof
       <section className="py-16 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10">
@@ -425,7 +425,7 @@ export default function VartaLangLanding() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Final CTA */}
       <section className={`py-24 px-4 relative overflow-hidden ${
@@ -470,7 +470,7 @@ export default function VartaLangLanding() {
               Join Free Now
               <ArrowRight className="w-5 h-5" />
             </Link>
-            <Link href="/jobs" className={`inline-flex items-center gap-2 px-10 py-4 rounded-full font-semibold text-base border transition-all hover:scale-105 ${
+            <Link href="/jobs/board" className={`inline-flex items-center gap-2 px-10 py-4 rounded-full font-semibold text-base border transition-all hover:scale-105 ${
               darkMode 
                 ? 'border-orange-700/50 text-orange-200 hover:bg-orange-900/20' 
                 : 'border-orange-300 text-gray-700 hover:bg-white'
