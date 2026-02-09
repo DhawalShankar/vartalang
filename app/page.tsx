@@ -64,8 +64,8 @@ export default function VartaLangLanding() {
           <p className={`text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed ${
             darkMode ? 'text-orange-200/80' : 'text-gray-600'
           }`}>
-            A platform where learners find teachers, teachers create content, and everyone—including specially-abled individuals—can access quality language education.
-            <span className="font-semibold"> Built for all of India.</span>
+           The language bridge India needs. Connecting learners with creators, knowledge with accessibility, tradition with opportunity—for every Indian, including our specially-abled community.
+            <span className="font-semibold"> VartaLang: Bridging India, one language at a time.</span>
           </p>
 
           {/* CTA */}
