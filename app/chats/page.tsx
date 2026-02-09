@@ -16,7 +16,9 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { useDarkMode } from '@/lib/DarkModeContext';
-import { useSocket } from '@/lib/SocketContext';
+import { createChatSocket, destroyChatSocket } from '@/lib/socketClient';
+import type { Socket } from "socket.io-client";
+
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
@@ -54,7 +56,9 @@ interface ChatDetail {
 
 function ChatsContent() {
   const { darkMode } = useDarkMode();
-  const { socket, isConnected } = useSocket();
+  const socketRef = useRef<Socket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const chatParam = searchParams.get('chat');
@@ -73,13 +77,68 @@ function ChatsContent() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const currentUserId = typeof window !== 'undefined' ? localStorage.getItem("userId") : null;
 
+  const handleReceiveMessage = (data: any) => {
+  const { chatId, message } = data;
+
+  if (message.sender === currentUserId) return;
+
+  if (selectedChat === chatId) {
+    setCurrentChatDetail(prev => {
+      if (!prev) return prev;
+      if (prev.messages.some(m => m._id === message._id)) return prev;
+
+      return {
+        ...prev,
+        messages: [...prev.messages, message],
+      };
+    });
+  }
+
+  fetchChats();
+};
+
+const handleMessagesRead = (data: any) => {
+  const { chatId } = data;
+
+  if (selectedChat !== chatId) return;
+
+  setCurrentChatDetail(prev => {
+    if (!prev) return prev;
+    return {
+      ...prev,
+      messages: prev.messages.map(m =>
+        m.sender === currentUserId ? { ...m, read: true } : m
+      ),
+    };
+  });
+};
+
+const handleUserBlocked = () => {
+  if (selectedChat) fetchChatMessages(selectedChat);
+  fetchChats();
+};
+
+const handleUserUnblocked = () => {
+  if (selectedChat) fetchChatMessages(selectedChat);
+  fetchChats();
+};
+useEffect(() => {
+  if (!selectedChat || !socketRef.current) return;
+
+  socketRef.current.emit("join_chat", `chat_${selectedChat}`);
+
+  return () => {
+    socketRef.current?.emit("leave_chat", `chat_${selectedChat}`);
+  };
+}, [selectedChat]);
+
   useEffect(() => {
     console.log("🔌 Socket Status Changed:", {
       isConnected,
-      socketExists: !!socket,
+      socketExists: !!socketRef.current,
       currentUserId
     });
-  }, [isConnected, socket, currentUserId]);
+  }, [isConnected, currentUserId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -112,142 +171,27 @@ function ChatsContent() {
   }, [chatParam, loading]);
 
   useEffect(() => {
-    if (!socket) {
-      console.warn("⚠️ Socket instance not available");
-      return;
-    }
+  const token = localStorage.getItem("token");
+  if (!token) return;
 
-    if (!isConnected) {
-      console.warn("⚠️ Socket not connected yet");
-      return;
-    }
+  const socket = createChatSocket(token);
+  socketRef.current = socket;
 
-    if (!currentUserId) {
-      console.warn("⚠️ User ID not available");
-      return;
-    }
+  socket.connect();
 
-    console.log("✅ Setting up Socket.IO listeners for user:", currentUserId);
+  socket.on("connect", () => setIsConnected(true));
+  socket.on("disconnect", () => setIsConnected(false));
 
-    if (selectedChat) {
-      console.log(`📍 Joining chat room: chat_${selectedChat}`);
-      socket.emit("join_chat", `chat_${selectedChat}`);
-    }
+  socket.on("receive_message", handleReceiveMessage);
+  socket.on("messages_read", handleMessagesRead);
+  socket.on("user_blocked", handleUserBlocked);
+  socket.on("user_unblocked", handleUserUnblocked);
 
-    const handleReceiveMessage = (data: any) => {
-      console.log("📨 Received message via Socket.IO:", data);
-      
-      const { chatId, message } = data;
-      
-      if (message.sender.toString() === currentUserId?.toString()) {
-        console.log("⚠️ Ignoring own message from socket (already added optimistically)");
-        return;
-      }
-      
-      if (selectedChat === chatId) {
-        setCurrentChatDetail(prev => {
-          if (!prev) return prev;
-          
-          const messageExists = prev.messages.some(m => m._id === message._id);
-          if (messageExists) {
-            console.log("⚠️ Message already exists, skipping duplicate");
-            return prev;
-          }
-          
-          console.log("✅ Adding new message to UI:", message);
-          
-          return {
-            ...prev,
-            messages: [...prev.messages, {
-              _id: message._id,
-              sender: message.sender.toString(),
-              text: message.text,
-              timestamp: message.timestamp,
-              read: message.read
-            }]
-          };
-        });
-      } else {
-        console.log(`📬 Message for different chat (${chatId}), updating chat list only`);
-      }
-      
-      fetchChats();
-    };
-
-    const handleMessagesRead = (data: any) => {
-      console.log("✅ Messages marked as read:", data);
-      
-      const { chatId, readBy } = data;
-      
-      if (readBy !== currentUserId && selectedChat === chatId) {
-        setCurrentChatDetail(prev => {
-          if (!prev) return prev;
-          
-          return {
-            ...prev,
-            messages: prev.messages.map(msg => 
-              msg.sender === currentUserId ? { ...msg, read: true } : msg
-            )
-          };
-        });
-      }
-    };
-
-    const handleUserBlocked = (data: any) => {
-      console.log("🚫 User blocked:", data);
-      if (data.chatId === selectedChat && selectedChat) {
-        fetchChatMessages(selectedChat);
-      }
-      fetchChats();
-    };
-
-    const handleUserUnblocked = (data: any) => {
-      console.log("✅ User unblocked:", data);
-      if (data.chatId === selectedChat && selectedChat) {
-        fetchChatMessages(selectedChat);
-      }
-      fetchChats();
-    };
-
-    const handleConnectError = (error: any) => {
-      console.error("❌ Socket connection error:", error);
-    };
-
-    const handleDisconnect = (reason: string) => {
-      console.warn("🔌 Socket disconnected:", reason);
-    };
-
-    const handleReconnect = () => {
-      console.log("🔄 Socket reconnected, rejoining chat");
-      if (selectedChat) {
-        socket.emit("join_chat", `chat_${selectedChat}`);
-      }
-    };
-
-    socket.on("receive_message", handleReceiveMessage);
-    socket.on("messages_read", handleMessagesRead);
-    socket.on("user_blocked", handleUserBlocked);
-    socket.on("user_unblocked", handleUserUnblocked);
-    socket.on("connect_error", handleConnectError);
-    socket.on("disconnect", handleDisconnect);
-    socket.on("connect", handleReconnect);
-
-    return () => {
-      console.log("🧹 Cleaning up Socket.IO listeners");
-      socket.off("receive_message", handleReceiveMessage);
-      socket.off("messages_read", handleMessagesRead);
-      socket.off("user_blocked", handleUserBlocked);
-      socket.off("user_unblocked", handleUserUnblocked);
-      socket.off("connect_error", handleConnectError);
-      socket.off("disconnect", handleDisconnect);
-      socket.off("connect", handleReconnect);
-      
-      if (selectedChat) {
-        console.log(`👋 Leaving chat room: chat_${selectedChat}`);
-        socket.emit("leave_chat", `chat_${selectedChat}`);
-      }
-    };
-  }, [socket, isConnected, selectedChat, currentUserId]);
+  return () => {
+    socket.off();
+    destroyChatSocket();
+  };
+}, []);
 
   const fetchChats = async () => {
     const token = localStorage.getItem("token");
@@ -314,9 +258,9 @@ function ChatsContent() {
       // ✅ NEW: Delete notifications when opening chat
       await deleteNotificationsForChat(chatId);
       
-      if (socket && isConnected) {
+      if (socketRef.current && isConnected) {
         console.log(`📍 Joining chat room: chat_${chatId}`);
-        socket.emit("join_chat", `chat_${chatId}`);
+        socketRef.current?.emit("join_chat", `chat_${chatId}`);
       } else {
         console.warn("⚠️ Cannot join chat room - socket not connected");
       }
@@ -403,9 +347,9 @@ function ChatsContent() {
   };
 
   const handleChatClick = (chatId: string) => {
-    if (selectedChat && socket && isConnected) {
+    if (selectedChat && socketRef.current && isConnected) {
       console.log(`👋 Leaving previous chat: chat_${selectedChat}`);
-      socket.emit("leave_chat", `chat_${selectedChat}`);
+      socketRef.current?.emit("leave_chat", `chat_${selectedChat}`);
     }
     
     setSelectedChat(chatId);
@@ -414,9 +358,9 @@ function ChatsContent() {
   };
 
   const handleBack = () => {
-    if (selectedChat && socket && isConnected) {
+    if (selectedChat && socketRef.current && isConnected) {
       console.log(`👋 Leaving chat: chat_${selectedChat}`);
-      socket.emit("leave_chat", `chat_${selectedChat}`);
+      socketRef.current?.emit("leave_chat", `chat_${selectedChat}`);
     }
     
     setSelectedChat(null);

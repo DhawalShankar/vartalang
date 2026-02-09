@@ -29,13 +29,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       > 
-      <SocketProvider>
+      
       <AuthProvider>
         <DarkModeProvider>
+          <SocketProvider>
         {children}
+         </SocketProvider>
         </DarkModeProvider>
       </AuthProvider>
-      </SocketProvider>
+     
       </body>
     </html>
   );

@@ -7,7 +7,6 @@ import Link from "next/link";
 import { Menu, X, Sun, Moon, Bell, User, MessageCircle, GraduationCap } from "lucide-react";
 import { useDarkMode } from "@/lib/DarkModeContext";
 import { useAuth } from "@/lib/AuthContext";
-import { useSocket } from "@/lib/SocketContext";
 import { useRouter } from "next/navigation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
@@ -26,7 +25,7 @@ export default function Navbar() {
   
   const { darkMode, setDarkMode } = useDarkMode();
   const { isLoggedIn } = useAuth();
-  const { socket, userId } = useSocket();
+  
 
   // ✅ ADD THIS - Fetch user profile to get role
   useEffect(() => {
@@ -60,26 +59,17 @@ export default function Navbar() {
 
   // Listen for real-time chat message notifications
   useEffect(() => {
-    if (!socket || !userId) return;
+  if (!isLoggedIn) return;
 
-    const handleNewMessage = (data: any) => {
-      console.log("New message notification received:", data);
-      
-      if (data.recipientId !== userId) {
-        console.log("Not my message notification, ignoring");
-        return;
-      }
-      
-      setUnreadCount(prev => prev + 1);
-      fetchNotifications();
-    };
+  fetchUnreadCount();
+  fetchNotifications();
 
-    socket.on("new_message_notification", handleNewMessage);
+  const interval = setInterval(() => {
+    fetchUnreadCount();
+  }, 30000); // ⏱️ every 30 sec
 
-    return () => {
-      socket.off("new_message_notification", handleNewMessage);
-    };
-  }, [socket, userId]);
+  return () => clearInterval(interval);
+}, [isLoggedIn]);
 
   // Close notification dropdown on outside click
   useEffect(() => {
