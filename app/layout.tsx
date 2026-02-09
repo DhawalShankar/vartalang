@@ -18,9 +18,9 @@ export const metadata: Metadata = {
   title: "VartaLang - India's Language Bridge",
   description: "Learn languages by connecting with real people across India",
   icons: {
-    icon: '/logo.png',
-    shortcut: '/logo.png',
-    apple: '/logo.png',
+    icon: '/icon.png',
+    shortcut: '/icon.png',
+    apple: '/icon.png',
   },
 };
 
