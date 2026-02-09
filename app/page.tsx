@@ -144,12 +144,12 @@ export default function VartaLangLanding() {
               {
                 emoji: '🛍️',
                 problem: 'A Kerala artisan can\'t sell to Delhi',
-                reason: 'doesn\'t speak Hindi'
+                reason: 'don\'t speak Hindi'
               },
               {
                 emoji: '🏪',
                 problem: 'A Bengali vendor can\'t work in Mumbai',
-                reason: 'doesn\'t speak Marathi'
+                reason: 'don\'t speak Marathi'
               },
               {
                 emoji: '🎨',
