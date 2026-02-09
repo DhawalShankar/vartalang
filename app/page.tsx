@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Heart, ArrowRight, MessageCircle, Target, Users, Globe, Shield, Sparkles, Star, Zap, TrendingUp, CheckCircle, Briefcase } from 'lucide-react';
+import { Heart, ArrowRight, MessageCircle, Target, Users, Globe, Shield, Sparkles, BookOpen, Zap, TrendingUp, CheckCircle, Briefcase, GraduationCap, Mic, Book, Award, UserPlus, Building2 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useDarkMode } from '@/lib/DarkModeContext';
@@ -46,17 +46,17 @@ export default function VartaLangLanding() {
               : 'bg-orange-50 border-orange-200 text-orange-700'
           }`}>
             <Heart className="w-3 h-3 fill-current" />
-            <span className="text-xs font-semibold">India's Language Bridge</span>
+            <span className="text-xs font-semibold">India's Inclusive Language Learning Ecosystem</span>
           </div>
 
           {/* Headline */}
           <h1 className={`text-4xl md:text-5xl font-bold mb-5 leading-tight ${
             darkMode ? 'text-orange-50' : 'text-gray-900'
           }`}>
-            Learn any Indian language by
+            Learn languages through
             <br />
             <span className={`${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-              teaching yours to someone else
+              literature, conversation & community
             </span>
           </h1>
 
@@ -64,31 +64,30 @@ export default function VartaLangLanding() {
           <p className={`text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed ${
             darkMode ? 'text-orange-200/80' : 'text-gray-600'
           }`}>
-            A platform where language exchange meets real opportunity. 
-            Connect with native speakers, help each other learn, find language-specific jobs.
-            <span className="font-semibold"> No bots. No gimmicks. Just real people.</span>
+            A platform where learners find teachers, teachers create content, and everyone—including specially-abled individuals—can access quality language education.
+            <span className="font-semibold"> Built for all of India.</span>
           </p>
 
           {/* CTA */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link href="/auth/signup" className="group px-8 py-4 rounded-full font-semibold text-base bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-lg transition-all hover:scale-105 inline-flex items-center gap-2">
-              Get Started
+              Join as Learner
               <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
             </Link>
-            <Link href="/about" className={`px-8 py-4 rounded-full font-medium text-base border transition-all hover:scale-105 ${
+            <Link href="/teachers" className={`px-8 py-4 rounded-full font-medium text-base border transition-all hover:scale-105 inline-flex items-center gap-2 ${
               darkMode 
                 ? 'border-orange-800/50 text-orange-200 hover:bg-orange-900/20' 
                 : 'border-orange-200 text-gray-700 hover:bg-orange-50'
             }`}>
-              Learn More
+              <GraduationCap className="w-4 h-4" />
+              Join as Teacher
             </Link>
           </div>
 
-          {/* Early Community Note */}
-          <div className="mt-10">
+          {/* Multi-audience Note */}
+          <div className="mt-10 flex flex-wrap justify-center gap-4">
             <p className={`text-sm font-medium ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>
-              <Zap className="w-4 h-4 inline mr-1" />
-              Be among the first to join our growing community
+              Open to: Students • Teachers • Language Coaches • Content Creators • Publishers • Government Institutes
             </p>
           </div>
         </div>
@@ -112,116 +111,153 @@ export default function VartaLangLanding() {
         </div>
       </section>
 
-      {/* The Problem */}
+      {/* For Different Audiences */}
       <section className="py-20 px-4">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h2 className={`text-3xl md:text-4xl font-bold mb-3 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-              The Language Barrier Is Real
+              Who VartaLang Is For
             </h2>
-            <p className={`text-base max-w-2xl mx-auto ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-              Millions of Indians miss opportunities because they don't speak the right language
+            <p className={`text-base ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+              Everyone has a place here
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               {
-                emoji: '💼',
-                title: 'Job Opportunities Lost',
-                desc: 'Can\'t apply for customer-facing roles in other states'
+                icon: Users,
+                title: 'Language Learners',
+                desc: 'Find practice partners, access courses, connect with native speakers across India.',
+                cta: 'Start Learning',
+                link: '/auth/signup'
               },
               {
-                emoji: '🛍️',
-                title: 'Business Expansion Blocked',
-                desc: 'Artisans and vendors stuck in one region'
+                icon: GraduationCap,
+                title: 'Teachers & Coaches',
+                desc: 'Create courses, teach conversational language, earn from your expertise. We help you reach students.',
+                cta: 'Become a Teacher',
+                link: '/teachers'
               },
               {
-                emoji: '🎓',
-                title: 'Limited Learning Options',
-                desc: 'Expensive tutors or ineffective apps are the only choices'
+                icon: Book,
+                title: 'Content Creators & Authors',
+                desc: 'Publish your language learning books, create literature-based courses. We provide the platform.',
+                cta: 'Publish Content',
+                link: '/teachers'
+              },
+              {
+                icon: Briefcase,
+                title: 'Workers & Job Seekers',
+                desc: 'Find opportunities where language skills unlock income. Post jobs where language is the requirement.',
+                cta: 'Browse Jobs',
+                link: '/jobs'
+              },
+              {
+                icon: Building2,
+                title: 'Government Institutes',
+                desc: 'Collaborate with us to bring quality language education to more people. Institutional partnerships welcome.',
+                cta: 'Partner With Us',
+                link: '/about'
+              },
+              {
+                icon: Heart,
+                title: 'Specially-Abled Community',
+                desc: 'Braille scripts, inclusive design, accessible learning. We\'re building for everyone, truly.',
+                cta: 'Learn More',
+                link: '/about'
               }
-            ].map((item, i) => (
-              <div 
+            ].map((audience, i) => (
+              <Link
+                href={audience.link}
                 key={i}
-                className={`p-6 rounded-2xl border text-center transition-all hover:scale-105 ${
+                className={`group p-6 rounded-2xl border transition-all hover:scale-105 block ${
                   darkMode 
-                    ? 'bg-orange-900/10 border-orange-800/30' 
-                    : 'bg-white border-orange-100'
+                    ? 'bg-orange-900/10 border-orange-800/30 hover:bg-orange-900/20' 
+                    : 'bg-white border-orange-100 hover:shadow-lg'
                 }`}
               >
-                <div className="text-4xl mb-3">{item.emoji}</div>
-                <h3 className={`font-semibold mb-2 ${darkMode ? 'text-orange-100' : 'text-gray-900'}`}>
-                  {item.title}
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 bg-linear-to-br ${
+                  darkMode 
+                    ? 'from-orange-500/20 to-red-600/20' 
+                    : 'from-orange-50 to-red-50'
+                }`}>
+                  <audience.icon className={`w-6 h-6 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                </div>
+                <h3 className={`text-lg font-bold mb-2 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                  {audience.title}
                 </h3>
-                <p className={`text-sm ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>
-                  {item.desc}
+                <p className={`text-base mb-4 leading-relaxed ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                  {audience.desc}
                 </p>
-              </div>
+                <span className={`text-sm font-semibold ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                  {audience.cta} →
+                </span>
+              </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* What VartaLang Does */}
+      {/* What's Live Now */}
       <section className="py-20 px-4">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <h2 className={`text-3xl md:text-4xl font-bold mb-3 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-              What VartaLang Can Do
+              Available Right Now
             </h2>
             <p className={`text-base ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-              Built for real language exchange and opportunity
+              Start using these features today
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-5">
             {[
               {
-                icon: MessageCircle,
-                title: 'Match with Language Exchange Partners',
-                desc: 'Our algorithm connects you with native speakers who want to learn YOUR language. You teach them, they teach you.',
-                capability: 'Smart matching based on languages, goals, and interests'
+                icon: Target,
+                title: 'Smart Language Matching',
+                desc: 'Our algorithm finds the best practice partners for you based on language compatibility and mutual benefit.',
+                status: 'Live',
+                link: '/matches'
               },
               {
-                icon: Shield,
-                title: 'Safe, Filtered Conversations',
-                desc: 'Every message is automatically filtered for profanity and inappropriate content. Block and report features built in.',
-                capability: 'Real-time content moderation in 20+ languages'
+                icon: MessageCircle,
+                title: 'Real-Time Conversations',
+                desc: 'Chat with your language partners. Practice naturally through conversation.',
+                status: 'Live',
+                link: '/chats'
               },
               {
                 icon: Briefcase,
-                title: 'Language-Specific Job Board',
-                desc: 'Find opportunities where language skills are the primary requirement. Post jobs for free and reach motivated candidates.',
-                capability: 'Direct employer-candidate connection'
+                title: 'Language-Specific Jobs',
+                desc: 'Browse and post opportunities where language skills are the primary requirement. Free for 7 days.',
+                status: 'Live',
+                link: '/jobs'
               },
               {
-                icon: Target,
-                title: 'Personalized Match Scoring',
-                desc: 'See exactly how compatible you are with each potential partner based on multiple factors.',
-                capability: 'Transparent compatibility algorithm'
-              },
-              {
-                icon: Users,
-                title: 'Real-Time Chat & Status',
-                desc: 'Know when your partners are online. See typing indicators. Have natural, flowing conversations.',
-                capability: 'Built for genuine human connection'
-              },
-              {
-                icon: Globe,
-                title: 'Support for 14+ Indian Languages',
-                desc: 'Hindi, Tamil, Telugu, Bengali, Marathi, Gujarati, Kannada, Malayalam, Punjabi, and more.',
-                capability: 'Truly multilingual platform'
+                icon: Shield,
+                title: 'Safe Community Features',
+                desc: 'Block and report tools to maintain a respectful learning environment.',
+                status: 'Live',
+                link: '/auth/signup'
               }
             ].map((feature, i) => (
-              <div 
+              <Link
+                href={feature.link}
                 key={i}
-                className={`group relative p-6 rounded-2xl border transition-all duration-300 hover:scale-[1.02] ${
+                className={`group relative p-6 rounded-2xl border transition-all hover:scale-[1.02] block ${
                   darkMode 
                     ? 'bg-orange-900/10 border-orange-800/30 hover:bg-orange-900/20' 
-                    : 'bg-white border-orange-100 hover:shadow-lg hover:border-orange-200'
+                    : 'bg-white border-orange-100 hover:shadow-lg'
                 }`}
               >
+                <div className={`absolute top-4 right-4 px-2 py-1 rounded-full text-xs font-semibold ${
+                  darkMode 
+                    ? 'bg-green-900/30 text-green-300' 
+                    : 'bg-green-100 text-green-700'
+                }`}>
+                  ● {feature.status}
+                </div>
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 bg-linear-to-br ${
                   darkMode 
                     ? 'from-orange-500/20 to-red-600/20' 
@@ -232,118 +268,63 @@ export default function VartaLangLanding() {
                 <h3 className={`text-lg font-bold mb-2 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
                   {feature.title}
                 </h3>
-                <p className={`text-base leading-relaxed mb-3 ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                <p className={`text-base ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
                   {feature.desc}
                 </p>
-                <p className={`text-xs font-medium ${darkMode ? 'text-orange-400/80' : 'text-orange-600/80'}`}>
-                  ✓ {feature.capability}
-                </p>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
+      {/* Coming Soon - LMS */}
       <section className="py-20 px-4">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
+            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-4 border ${
+              darkMode 
+                ? 'bg-orange-900/20 border-orange-800/40 text-orange-300' 
+                : 'bg-orange-50 border-orange-200 text-orange-700'
+            }`}>
+              <Sparkles className="w-3 h-3" />
+              <span className="text-xs font-semibold">Building Now</span>
+            </div>
             <h2 className={`text-3xl md:text-4xl font-bold mb-3 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-              How It Works
+              Coming Soon: Complete Learning Platform
             </h2>
             <p className={`text-base ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-              Simple, transparent process
-            </p>
-          </div>
-
-          <div className="grid gap-6">
-            {[
-              {
-                step: '1',
-                title: 'Create Your Profile',
-                desc: 'Tell us what languages you speak and want to learn. Add your interests and location.'
-              },
-              {
-                step: '2',
-                title: 'Get Matched',
-                desc: 'Our algorithm finds the best partners for you based on language compatibility and mutual benefit.'
-              },
-              {
-                step: '3',
-                title: 'Start Conversations',
-                desc: 'Send connection requests. Once accepted, start chatting and helping each other learn.'
-              },
-              {
-                step: '4',
-                title: 'Explore Opportunities',
-                desc: 'Browse jobs where your language skills matter. Post opportunities if you\'re hiring.'
-              }
-            ].map((item, i) => (
-              <div 
-                key={i}
-                className={`flex gap-5 p-6 rounded-2xl border ${
-                  darkMode 
-                    ? 'bg-orange-900/10 border-orange-800/30' 
-                    : 'bg-white border-orange-100'
-                }`}
-              >
-                <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xl ${
-                  darkMode 
-                    ? 'bg-orange-500/20 text-orange-300' 
-                    : 'bg-orange-100 text-orange-600'
-                }`}>
-                  {item.step}
-                </div>
-                <div>
-                  <h3 className={`text-lg font-bold mb-2 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-                    {item.title}
-                  </h3>
-                  <p className={`text-base ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                    {item.desc}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Why Different */}
-      <section className="py-16 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className={`text-3xl md:text-4xl font-bold mb-3 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-              Why VartaLang Is Different
-            </h2>
-            <p className={`text-base ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-              Built with India's reality in mind
+              We're building the infrastructure. You can help.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-5">
             {[
               {
-                title: 'Not a Language Learning App',
-                desc: 'We don\'t teach grammar rules. We connect you with real people for practical conversation.',
-                icon: '🚫📱'
+                icon: BookOpen,
+                title: 'Structured Courses',
+                desc: 'Learn languages through literature and structured curriculum. Beginner to advanced levels.',
+                invite: 'Teachers: Create courses and earn'
               },
               {
-                title: 'Not a Dating Platform',
-                desc: 'Strict content filtering, clear intent, respectful community guidelines. Language learning only.',
-                icon: '🛡️'
+                icon: Mic,
+                title: 'Conversational Practice Modules',
+                desc: 'Guided practice sessions with real-life scenarios. Learn how people actually speak.',
+                invite: 'Language coaches: Join our platform'
               },
               {
-                title: 'Not Just for English Speakers',
-                desc: 'Every Indian language is equal here. Learn Tamil, Gujarati, Bengali—whatever you need.',
-                icon: '🇮🇳'
+                icon: Book,
+                title: 'Publishing Platform',
+                desc: 'Get your language learning books published and reach thousands of learners.',
+                invite: 'Authors: Submit your manuscripts'
               },
               {
-                title: 'Not Focused on Vanity Metrics',
-                desc: 'We measure real connections made and actual learning progress, not likes or views.',
-                icon: '📊'
+                icon: Award,
+                title: 'Certification Programs',
+                desc: 'Earn recognized certificates for your language proficiency.',
+                invite: 'Institutes: Partner for accreditation'
               }
-            ].map((item, i) => (
-              <div 
+            ].map((coming, i) => (
+              <div
                 key={i}
                 className={`p-6 rounded-2xl border ${
                   darkMode 
@@ -351,20 +332,114 @@ export default function VartaLangLanding() {
                     : 'bg-white border-orange-100'
                 }`}
               >
-                <div className="text-3xl mb-3">{item.icon}</div>
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 bg-linear-to-br ${
+                  darkMode 
+                    ? 'from-orange-500/20 to-red-600/20' 
+                    : 'from-orange-50 to-red-50'
+                }`}>
+                  <coming.icon className={`w-6 h-6 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                </div>
                 <h3 className={`text-lg font-bold mb-2 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-                  {item.title}
+                  {coming.title}
                 </h3>
-                <p className={`text-base ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                  {item.desc}
+                <p className={`text-base mb-3 ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                  {coming.desc}
                 </p>
+                <div className={`pt-3 border-t ${darkMode ? 'border-orange-800/30' : 'border-orange-100'}`}>
+                  <p className={`text-sm font-medium ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                    💡 {coming.invite}
+                  </p>
+                </div>
               </div>
             ))}
+          </div>
+
+          <div className="mt-10 text-center">
+            <Link 
+              href="/teachers"
+              className={`inline-flex items-center gap-2 px-8 py-4 rounded-full font-semibold border transition-all hover:scale-105 ${
+                darkMode 
+                  ? 'bg-orange-900/20 border-orange-800/50 text-orange-200 hover:bg-orange-900/30' 
+                  : 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100'
+              }`}
+            >
+              <UserPlus className="w-5 h-5" />
+              Register Your Interest as a Teacher/Creator
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* Community Building Message */}
+      {/* Our Philosophy */}
+      <section className="py-20 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className={`text-3xl md:text-4xl font-bold mb-3 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+              Language Through Literature
+            </h2>
+            <p className={`text-base ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+              Our core belief
+            </p>
+          </div>
+
+          <div className={`p-8 rounded-3xl border ${
+            darkMode 
+              ? 'bg-orange-900/10 border-orange-800/30' 
+              : 'bg-white border-orange-100'
+          }`}>
+            <p className={`text-lg leading-relaxed mb-4 ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
+              We believe the best way to learn a language is through its <span className="font-semibold">literature, stories, and culture</span>. 
+              Not just grammar rules and vocabulary lists.
+            </p>
+            <p className={`text-base leading-relaxed mb-6 ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+              When you read Tamil poetry, Hindi short stories, Bengali novels—you don't just learn words. 
+              You understand how people think, feel, and express themselves in that language.
+            </p>
+            <div className={`p-5 rounded-2xl border ${
+              darkMode 
+                ? 'bg-orange-900/20 border-orange-800/30' 
+                : 'bg-orange-50 border-orange-200'
+            }`}>
+              <p className={`text-base italic ${darkMode ? 'text-orange-300' : 'text-orange-800'}`}>
+                "That's why we're inviting language teachers, literature experts, and content creators 
+                to help us build courses that actually work. Courses that teach language the way it should be taught."
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Inclusivity Section */}
+      <section className="py-16 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className={`p-10 rounded-3xl border ${
+            darkMode 
+              ? 'bg-orange-900/10 border-orange-800/30' 
+              : 'bg-white border-orange-100 shadow-lg'
+          }`}>
+            <div className={`inline-flex items-center justify-center w-14 h-14 rounded-full mb-5 bg-linear-to-br ${
+              darkMode 
+                ? 'from-orange-500/20 to-red-600/20' 
+                : 'from-orange-50 to-red-50'
+            }`}>
+              <Globe className={`w-7 h-7 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+            </div>
+            <h3 className={`text-2xl md:text-3xl font-bold mb-4 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+              Truly Inclusive Learning
+            </h3>
+            <p className={`text-lg leading-relaxed mb-4 ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
+              We're building support for <span className="font-semibold">Braille scripts</span> and other accessibility features 
+              so that specially-abled individuals can learn languages without barriers.
+            </p>
+            <p className={`text-base ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>
+              If you work with specially-abled communities or understand accessible education, 
+              we want to collaborate with you.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Community Growth */}
       <section className="py-16 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <div className={`p-10 rounded-3xl border ${
@@ -380,19 +455,19 @@ export default function VartaLangLanding() {
               <TrendingUp className={`w-7 h-7 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
             </div>
             <h3 className={`text-2xl md:text-3xl font-bold mb-4 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-              We Grow Together
+              We Grow With Our Community
             </h3>
             <p className={`text-lg leading-relaxed mb-4 ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-              VartaLang gets better with every person who joins. 
-              <span className="font-semibold"> More users = better matches = more opportunities.</span>
+              VartaLang gets stronger with every learner who joins, every teacher who contributes, 
+              every conversation that happens.
             </p>
             <p className={`text-base ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>
-              Your conversations help someone learn. Your job posts help someone earn. 
-              Your participation builds something meaningful for millions of Indians.
+              The more people use it, the better our matches become. 
+              The more teachers create content, the richer our learning library grows.
             </p>
             <div className={`mt-6 pt-6 border-t ${darkMode ? 'border-orange-800/30' : 'border-orange-100'}`}>
               <p className={`text-sm font-semibold ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                Be part of building India's language bridge 🌉
+                🌉 Help us build India's language bridge—one conversation, one course, one connection at a time
               </p>
             </div>
           </div>
@@ -417,42 +492,42 @@ export default function VartaLangLanding() {
           }`}>
             <Heart className="w-4 h-4 fill-current" />
             <span className="text-sm font-semibold">
-              Start your language journey today
+              Join the movement
             </span>
           </div>
 
           <h2 className={`text-4xl md:text-5xl font-bold mb-4 leading-tight ${
             darkMode ? 'text-orange-50' : 'text-gray-900'
           }`}>
-            Ready to break the
+            Be part of something
             <br />
-            language barrier?
+            meaningful
           </h2>
 
           <p className={`text-lg mb-8 max-w-xl mx-auto ${
             darkMode ? 'text-orange-200/80' : 'text-gray-600'
           }`}>
-            Join VartaLang and connect with people who can help you learn 
-            the language you need for your next opportunity.
+            Whether you're here to learn, teach, create, or collaborate—
+            there's a place for you on VartaLang.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/auth/signup" className="inline-flex items-center gap-2 px-10 py-4 rounded-full font-semibold text-base bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-xl hover:scale-105 transition-all">
-              Create Your Profile
+              Join as Learner
               <ArrowRight className="w-5 h-5" />
             </Link>
-            <Link href="/jobs" className={`inline-flex items-center gap-2 px-10 py-4 rounded-full font-semibold text-base border transition-all hover:scale-105 ${
+            <Link href="/teachers" className={`inline-flex items-center gap-2 px-10 py-4 rounded-full font-semibold text-base border transition-all hover:scale-105 ${
               darkMode 
                 ? 'border-orange-700/50 text-orange-200 hover:bg-orange-900/20' 
                 : 'border-orange-300 text-gray-700 hover:bg-white'
             }`}>
-              <Briefcase className="w-5 h-5" />
-              Explore Jobs
+              <GraduationCap className="w-5 h-5" />
+              Join as Teacher
             </Link>
           </div>
 
           <p className={`text-sm mt-6 ${darkMode ? 'text-orange-300/60' : 'text-gray-500'}`}>
-            Takes 2 minutes to set up. Start connecting immediately.
+            Students • Teachers • Coaches • Authors • Institutes • Everyone Welcome
           </p>
         </div>
       </section>
