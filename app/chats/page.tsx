@@ -679,163 +679,170 @@ function ChatsContent() {
           </div>
 
           {/* Chat Window */}
-          <div className={`${selectedChat ? 'block' : 'hidden'} md:block md:col-span-2 rounded-3xl overflow-hidden flex flex-col ${darkMode ? "bg-orange-900/10 border border-orange-800/30" : "bg-white border border-orange-200 shadow-lg"}`}>
-            
-            {currentChatDetail ? (
-              <>
-                {/* Chat Header */}
-                <div className={`sticky top-0 z-10 p-4 border-b flex items-center justify-between ${darkMode ? "bg-orange-900/10 border-orange-800/30 backdrop-blur-sm" : "bg-white border-orange-200 backdrop-blur-sm"}`}>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={handleBack}
-                      className={`md:hidden p-2 rounded-lg transition-all ${darkMode ? "hover:bg-orange-900/30 text-orange-300" : "hover:bg-orange-100 text-orange-600"}`}
-                    >
-                      <ArrowLeft className="w-5 h-5" />
-                    </button>
-                    <div className="relative">
-                      <div className="w-10 h-10 rounded-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-semibold">
-                        {getInitials(currentChatDetail.user.name)}
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className={`font-semibold ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
-                        {currentChatDetail.user.name}
-                      </h3>
-                      <p className={`text-xs ${darkMode ? "text-orange-300/70" : "text-orange-600/70"}`}>
-                        Teaches: {currentChatDetail.user.languagesKnow[0]?.language || 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 relative">
-                    <button 
-                      onClick={() => setShowMenu(!showMenu)}
-                      className={`p-2 rounded-lg transition-all ${darkMode ? "hover:bg-orange-900/30 text-orange-300" : "hover:bg-orange-100 text-orange-600"}`}
-                    >
-                      <MoreVertical className="w-5 h-5" />
-                    </button>
+       // Replace the "Chat Window" section (around line 600)
 
-                    {showMenu && (
-                      <div className={`absolute top-12 right-0 rounded-xl shadow-xl border z-10 min-w-50 ${
-                        darkMode ? "bg-orange-900/95 border-orange-800/30 backdrop-blur-sm" : "bg-white border-orange-200"
-                      }`}>
-                        {currentChatDetail.isBlocked ? (
-                          <button
-                            onClick={handleUnblockUser}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-2 rounded-t-xl transition-all ${
-                              darkMode ? "hover:bg-orange-900/50 text-green-400" : "hover:bg-green-50 text-green-700"
-                            }`}
-                          >
-                            <Shield className="w-4 h-4" />
-                            <span className="text-sm font-medium">Unblock User</span>
-                          </button>
-                        ) : (
-                          <>
-                            <button
-                              onClick={handleBlockUser}
-                              className={`w-full px-4 py-3 text-left flex items-center gap-2 rounded-t-xl transition-all ${
-                                darkMode ? "hover:bg-orange-900/50 text-orange-300" : "hover:bg-orange-50 text-orange-700"
-                              }`}
-                            >
-                              <Ban className="w-4 h-4" />
-                              <span className="text-sm font-medium">Block User</span>
-                            </button>
-                            <button
-                              onClick={() => {
-                                setShowReportDialog(true);
-                                setShowMenu(false);
-                              }}
-                              className={`w-full px-4 py-3 text-left flex items-center gap-2 transition-all ${
-                                darkMode ? "hover:bg-orange-900/50 text-yellow-400" : "hover:bg-yellow-50 text-yellow-700"
-                              }`}
-                            >
-                              <AlertTriangle className="w-4 h-4" />
-                              <span className="text-sm font-medium">Report & Block</span>
-                            </button>
-                          </>
-                        )}
-                        <button
-                          onClick={handleDeleteChat}
-                          className={`w-full px-4 py-3 text-left flex items-center gap-2 rounded-b-xl transition-all border-t ${
-                            darkMode ? "hover:bg-orange-900/50 text-red-400 border-orange-800/30" : "hover:bg-red-50 text-red-700 border-orange-200"
-                          }`}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          <span className="text-sm font-medium">Delete Chat</span>
-                        </button>
-                      </div>
+{/* Chat Window */}
+<div className={`${selectedChat ? 'block' : 'hidden'} md:block md:col-span-2 rounded-3xl overflow-hidden flex flex-col ${darkMode ? "bg-orange-900/10 border border-orange-800/30" : "bg-white border border-orange-200 shadow-lg"}`}>
+  
+  {currentChatDetail ? (
+    <>
+      {/* Chat Header */}
+      <div className={`p-4 border-b flex items-center justify-between ${darkMode ? "bg-orange-900/10 border-orange-800/30" : "bg-white border-orange-200"}`}>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleBack}
+            className={`md:hidden p-2 rounded-lg transition-all ${darkMode ? "hover:bg-orange-900/30 text-orange-300" : "hover:bg-orange-100 text-orange-600"}`}
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="relative">
+            <div className="w-10 h-10 rounded-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-semibold">
+              {getInitials(currentChatDetail.user.name)}
+            </div>
+          </div>
+          <div>
+            <h3 className={`font-semibold ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
+              {currentChatDetail.user.name}
+            </h3>
+            <p className={`text-xs ${darkMode ? "text-orange-300/70" : "text-orange-600/70"}`}>
+              Teaches: {currentChatDetail.user.languagesKnow[0]?.language || 'N/A'}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 relative">
+          <button 
+            onClick={() => setShowMenu(!showMenu)}
+            className={`p-2 rounded-lg transition-all ${darkMode ? "hover:bg-orange-900/30 text-orange-300" : "hover:bg-orange-100 text-orange-600"}`}
+          >
+            <MoreVertical className="w-5 h-5" />
+          </button>
+
+          {showMenu && (
+            <div className={`absolute top-12 right-0 rounded-xl shadow-xl border z-10 min-w-50 ${
+              darkMode ? "bg-orange-900/95 border-orange-800/30 backdrop-blur-sm" : "bg-white border-orange-200"
+            }`}>
+              {currentChatDetail.isBlocked ? (
+                <button
+                  onClick={handleUnblockUser}
+                  className={`w-full px-4 py-3 text-left flex items-center gap-2 rounded-t-xl transition-all ${
+                    darkMode ? "hover:bg-orange-900/50 text-green-400" : "hover:bg-green-50 text-green-700"
+                  }`}
+                >
+                  <Shield className="w-4 h-4" />
+                  <span className="text-sm font-medium">Unblock User</span>
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={handleBlockUser}
+                    className={`w-full px-4 py-3 text-left flex items-center gap-2 rounded-t-xl transition-all ${
+                      darkMode ? "hover:bg-orange-900/50 text-orange-300" : "hover:bg-orange-50 text-orange-700"
+                    }`}
+                  >
+                    <Ban className="w-4 h-4" />
+                    <span className="text-sm font-medium">Block User</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowReportDialog(true);
+                      setShowMenu(false);
+                    }}
+                    className={`w-full px-4 py-3 text-left flex items-center gap-2 transition-all ${
+                      darkMode ? "hover:bg-orange-900/50 text-yellow-400" : "hover:bg-yellow-50 text-yellow-700"
+                    }`}
+                  >
+                    <AlertTriangle className="w-4 h-4" />
+                    <span className="text-sm font-medium">Report & Block</span>
+                  </button>
+                </>
+              )}
+              <button
+                onClick={handleDeleteChat}
+                className={`w-full px-4 py-3 text-left flex items-center gap-2 rounded-b-xl transition-all border-t ${
+                  darkMode ? "hover:bg-orange-900/50 text-red-400 border-orange-800/30" : "hover:bg-red-50 text-red-700 border-orange-200"
+                }`}
+              >
+                <Trash2 className="w-4 h-4" />
+                <span className="text-sm font-medium">Delete Chat</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {currentChatDetail.isBlocked && (
+        <div className={`p-3 text-center border-b ${
+          darkMode ? "bg-red-900/20 border-red-800/30 text-red-400" : "bg-red-50 border-red-200 text-red-700"
+        }`}>
+          <div className="flex items-center justify-center gap-2">
+            <Ban className="w-4 h-4" />
+            <span className="text-sm font-medium">You have blocked this user</span>
+          </div>
+        </div>
+      )}
+
+      {/* Messages - ✅ FIXED HEIGHT FOR MOBILE */}
+      <div 
+        className={`flex-1 p-4 space-y-4 overflow-y-auto ${darkMode ? "bg-[#1a1410]/50" : "bg-orange-50/30"}`}
+        style={{ 
+          height: 'calc(100vh - 250px)', // Mobile
+          maxHeight: 'calc(100vh - 250px)' 
+        }}
+      >
+        {currentChatDetail.messages.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <p className={`text-sm ${darkMode ? "text-orange-300/70" : "text-orange-600/70"}`}>
+              No messages yet. Say hello!
+            </p>
+          </div>
+        ) : (
+          currentChatDetail.messages.map((msg) => {
+            const isMe = msg.sender.toString() === currentUserId?.toString();
+            
+            return (
+              <div
+                key={msg._id}
+                className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+              >
+                <div className={`max-w-[70%] flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+                  {!isMe && (
+                    <span className={`text-xs mb-1 px-2 font-medium ${darkMode ? "text-orange-300" : "text-orange-700"}`}>
+                      {currentChatDetail.user.name}
+                    </span>
+                  )}
+                  
+                  <div
+                    className={`px-4 py-2 rounded-2xl ${
+                      isMe
+                        ? "bg-linear-to-r from-orange-500 to-red-600 text-white"
+                        : darkMode 
+                          ? "bg-orange-900/30 text-orange-100" 
+                          : "bg-white text-orange-950 border border-orange-200"
+                    }`}
+                  >
+                    <p className="text-sm wrap-break-word">{msg.text}</p>
+                  </div>
+                  
+                  <div className="flex items-center gap-1 mt-1 px-2">
+                    <span className={`text-xs ${darkMode ? "text-orange-300/50" : "text-orange-600/50"}`}>
+                      {formatTimestamp(msg.timestamp)}
+                    </span>
+                    {isMe && (
+                      msg.read ? (
+                        <CheckCheck className="w-3 h-3 text-blue-400" />
+                      ) : (
+                        <Check className={`w-3 h-3 ${darkMode ? "text-orange-300/50" : "text-orange-600/50"}`} />
+                      )
                     )}
                   </div>
                 </div>
+              </div>
+            );
+          })
+        )}
+        <div ref={messagesEndRef} />
+      </div>
 
-                {currentChatDetail.isBlocked && (
-                  <div className={`p-3 text-center border-b ${
-                    darkMode ? "bg-red-900/20 border-red-800/30 text-red-400" : "bg-red-50 border-red-200 text-red-700"
-                  }`}>
-                    <div className="flex items-center justify-center gap-2">
-                      <Ban className="w-4 h-4" />
-                      <span className="text-sm font-medium">You have blocked this user</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Messages - ✅ FIXED SCROLL */}
-                <div 
-                  className={`flex-1 p-4 space-y-4 overflow-y-auto ${darkMode ? "bg-[#1a1410]/50" : "bg-orange-50/30"}`}
-                  style={{ maxHeight: 'calc(100vh - 280px)' }}
-                >
-                  {currentChatDetail.messages.length === 0 ? (
-                    <div className="flex items-center justify-center h-full">
-                      <p className={`text-sm ${darkMode ? "text-orange-300/70" : "text-orange-600/70"}`}>
-                        No messages yet. Say hello!
-                      </p>
-                    </div>
-                  ) : (
-                    currentChatDetail.messages.map((msg) => {
-                      const isMe = msg.sender.toString() === currentUserId?.toString();
-                      
-                      return (
-                        <div
-                          key={msg._id}
-                          className={`flex ${isMe ? "justify-end" : "justify-start"}`}
-                        >
-                          <div className={`max-w-[70%] flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-                            {!isMe && (
-                              <span className={`text-xs mb-1 px-2 font-medium ${darkMode ? "text-orange-300" : "text-orange-700"}`}>
-                                {currentChatDetail.user.name}
-                              </span>
-                            )}
-                            
-                            <div
-                              className={`px-4 py-2 rounded-2xl ${
-                                isMe
-                                  ? "bg-linear-to-r from-orange-500 to-red-600 text-white"
-                                  : darkMode 
-                                    ? "bg-orange-900/30 text-orange-100" 
-                                    : "bg-white text-orange-950 border border-orange-200"
-                              }`}
-                            >
-                              <p className="text-sm wrap-break-word">{msg.text}</p>
-                            </div>
-                            
-                            <div className="flex items-center gap-1 mt-1 px-2">
-                              <span className={`text-xs ${darkMode ? "text-orange-300/50" : "text-orange-600/50"}`}>
-                                {formatTimestamp(msg.timestamp)}
-                              </span>
-                              {isMe && (
-                                msg.read ? (
-                                  <CheckCheck className="w-3 h-3 text-blue-400" />
-                                ) : (
-                                  <Check className={`w-3 h-3 ${darkMode ? "text-orange-300/50" : "text-orange-600/50"}`} />
-                                )
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
 
                 {/* Message Input */}
                 <div className={`p-4 border-t ${darkMode ? "border-orange-800/30" : "border-orange-200"}`}>

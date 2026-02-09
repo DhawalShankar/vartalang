@@ -28,8 +28,8 @@ export default function Navbar() {
   const { darkMode, setDarkMode } = useDarkMode();
   const { isLoggedIn } = useAuth();
   
-  // ✅ Check if we're on chats page
-  const isOnChatsPage = pathname === '/chats';
+  // ✅ Check if we're on chats page (handles query params too)
+  const isOnChatsPage = pathname.startsWith('/chats');
 
   // ✅ Fetch user profile to get role
   useEffect(() => {
@@ -77,10 +77,10 @@ export default function Navbar() {
 
   // ✅ Clear all chat notifications when visiting chats page
   useEffect(() => {
-    if (isOnChatsPage && isLoggedIn) {
+    if (isOnChatsPage && isLoggedIn && unreadCount > 0) {
       clearAllChatNotifications();
     }
-  }, [isOnChatsPage, isLoggedIn]);
+  }, [isOnChatsPage, isLoggedIn, unreadCount]);
 
   // Close notification dropdown on outside click
   useEffect(() => {
@@ -129,19 +129,34 @@ export default function Navbar() {
   // ✅ Clear all chat notifications (for chats page visit)
   const clearAllChatNotifications = async () => {
     const token = localStorage.getItem("token");
-    if (!token) return;
+    if (!token || unreadCount === 0) return;
 
     try {
-      await fetch(`${API_URL}/notifications/messages/all`, {
+      console.log("🧹 Clearing all chat notifications...");
+      
+      const response = await fetch(`${API_URL}/notifications/messages/all`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Refresh counts
-      fetchUnreadCount();
-      fetchNotifications();
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(`✅ Cleared ${data.count} notifications`);
+
+      // Immediately update UI
+      setNotifications([]);
+      setUnreadCount(0);
+      
+      // Then refresh from server to be sure
+      setTimeout(() => {
+        fetchUnreadCount();
+        fetchNotifications();
+      }, 100);
     } catch (error) {
-      console.error("Clear chat notifications error:", error);
+      console.error("❌ Clear chat notifications error:", error);
     }
   };
 
@@ -373,17 +388,25 @@ export default function Navbar() {
                     onClick={async () => {
                       const token = localStorage.getItem("token");
                       try {
-                        // Delete all message notifications at once
-                        await fetch(`${API_URL}/notifications/messages/all`, {
+                        console.log("🧹 Clearing all notifications from button...");
+                        
+                        const response = await fetch(`${API_URL}/notifications/messages/all`, {
                           method: "DELETE",
                           headers: { Authorization: `Bearer ${token}` },
                         });
+
+                        if (!response.ok) {
+                          throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+
+                        const data = await response.json();
+                        console.log(`✅ Cleared ${data.count} notifications`);
                         
                         setNotifications([]);
                         setUnreadCount(0);
                         setShowNotifications(false);
                       } catch (error) {
-                        console.error("Clear all error:", error);
+                        console.error("❌ Clear all error:", error);
                       }
                     }}
                     className={`text-xs ${darkMode ? "text-orange-400 hover:text-orange-300" : "text-orange-600 hover:text-orange-700"}`}
