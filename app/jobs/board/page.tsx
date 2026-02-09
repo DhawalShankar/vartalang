@@ -409,35 +409,34 @@ export default function VartaLangJobsBoard() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               <select
-                value={selectedLanguage}
-                onChange={(e) => setSelectedLanguage(e.target.value)}
-                className={`px-4 py-3 rounded-xl border outline-none transition-all ${
-                  darkMode 
-                    ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 focus:border-orange-600' 
-                    : 'bg-white border-orange-100 text-gray-900 focus:border-orange-400'
-                }`}
-              >
-                <option value="all">All Languages</option>
-                {languages.map(lang => (
-                  <option key={lang} value={lang}>{lang}</option>
-                ))}
-              </select>
+                  value={selectedLanguage}
+                  onChange={(e) => setSelectedLanguage(e.target.value)}
+                  className={`px-4 py-3 rounded-xl border outline-none transition-all ${
+                    darkMode 
+                      ? 'bg-orange-900/20 border-orange-800/30 text-orange-100 focus:border-orange-600 [&>option]:bg-orange-900 [&>option]:text-orange-100' 
+                      : 'bg-white border-orange-100 text-gray-900 focus:border-orange-400'
+                  }`}
+                >
+                  <option value="all">All Languages</option>
+                  {languages.map(lang => (
+                    <option key={lang} value={lang}>{lang}</option>
+                  ))}
+                </select>
 
-              <select
-                value={selectedJobType}
-                onChange={(e) => setSelectedJobType(e.target.value)}
-                className={`px-4 py-3 rounded-xl border outline-none transition-all ${
-                  darkMode 
-                    ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 focus:border-orange-600' 
-                    : 'bg-white border-orange-100 text-gray-900 focus:border-orange-400'
-                }`}
-              >
-                <option value="all">All Job Types</option>
-                {jobTypes.map(type => (
-                  <option key={type.value} value={type.value}>{type.label}</option>
-                ))}
-              </select>
-
+                <select
+                  value={selectedJobType}
+                  onChange={(e) => setSelectedJobType(e.target.value)}
+                  className={`px-4 py-3 rounded-xl border outline-none transition-all ${
+                    darkMode 
+                      ? 'bg-orange-900/20 border-orange-800/30 text-orange-100 focus:border-orange-600 [&>option]:bg-orange-900 [&>option]:text-orange-100' 
+                      : 'bg-white border-orange-100 text-gray-900 focus:border-orange-400'
+                  }`}
+                >
+                  <option value="all">All Job Types</option>
+                  {jobTypes.map(type => (
+                    <option key={type.value} value={type.value}>{type.label}</option>
+                  ))}
+                </select>
               <input
                 type="text"
                 placeholder="Filter by location..."
