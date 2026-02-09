@@ -65,7 +65,8 @@ export default function VartaLangLanding() {
             darkMode ? 'text-orange-200/80' : 'text-gray-600'
           }`}>
            The language bridge India needs. Connecting learners with creators, knowledge with accessibility, tradition with opportunity—for every Indian, including our specially-abled community.
-            <span className="font-semibold"> VartaLang: Bridging India, one language at a time.</span>
+          <br />
+           <span className="font-semibold"> VartaLang: Bridging India, one language at a time.</span>
           </p>
 
           {/* CTA */}
