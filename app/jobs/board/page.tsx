@@ -17,6 +17,7 @@ import { useDarkMode } from '@/lib/DarkModeContext';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 // Type definitions
+// Type definitions
 interface Job {
   _id: string;
   title: string;
@@ -34,6 +35,13 @@ interface Job {
   expiryDate: string;
   status: 'active' | 'expired';
   views: number;
+  // ✅ ADD THESE
+  postedBy?: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  postedByName?: string;
 }
 
 interface JobFormData {
@@ -189,84 +197,96 @@ export default function VartaLangJobsBoard() {
   };
 
   const handlePostJob = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    setFormErrors({});
+  e.preventDefault();
+  
+  setFormErrors({});
 
-    if (!validateForm()) {
+  if (!validateForm()) {
+    return;
+  }
+
+  setSubmitting(true);
+
+  try {
+    // ✅ GET TOKEN
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setFormErrors({
+        general: 'You must be logged in to post a job. Please log in and try again.'
+      });
+      setSubmitting(false);
       return;
     }
 
-    setSubmitting(true);
+    const processedResponsibilities = formData.responsibilities
+      .split('\n')
+      .map(r => r.trim().replace(/^[•\-*]\s*/, ''))
+      .filter(r => r.length > 0);
 
-    try {
-      const processedResponsibilities = formData.responsibilities
-        .split('\n')
-        .map(r => r.trim().replace(/^[•\-*]\s*/, ''))
-        .filter(r => r.length > 0);
+    const processedRequirements = formData.requirements
+      .split('\n')
+      .map(r => r.trim().replace(/^[•\-*]\s*/, ''))
+      .filter(r => r.length > 0);
 
-      const processedRequirements = formData.requirements
-        .split('\n')
-        .map(r => r.trim().replace(/^[•\-*]\s*/, ''))
-        .filter(r => r.length > 0);
+    const jobData = {
+      ...formData,
+      title: formData.title.trim(),
+      companyName: formData.companyName.trim(),
+      location: formData.location.trim(),
+      description: formData.description.trim(),
+      contactEmail: formData.contactEmail.trim().toLowerCase(),
+      responsibilities: processedResponsibilities,
+      requirements: processedRequirements
+    };
 
-      const jobData = {
-        ...formData,
-        title: formData.title.trim(),
-        companyName: formData.companyName.trim(),
-        location: formData.location.trim(),
-        description: formData.description.trim(),
-        contactEmail: formData.contactEmail.trim().toLowerCase(),
-        responsibilities: processedResponsibilities,
-        requirements: processedRequirements
-      };
+    // ✅ ADD AUTHORIZATION HEADER
+    const res = await fetch(`${API_URL}/jobs/listings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`  // ← ADD THIS
+      },
+      body: JSON.stringify(jobData)
+    });
 
-      const res = await fetch(`${API_URL}/jobs/listings`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(jobData)
-      });
+    const data = await res.json();
 
-      const data = await res.json();
-
-      if (res.ok) {
-        setShowSuccessMessage(true);
+    if (res.ok) {
+      setShowSuccessMessage(true);
+      
+      setTimeout(() => {
+        setShowPostModal(false);
+        setShowSuccessMessage(false);
+        fetchJobs();
         
-        setTimeout(() => {
-          setShowPostModal(false);
-          setShowSuccessMessage(false);
-          fetchJobs();
-          
-          setFormData({
-            title: '',
-            language: 'Hindi',
-            proficiencyLevel: 'Intermediate',
-            jobType: 'translation',
-            companyName: '',
-            location: '',
-            isRemote: false,
-            description: '',
-            responsibilities: '',
-            requirements: '',
-            contactEmail: ''
-          });
-        }, 2000);
-      } else {
-        setFormErrors({
-          general: data.error || 'Failed to post job. Please try again.'
+        setFormData({
+          title: '',
+          language: 'Hindi',
+          proficiencyLevel: 'Intermediate',
+          jobType: 'translation',
+          companyName: '',
+          location: '',
+          isRemote: false,
+          description: '',
+          responsibilities: '',
+          requirements: '',
+          contactEmail: ''
         });
-      }
-    } catch (error) {
-      console.error("Error posting job:", error);
+      }, 2000);
+    } else {
       setFormErrors({
-        general: 'Network error. Please check your connection and try again.'
+        general: data.error || 'Failed to post job. Please try again.'
       });
-    } finally {
-      setSubmitting(false);
     }
-  };
+  } catch (error) {
+    console.error("Error posting job:", error);
+    setFormErrors({
+      general: 'Network error. Please check your connection and try again.'
+    });
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   const getJobTypeLabel = (type: string) => {
     const jobType = jobTypes.find(jt => jt.value === type);
@@ -575,7 +595,7 @@ export default function VartaLangJobsBoard() {
                         {job.description}
                       </p>
 
-                      <div className="flex items-center gap-4 text-sm">
+                     <div className="flex items-center gap-4 text-sm">
                         <div className="flex items-center gap-1">
                           <MapPin className={`w-4 h-4 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
                           <span className={darkMode ? 'text-orange-200' : 'text-gray-700'}>
@@ -588,6 +608,15 @@ export default function VartaLangJobsBoard() {
                             {job.views} views
                           </span>
                         </div>
+                        {/* ✅ ADD THIS */}
+                        {job.postedByName && (
+                          <div className="flex items-center gap-1">
+                            <Users className={`w-4 h-4 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                            <span className={darkMode ? 'text-orange-200/70' : 'text-gray-500'}>
+                              Posted by {job.postedByName}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -612,8 +641,11 @@ export default function VartaLangJobsBoard() {
                         View Details
                       </button>
                     </div>
+                    
                   </div>
+                  
                 </div>
+                
               ))}
             </div>
           )}
@@ -672,8 +704,8 @@ export default function VartaLangJobsBoard() {
               </div>
             </div>
 
-            <div className="p-6 space-y-6">
-              <div className="flex items-center gap-4">
+           <div className="p-6 space-y-6">
+              <div className="flex items-center gap-4 flex-wrap">
                 <div className="flex items-center gap-2">
                   <MapPin className={`w-4 h-4 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
                   <span className={darkMode ? 'text-orange-200' : 'text-gray-700'}>
@@ -686,7 +718,17 @@ export default function VartaLangJobsBoard() {
                     Posted {formatDate(selectedJob.postedDate)}
                   </span>
                 </div>
+                {/* ✅ ADD THIS */}
+                {selectedJob.postedByName && (
+                  <div className="flex items-center gap-2">
+                    <Users className={`w-4 h-4 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                    <span className={darkMode ? 'text-orange-200/70' : 'text-gray-600'}>
+                      by {selectedJob.postedByName}
+                    </span>
+                  </div>
+                )}
               </div>
+
 
               <div>
                 <h3 className={`text-lg font-bold mb-3 flex items-center gap-2 ${
