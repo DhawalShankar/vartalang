@@ -75,6 +75,13 @@ export default function Navbar() {
     return () => clearInterval(interval);
   }, [isLoggedIn]);
 
+  // ✅ Clear all chat notifications when visiting chats page
+  useEffect(() => {
+    if (isOnChatsPage && isLoggedIn) {
+      clearAllChatNotifications();
+    }
+  }, [isOnChatsPage, isLoggedIn]);
+
   // Close notification dropdown on outside click
   useEffect(() => {
     if (!showNotifications) return;
@@ -116,6 +123,25 @@ export default function Navbar() {
       setNotifications(data.notifications);
     } catch (error) {
       console.error("Fetch notifications error:", error);
+    }
+  };
+
+  // ✅ Clear all chat notifications (for chats page visit)
+  const clearAllChatNotifications = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      await fetch(`${API_URL}/notifications/messages/all`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Refresh counts
+      fetchUnreadCount();
+      fetchNotifications();
+    } catch (error) {
+      console.error("Clear chat notifications error:", error);
     }
   };
 
@@ -347,14 +373,12 @@ export default function Navbar() {
                     onClick={async () => {
                       const token = localStorage.getItem("token");
                       try {
-                        await Promise.all(
-                          notifications.map(notif => 
-                            fetch(`${API_URL}/notifications/${notif._id}`, {
-                              method: "DELETE",
-                              headers: { Authorization: `Bearer ${token}` },
-                            })
-                          )
-                        );
+                        // Delete all message notifications at once
+                        await fetch(`${API_URL}/notifications/messages/all`, {
+                          method: "DELETE",
+                          headers: { Authorization: `Bearer ${token}` },
+                        });
+                        
                         setNotifications([]);
                         setUnreadCount(0);
                         setShowNotifications(false);
