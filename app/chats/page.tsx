@@ -99,18 +99,46 @@ function ChatsContent() {
     clearAllChatNotifications();
   }, []);
 
-  // ✅ FIX 1: useCallback के साथ stable reference बनाएं
+  const fetchChats = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/auth/login");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/chats`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Failed to fetch chats");
+
+      const data = await res.json();
+      setChats(data.chats);
+      setLoading(false);
+      console.log(`✅ Fetched ${data.chats.length} chats`);
+      return data.chats;
+    } catch (error) {
+      console.error("Fetch chats error:", error);
+      setLoading(false);
+      return [];
+    }
+  }, [router]);
+
+  // ✅ FIX: useCallback with stable reference
   const handleReceiveMessage = useCallback((data: any) => {
     console.log("📨 Received message:", data);
     const { chatId, message } = data;
 
-    // अगर message खुद का है तो ignore करें
+    // Skip own messages
     if (message.sender === currentUserId) {
       console.log("⏭️ Skipping own message");
       return;
     }
 
-    // ✅ FIX 2: Current chat में message add करें
+    // ✅ Add message to current chat if it's open
     setCurrentChatDetail(prev => {
       if (!prev || prev.id !== chatId) {
         console.log("⏭️ Message not for current chat");
@@ -124,15 +152,36 @@ function ChatsContent() {
       }
 
       console.log("✅ Adding message to current chat");
+      
+      // ✅ Mark as read immediately if chat is open
+      if (selectedChat === chatId && socketRef.current) {
+        setTimeout(() => {
+          const token = localStorage.getItem("token");
+          fetch(`${API_URL}/chats/${chatId}/read`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }).then(res => {
+            if (res.ok) {
+              socketRef.current?.emit("mark_read", { chatId });
+              fetchChats(); // Update sidebar to remove unread count
+            }
+          }).catch(err => console.error("Mark as read error:", err));
+        }, 500);
+      }
+
       return {
         ...prev,
         messages: [...prev.messages, message],
       };
     });
 
-    // Chat list update करें
-    fetchChats();
-  }, [currentUserId]); // ✅ Only currentUserId dependency
+    // Only fetch chats if message is not for current open chat
+    if (selectedChat !== chatId) {
+      fetchChats();
+    }
+  }, [currentUserId, selectedChat, fetchChats]);
 
   const handleMessagesRead = useCallback((data: any) => {
     console.log("👁️ Messages marked as read:", data);
@@ -154,15 +203,15 @@ function ChatsContent() {
     console.log("🚫 User blocked event");
     fetchChats();
     if (selectedChat) fetchChatMessages(selectedChat);
-  }, [selectedChat]);
+  }, [selectedChat, fetchChats]);
 
   const handleUserUnblocked = useCallback(() => {
     console.log("✅ User unblocked event");
     fetchChats();
     if (selectedChat) fetchChatMessages(selectedChat);
-  }, [selectedChat]);
+  }, [selectedChat, fetchChats]);
 
-  // ✅ FIX 3: Socket setup को अलग useEffect में रखें
+  // ✅ Socket setup
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -200,7 +249,7 @@ function ChatsContent() {
     };
   }, [handleReceiveMessage, handleMessagesRead, handleUserBlocked, handleUserUnblocked]);
 
-  // ✅ FIX 4: Chat room join/leave
+  // ✅ Chat room join/leave
   useEffect(() => {
     if (!selectedChat || !socketRef.current || !isConnected) return;
 
@@ -215,6 +264,40 @@ function ChatsContent() {
     };
   }, [selectedChat, isConnected]);
 
+  // ✅ Mark messages as read when chat is open
+  useEffect(() => {
+    if (!selectedChat || !isConnected) return;
+
+    const markAsRead = async () => {
+      const token = localStorage.getItem("token");
+      
+      try {
+        const res = await fetch(`${API_URL}/chats/${selectedChat}/read`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.ok) {
+          console.log(`✅ Marked messages as read for chat ${selectedChat}`);
+          // Emit socket event to notify the sender
+          if (socketRef.current) {
+            socketRef.current.emit("mark_read", { chatId: selectedChat });
+          }
+          // Refresh chat list to update unread count
+          fetchChats();
+        }
+      } catch (error) {
+        console.error("Mark as read error:", error);
+      }
+    };
+
+    // Small delay to ensure messages are loaded
+    const timer = setTimeout(markAsRead, 500);
+    return () => clearTimeout(timer);
+  }, [selectedChat, isConnected, fetchChats]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -225,7 +308,7 @@ function ChatsContent() {
 
   useEffect(() => {
     fetchChats();
-  }, []);
+  }, [fetchChats]);
 
   useEffect(() => {
     const openChatFromUrl = async () => {
@@ -241,35 +324,7 @@ function ChatsContent() {
     if (chatParam && !loading) {
       openChatFromUrl();
     }
-  }, [chatParam, loading]);
-
-  const fetchChats = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/auth/login");
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API_URL}/chats`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) throw new Error("Failed to fetch chats");
-
-      const data = await res.json();
-      setChats(data.chats);
-      setLoading(false);
-      console.log(`✅ Fetched ${data.chats.length} chats`);
-      return data.chats;
-    } catch (error) {
-      console.error("Fetch chats error:", error);
-      setLoading(false);
-      return [];
-    }
-  };
+  }, [chatParam, loading, fetchChats]);
 
   const deleteNotificationsForChat = async (chatId: string) => {
     const token = localStorage.getItem("token");
@@ -666,7 +721,7 @@ function ChatsContent() {
                           )}
                         </div>
                       </div>
-                      {chat.unread > 0 && (
+                      {chat.unread > 0 && selectedChat !== chat.id && (
                         <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center shrink-0">
                           <span className="text-xs text-white font-semibold">{chat.unread}</span>
                         </div>
@@ -778,10 +833,10 @@ function ChatsContent() {
                   </div>
                 )}
 
-                {/* Messages - ✅ FIXED SCROLL */}
+                {/* Messages */}
                 <div 
                   className={`flex-1 p-4 space-y-4 overflow-y-auto ${darkMode ? "bg-[#1a1410]/50" : "bg-orange-50/30"}`}
-                  style={{ maxHeight: 'calc(100vh - 280px)' }}
+                  style={{ maxHeight: 'calc(100dvh - 280px)' }}
                 >
                   {currentChatDetail.messages.length === 0 ? (
                     <div className="flex items-center justify-center h-full">
