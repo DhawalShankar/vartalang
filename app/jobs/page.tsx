@@ -119,8 +119,8 @@ export default function VartaLangJobsHome() {
           <div className="flex flex-wrap justify-center gap-8">
             {[
               { icon: Briefcase, label: 'Active Jobs', value: stats.activeJobs },
-              { icon: Languages, label: 'Languages', value: stats.languages },
-              { icon: Building2, label: 'Companies', value: stats.companies },
+              // { icon: Languages, label: 'Languages', value: stats.languages },
+              // { icon: Building2, label: 'Companies', value: stats.companies },
               { icon: TrendingUp, label: 'Total Posted', value: stats.totalJobs }
             ].map((stat, i) => (
               <div key={i} className="flex items-center gap-3">
