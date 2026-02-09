@@ -44,8 +44,8 @@ export default function SigninPage() {
       localStorage.setItem("userId", data.userId); 
       setIsLoggedIn(true);
       
-      // Redirect to learn page
-      router.push("/learn");
+      // Redirect to profile page
+      router.push("/profile");
     } catch (error) {
       console.error("Login error:", error);
       alert("Network error. Please check your connection and try again.");

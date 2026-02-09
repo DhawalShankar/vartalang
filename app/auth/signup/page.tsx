@@ -96,8 +96,8 @@ export default function SignupPage() {
       localStorage.setItem("token", data.token);
       setIsLoggedIn(true);
       
-      // Redirect to learn page
-      router.push("/learn");
+      // Redirect to profile page
+      router.push("/profile");
     } catch (error) {
       console.error("Signup error:", error);
       alert("Network error. Please check your connection and try again.");

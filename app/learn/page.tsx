@@ -629,7 +629,7 @@ export default function LearnPage() {
           </p>
 
           <Link
-            href="/find-partner"
+            href="/matches"
             className="inline-flex items-center gap-2 px-10 py-4 rounded-full font-semibold text-base
             bg-linear-to-r from-orange-500 to-red-600 text-white
             hover:shadow-xl hover:scale-105 transition-all"
