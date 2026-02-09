@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useState, useEffect, useRef } from "react";
+import { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import { 
@@ -18,7 +18,6 @@ import {
 import { useDarkMode } from '@/lib/DarkModeContext';
 import { createChatSocket, destroyChatSocket } from '@/lib/socketClient';
 import type { Socket } from "socket.io-client";
-
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
@@ -77,68 +76,121 @@ function ChatsContent() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const currentUserId = typeof window !== 'undefined' ? localStorage.getItem("userId") : null;
 
-  const handleReceiveMessage = (data: any) => {
-  const { chatId, message } = data;
+  // ✅ FIX 1: useCallback के साथ stable reference बनाएं
+  const handleReceiveMessage = useCallback((data: any) => {
+    console.log("📨 Received message:", data);
+    const { chatId, message } = data;
 
-  if (message.sender === currentUserId) return;
+    // अगर message खुद का है तो ignore करें
+    if (message.sender === currentUserId) {
+      console.log("⏭️ Skipping own message");
+      return;
+    }
 
-  if (selectedChat === chatId) {
+    // ✅ FIX 2: Current chat में message add करें
     setCurrentChatDetail(prev => {
-      if (!prev) return prev;
-      if (prev.messages.some(m => m._id === message._id)) return prev;
+      if (!prev || prev.id !== chatId) {
+        console.log("⏭️ Message not for current chat");
+        return prev;
+      }
 
+      // Duplicate check
+      if (prev.messages.some(m => m._id === message._id)) {
+        console.log("⏭️ Duplicate message, skipping");
+        return prev;
+      }
+
+      console.log("✅ Adding message to current chat");
       return {
         ...prev,
         messages: [...prev.messages, message],
       };
     });
-  }
 
-  fetchChats();
-};
+    // Chat list update करें
+    fetchChats();
+  }, [currentUserId]); // ✅ Only currentUserId dependency
 
-const handleMessagesRead = (data: any) => {
-  const { chatId } = data;
+  const handleMessagesRead = useCallback((data: any) => {
+    console.log("👁️ Messages marked as read:", data);
+    const { chatId } = data;
 
-  if (selectedChat !== chatId) return;
-
-  setCurrentChatDetail(prev => {
-    if (!prev) return prev;
-    return {
-      ...prev,
-      messages: prev.messages.map(m =>
-        m.sender === currentUserId ? { ...m, read: true } : m
-      ),
-    };
-  });
-};
-
-const handleUserBlocked = () => {
-  if (selectedChat) fetchChatMessages(selectedChat);
-  fetchChats();
-};
-
-const handleUserUnblocked = () => {
-  if (selectedChat) fetchChatMessages(selectedChat);
-  fetchChats();
-};
-useEffect(() => {
-  if (!selectedChat || !socketRef.current) return;
-
-  socketRef.current.emit("join_chat", `chat_${selectedChat}`);
-
-  return () => {
-    socketRef.current?.emit("leave_chat", `chat_${selectedChat}`);
-  };
-}, [selectedChat]);
-
-  useEffect(() => {
-    console.log("🔌 Socket Status Changed:", {
-      isConnected,
-      socketExists: !!socketRef.current,
-      currentUserId
+    setCurrentChatDetail(prev => {
+      if (!prev || prev.id !== chatId) return prev;
+      
+      return {
+        ...prev,
+        messages: prev.messages.map(m =>
+          m.sender === currentUserId ? { ...m, read: true } : m
+        ),
+      };
     });
-  }, [isConnected, currentUserId]);
+  }, [currentUserId]);
+
+  const handleUserBlocked = useCallback(() => {
+    console.log("🚫 User blocked event");
+    fetchChats();
+    if (selectedChat) fetchChatMessages(selectedChat);
+  }, [selectedChat]);
+
+  const handleUserUnblocked = useCallback(() => {
+    console.log("✅ User unblocked event");
+    fetchChats();
+    if (selectedChat) fetchChatMessages(selectedChat);
+  }, [selectedChat]);
+
+  // ✅ FIX 3: Socket setup को अलग useEffect में रखें
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    console.log("🔌 Setting up socket connection...");
+    const socket = createChatSocket(token);
+    socketRef.current = socket;
+
+    socket.connect();
+
+    socket.on("connect", () => {
+      console.log("✅ Socket connected!");
+      setIsConnected(true);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("❌ Socket disconnected");
+      setIsConnected(false);
+    });
+
+    socket.on("receive_message", handleReceiveMessage);
+    socket.on("messages_read", handleMessagesRead);
+    socket.on("user_blocked", handleUserBlocked);
+    socket.on("user_unblocked", handleUserUnblocked);
+
+    return () => {
+      console.log("🧹 Cleaning up socket...");
+      socket.off("connect");
+      socket.off("disconnect");
+      socket.off("receive_message");
+      socket.off("messages_read");
+      socket.off("user_blocked");
+      socket.off("user_unblocked");
+      destroyChatSocket();
+    };
+  }, [handleReceiveMessage, handleMessagesRead, handleUserBlocked, handleUserUnblocked]);
+
+  // ✅ FIX 4: Chat room join/leave
+  useEffect(() => {
+    if (!selectedChat || !socketRef.current || !isConnected) return;
+
+    console.log(`🚪 Joining chat room: chat_${selectedChat}`);
+    socketRef.current.emit("join_chat", `chat_${selectedChat}`);
+
+    return () => {
+      if (socketRef.current && isConnected) {
+        console.log(`👋 Leaving chat room: chat_${selectedChat}`);
+        socketRef.current.emit("leave_chat", `chat_${selectedChat}`);
+      }
+    };
+  }, [selectedChat, isConnected]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -157,8 +209,6 @@ useEffect(() => {
       if (!chatParam) return;
       
       console.log(`🎯 Opening chat from URL: ${chatParam}`);
-      
-      console.log(`🔄 Refetching chats to ensure latest data...`);
       await fetchChats();
       
       setSelectedChat(chatParam);
@@ -169,29 +219,6 @@ useEffect(() => {
       openChatFromUrl();
     }
   }, [chatParam, loading]);
-
-  useEffect(() => {
-  const token = localStorage.getItem("token");
-  if (!token) return;
-
-  const socket = createChatSocket(token);
-  socketRef.current = socket;
-
-  socket.connect();
-
-  socket.on("connect", () => setIsConnected(true));
-  socket.on("disconnect", () => setIsConnected(false));
-
-  socket.on("receive_message", handleReceiveMessage);
-  socket.on("messages_read", handleMessagesRead);
-  socket.on("user_blocked", handleUserBlocked);
-  socket.on("user_unblocked", handleUserUnblocked);
-
-  return () => {
-    socket.off();
-    destroyChatSocket();
-  };
-}, []);
 
   const fetchChats = async () => {
     const token = localStorage.getItem("token");
@@ -221,7 +248,6 @@ useEffect(() => {
     }
   };
 
-  // ✅ NEW: Delete all notifications for a specific chat
   const deleteNotificationsForChat = async (chatId: string) => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -255,12 +281,11 @@ useEffect(() => {
       const data = await res.json();
       setCurrentChatDetail(data.chat);
       
-      // ✅ NEW: Delete notifications when opening chat
       await deleteNotificationsForChat(chatId);
       
       if (socketRef.current && isConnected) {
         console.log(`📍 Joining chat room: chat_${chatId}`);
-        socketRef.current?.emit("join_chat", `chat_${chatId}`);
+        socketRef.current.emit("join_chat", `chat_${chatId}`);
       } else {
         console.warn("⚠️ Cannot join chat room - socket not connected");
       }
@@ -281,6 +306,7 @@ useEffect(() => {
       read: false
     };
 
+    // ✅ Optimistic update
     setCurrentChatDetail(prev => {
       if (!prev) return prev;
       return {
@@ -311,6 +337,7 @@ useEffect(() => {
       
       console.log("✅ Message sent successfully:", data.messageData);
       
+      // ✅ Replace temp message with real one
       setCurrentChatDetail(prev => {
         if (!prev) return prev;
         return {
@@ -331,6 +358,7 @@ useEffect(() => {
     } catch (error) {
       console.error("Send message error:", error);
       
+      // ✅ Remove temp message on error
       setCurrentChatDetail(prev => {
         if (!prev) return prev;
         return {
@@ -347,22 +375,12 @@ useEffect(() => {
   };
 
   const handleChatClick = (chatId: string) => {
-    if (selectedChat && socketRef.current && isConnected) {
-      console.log(`👋 Leaving previous chat: chat_${selectedChat}`);
-      socketRef.current?.emit("leave_chat", `chat_${selectedChat}`);
-    }
-    
     setSelectedChat(chatId);
     router.push(`/chats?chat=${chatId}`, { scroll: false });
     fetchChatMessages(chatId);
   };
 
   const handleBack = () => {
-    if (selectedChat && socketRef.current && isConnected) {
-      console.log(`👋 Leaving chat: chat_${selectedChat}`);
-      socketRef.current?.emit("leave_chat", `chat_${selectedChat}`);
-    }
-    
     setSelectedChat(null);
     setCurrentChatDetail(null);
     router.push('/chats', { scroll: false });
@@ -527,6 +545,7 @@ useEffect(() => {
     <div className={`pt-20 min-h-screen ${darkMode ? "bg-[#1a1410]" : "bg-[#FFF9F5]"}`}>
       <Navbar />
       
+      {/* ✅ Connection Status Indicator */}
       <div className="fixed bottom-4 right-4 z-50">
         <div 
           className={`px-3 py-1.5 rounded-full text-xs font-medium shadow-lg transition-all cursor-help ${
@@ -636,13 +655,13 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* ✅ FIXED: Chat Window - Simplified mobile visibility logic */}
+          {/* Chat Window */}
           <div className={`${selectedChat ? 'block' : 'hidden'} md:block md:col-span-2 rounded-3xl overflow-hidden flex flex-col ${darkMode ? "bg-orange-900/10 border border-orange-800/30" : "bg-white border border-orange-200 shadow-lg"}`}>
             
             {currentChatDetail ? (
               <>
-                  {/* Chat Header - Sticky */}
-                  <div className={`sticky top-0 z-10 p-4 border-b flex items-center justify-between ${darkMode ? "bg-orange-900/10 border-orange-800/30 backdrop-blur-sm" : "bg-white border-orange-200 backdrop-blur-sm"}`}>
+                {/* Chat Header */}
+                <div className={`sticky top-0 z-10 p-4 border-b flex items-center justify-between ${darkMode ? "bg-orange-900/10 border-orange-800/30 backdrop-blur-sm" : "bg-white border-orange-200 backdrop-blur-sm"}`}>
                   <div className="flex items-center gap-3">
                     <button
                       onClick={handleBack}
