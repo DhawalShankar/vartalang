@@ -284,7 +284,7 @@ export default function LearnPage() {
               : 'bg-orange-50 border-orange-200 text-orange-700'
           }`}>
             <BookOpen className="w-4 h-4" />
-            <span className="text-sm font-semibold">Language Learning Hub</span>
+            <span className="text-sm font-semibold">"Upcoming" Language Learning Hub</span>
           </div>
 
           {/* Headline */}
