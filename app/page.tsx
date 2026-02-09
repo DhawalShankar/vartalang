@@ -111,11 +111,11 @@ export default function VartaLangLanding() {
 
       {/* Languages Ticker */}
       <section className={`py-6 overflow-hidden border-y ${darkMode ? 'border-orange-900/30' : 'border-orange-100'}`}>
-        <div className="flex animate-scroll whitespace-nowrap">
-          {[...languages, ...languages, ...languages].map((lang, i) => (
+        <div className="flex animate-scroll-desktop md:animate-scroll-desktop whitespace-nowrap">
+          {[...languages, ...languages, ...languages, ...languages].map((lang, i) => (
             <div
               key={i}
-              className={`inline-flex items-center mx-3 px-4 py-2 rounded-full border text-sm font-medium transition-all hover:scale-105 ${
+              className={`inline-flex items-center mx-2 md:mx-3 px-3 md:px-4 py-2 rounded-full border text-xs md:text-sm font-medium transition-all hover:scale-105 ${
                 darkMode 
                   ? 'bg-orange-900/20 border-orange-800/30 text-orange-200 hover:bg-orange-900/30' 
                   : 'bg-white border-orange-100 text-gray-700 hover:bg-orange-50'
@@ -211,7 +211,7 @@ export default function VartaLangLanding() {
               What you can do on VartaLang today
             </h2>
             <p className={`text-base ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-              Real features. Live now. Completely free.
+              Real features. Live now. Start today.
             </p>
           </div>
 
@@ -222,13 +222,15 @@ export default function VartaLangLanding() {
                 title: 'Connect with Real Language Partners',
                 desc: 'Match with native speakers who want to learn YOUR language. Teach each other for free—no subscriptions, no bots.',
                 cta: 'Start chatting',
+                link: '/matches',
                 live: true
               },
               {
                 icon: Briefcase,
                 title: 'Find Jobs Where Language IS the Skill',
-                desc: '"Hindi helper needed for sweet shop in Surat." Real jobs posted by real employers. Apply directly.',
+                desc: 'Customer service roles, sales positions, tourism guides, teaching opportunities—real jobs where your language abilities are the primary requirement.',
                 cta: 'Browse jobs',
+                link: '/jobs',
                 live: true
               },
               {
@@ -236,6 +238,7 @@ export default function VartaLangLanding() {
                 title: 'Smart Matching Algorithm',
                 desc: 'We match you based on what you speak, what you need, location, and learning goals. See your top 10 best matches.',
                 cta: 'See matches',
+                link: '/matches',
                 live: true
               },
               {
@@ -243,6 +246,7 @@ export default function VartaLangLanding() {
                 title: 'Safe, Respectful Community',
                 desc: 'Profanity filtering, instant blocking, zero tolerance for harassment. This is NOT a dating app.',
                 cta: 'Join safely',
+                link: '/auth/signup',
                 live: true
               },
               {
@@ -250,6 +254,7 @@ export default function VartaLangLanding() {
                 title: 'Post Jobs for FREE (7 Days)',
                 desc: 'Employers: Need Tamil-speaking staff? Gujarati helpers? Post free for a week, reach motivated candidates.',
                 cta: 'Post a job',
+                link: '/jobs',
                 live: true
               },
               {
@@ -257,12 +262,14 @@ export default function VartaLangLanding() {
                 title: 'Premium Courses (Coming Soon)',
                 desc: 'IELTS prep, embassy interviews, business language. We\'re building them based on YOUR feedback.',
                 cta: 'Join waitlist',
+                link: '/learn',
                 live: false
               }
             ].map((feature, i) => (
-              <div 
+              <Link 
+                href={feature.link}
                 key={i}
-                className={`group relative p-6 rounded-2xl border transition-all duration-300 hover:scale-[1.02] ${
+                className={`group relative p-6 rounded-2xl border transition-all duration-300 hover:scale-[1.02] block ${
                   darkMode 
                     ? 'bg-orange-900/10 border-orange-800/30 hover:bg-orange-900/20' 
                     : 'bg-white border-orange-100 hover:shadow-lg hover:border-orange-200'
@@ -293,7 +300,7 @@ export default function VartaLangLanding() {
                 <span className={`text-sm font-semibold ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
                   {feature.cta} →
                 </span>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -349,10 +356,10 @@ export default function VartaLangLanding() {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {[
               { icon: Shield, text: '100% Safe' },
-              { icon: Heart, text: 'Free Forever' },
-              { icon: CheckCircle, text: 'Real Jobs' },
+              { icon: Heart, text: 'Community-First' },
+              { icon: CheckCircle, text: 'Real Opportunities' },
               { icon: MessageCircle, text: 'Real People' },
-              { icon: Users, text: 'Community-First' },
+              { icon: Users, text: 'Respectful Space' },
               { icon: Globe, text: 'Economic Impact' }
             ].map((value, i) => (
               <div 
@@ -385,14 +392,14 @@ export default function VartaLangLanding() {
           <div className="grid md:grid-cols-2 gap-6">
             {[
               {
-                quote: "I needed Tamil to work in Chennai. Found a partner on VartaLang who needed Hindi. We both won. Now I have a job.",
+                quote: "I matched with a Tamil speaker who needed Hindi. We video call twice a week. My conversational Tamil has improved significantly in 2 months.",
                 name: "Rajesh K.",
-                role: "Shop Assistant, Chennai"
+                role: "Language Learner, Delhi"
               },
               {
-                quote: "Posted a job for Malayalam speaker. Got 12 applications in 2 days. Hired someone great. All free!",
+                quote: "Posted a requirement for Malayalam-speaking customer service staff. Found 3 qualified candidates within a week through VartaLang.",
                 name: "Priya M.",
-                role: "Restaurant Owner, Kochi"
+                role: "Business Owner, Bangalore"
               }
             ].map((story, i) => (
               <div 
@@ -455,7 +462,7 @@ export default function VartaLangLanding() {
           }`}>
             Start learning. Find jobs. Connect with real people.
             <br />
-            <span className="font-semibold">Completely free. Forever.</span>
+            <span className="font-semibold">Join our growing community today.</span>
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -474,7 +481,7 @@ export default function VartaLangLanding() {
           </div>
 
           <p className={`text-sm mt-6 ${darkMode ? 'text-orange-300/60' : 'text-gray-500'}`}>
-            No credit card. No hidden fees. Just real people, real opportunities.
+            Get started today. Core features available at no cost.
           </p>
         </div>
       </section>
@@ -482,12 +489,24 @@ export default function VartaLangLanding() {
       <Footer />
 
       <style jsx>{`
-        @keyframes scroll {
+        @keyframes scroll-mobile {
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
         }
-        .animate-scroll {
-          animation: scroll 35s linear infinite;
+        @keyframes scroll-desktop {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .animate-scroll-mobile {
+          animation: scroll-mobile 20s linear infinite;
+        }
+        .animate-scroll-desktop {
+          animation: scroll-desktop 35s linear infinite;
+        }
+        @media (max-width: 768px) {
+          .animate-scroll-desktop {
+            animation: scroll-mobile 20s linear infinite;
+          }
         }
       `}</style>
     </div>
