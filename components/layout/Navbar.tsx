@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu, X, Sun, Moon, Bell, User, MessageCircle, GraduationCap } from "lucide-react";
 import { useDarkMode } from "@/lib/DarkModeContext";
 import { useAuth } from "@/lib/AuthContext";
@@ -17,28 +18,31 @@ export default function Navbar() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<any[]>([]);
   
-  // ✅ ADD THIS - Track user role
+  // ✅ Track user role
   const [userRole, setUserRole] = useState<'learner' | 'teacher' | null>(null);
   
   const notificationRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const pathname = usePathname(); // ✅ Get current path
   
   const { darkMode, setDarkMode } = useDarkMode();
   const { isLoggedIn } = useAuth();
   
+  // ✅ Check if we're on chats page
+  const isOnChatsPage = pathname === '/chats';
 
-  // ✅ ADD THIS - Fetch user profile to get role
+  // ✅ Fetch user profile to get role
   useEffect(() => {
     if (isLoggedIn) {
       fetchUserProfile();
       fetchUnreadCount();
       fetchNotifications();
     } else {
-      setUserRole(null); // Reset role when logged out
+      setUserRole(null);
     }
   }, [isLoggedIn]);
 
-  // ✅ ADD THIS FUNCTION - Fetch user profile
+  // ✅ Fetch user profile
   const fetchUserProfile = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -51,25 +55,25 @@ export default function Navbar() {
       if (!res.ok) throw new Error("Failed to fetch profile");
       
       const data = await res.json();
-      setUserRole(data.user.primaryRole); // Set the role
+      setUserRole(data.user.primaryRole);
     } catch (error) {
       console.error("Fetch profile error:", error);
     }
   };
 
-  // Listen for real-time chat message notifications
+  // ✅ Poll for notifications
   useEffect(() => {
-  if (!isLoggedIn) return;
+    if (!isLoggedIn) return;
 
-  fetchUnreadCount();
-  fetchNotifications();
-
-  const interval = setInterval(() => {
     fetchUnreadCount();
-  }, 30000); // ⏱️ every 30 sec
+    fetchNotifications();
 
-  return () => clearInterval(interval);
-}, [isLoggedIn]);
+    const interval = setInterval(() => {
+      fetchUnreadCount();
+    }, 30000); // every 30 sec
+
+    return () => clearInterval(interval);
+  }, [isLoggedIn]);
 
   // Close notification dropdown on outside click
   useEffect(() => {
@@ -187,7 +191,7 @@ export default function Navbar() {
                     </Link>
                   ))}
 
-                  {/* ✅ CONDITIONALLY SHOW TEACHERS LINK - Only for teachers */}
+                  {/* ✅ Conditionally show Teachers link - Only for teachers */}
                   {userRole === 'teacher' && (
                     <Link
                       href="/teachers"
@@ -496,7 +500,7 @@ export default function Navbar() {
                     About
                   </Link>
 
-                  {/* ✅ CONDITIONALLY SHOW TEACHERS LINK IN MOBILE - Only for teachers */}
+                  {/* ✅ Conditionally show Teachers link in mobile - Only for teachers */}
                   {userRole === 'teacher' && (
                     <Link
                       href="/teachers"

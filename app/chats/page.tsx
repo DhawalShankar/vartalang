@@ -76,6 +76,29 @@ function ChatsContent() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const currentUserId = typeof window !== 'undefined' ? localStorage.getItem("userId") : null;
 
+  // ✅ Clear all chat notifications on page load
+  useEffect(() => {
+    const clearAllChatNotifications = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const res = await fetch(`${API_URL}/notifications/clear-all-chat`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.ok) {
+          console.log("✅ Cleared all chat notifications on page load");
+        }
+      } catch (error) {
+        console.error("Clear chat notifications error:", error);
+      }
+    };
+
+    clearAllChatNotifications();
+  }, []);
+
   // ✅ FIX 1: useCallback के साथ stable reference बनाएं
   const handleReceiveMessage = useCallback((data: any) => {
     console.log("📨 Received message:", data);
@@ -755,8 +778,11 @@ function ChatsContent() {
                   </div>
                 )}
 
-                {/* Messages */}
-                <div className={`flex-1 overflow-y-auto p-4 space-y-4 min-h-0 ${darkMode ? "bg-[#1a1410]/50" : "bg-orange-50/30"}`}>
+                {/* Messages - ✅ FIXED SCROLL */}
+                <div 
+                  className={`flex-1 p-4 space-y-4 overflow-y-auto ${darkMode ? "bg-[#1a1410]/50" : "bg-orange-50/30"}`}
+                  style={{ maxHeight: 'calc(100vh - 280px)' }}
+                >
                   {currentChatDetail.messages.length === 0 ? (
                     <div className="flex items-center justify-center h-full">
                       <p className={`text-sm ${darkMode ? "text-orange-300/70" : "text-orange-600/70"}`}>
