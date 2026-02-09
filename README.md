@@ -480,14 +480,6 @@ VartaLang is built for India, by people who understand India's reality.
 - Student dashboard
 - Discussion forums
 
-**Video/Voice Calls**
-- WebRTC implementation
-- In-app calling
-- Screen sharing
-- Call recording (optional)
-- Session scheduling
-- Call history
-
 #### Phase 3: Mobile & Scale (Month 4-6)
 
 **Mobile Apps**
