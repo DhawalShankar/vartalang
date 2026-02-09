@@ -12,7 +12,8 @@ import {
   Award,
   Play,
   Book,
-  MessageCircle
+  MessageCircle,
+  Heart
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -204,6 +205,18 @@ export default function LearnPage() {
       color: 'from-amber-600 to-orange-700',
       description: 'Ancient language of wisdom',
       resources: 168
+    },
+    {
+      name: 'Braille',
+      nativeName: '⠃⠗⠁⠊⠇⠇⠑',
+      slug: 'language',
+      icon: '👁️',
+      learners: '+',
+      difficulty: 'Beginner',
+      category: 'accessibility',
+      color: 'from-blue-600 to-indigo-600',
+      description: 'Tactile writing system for the visually impaired',
+      resources: 89
     }
   ];
 
@@ -214,7 +227,8 @@ export default function LearnPage() {
     { value: 'east', label: 'East India', icon: '🎋' },
     { value: 'west', label: 'West India', icon: '🏖️' },
     { value: 'classical', label: 'Classical', icon: '🕉️' },
-    { value: 'global', label: 'Global', icon: '🌍' }
+    { value: 'global', label: 'Global', icon: '🌍' },
+    { value: 'accessibility', label: 'Accessibility', icon: '👁️' }
   ];
 
   const levels = [
@@ -295,7 +309,7 @@ export default function LearnPage() {
           {/* Stats */}
           <div className="flex flex-wrap justify-center gap-8 mb-12">
             {[
-              { icon: Globe, label: '14 Languages', value: 'Available' },
+              { icon: Globe, label: '15 Languages', value: 'Available' },
               { icon: Users, label: 'Learners', value: 'Active' },
               { icon: Book, label: 'Resources', value: 'Curated' }
             ].map((stat, i) => (
@@ -321,6 +335,33 @@ export default function LearnPage() {
         </div>
       </section>
 
+      {/* Accessibility Highlight Banner */}
+      <section className="px-4 pb-8">
+        <div className="max-w-6xl mx-auto">
+          <div className={`p-6 rounded-2xl border backdrop-blur-lg ${
+            darkMode 
+              ? 'bg-linear-to-r from-blue-900/20 to-indigo-900/20 border-blue-800/30' 
+              : 'bg-linear-to-r from-blue-50 to-indigo-50 border-blue-200'
+          }`}>
+            <div className="flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+                darkMode ? 'bg-blue-500/20' : 'bg-blue-100'
+              }`}>
+                <Heart className={`w-6 h-6 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+              </div>
+              <div>
+                <h3 className={`text-lg font-bold mb-1 ${darkMode ? 'text-blue-100' : 'text-gray-900'}`}>
+                  Inclusive Learning for Everyone
+                </h3>
+                <p className={`text-sm ${darkMode ? 'text-blue-200/70' : 'text-gray-700'}`}>
+                  VartaLang proudly supports Braille and accessible learning materials. Education should have no barriers—we're building for every Indian, including our specially-abled community.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Filters Section */}
       <section className=" px-4 pb-6">
         <div className={`max-w-6xl mx-auto p-6 rounded-2xl border backdrop-blur-lg ${
@@ -336,7 +377,7 @@ export default function LearnPage() {
               }`} />
               <input
                 type="text"
-                placeholder="Search languages... (e.g., Hindi, தமிழ்)"
+                placeholder="Search languages... (e.g., Hindi, தமிழ், Braille)"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={`w-full pl-12 pr-4 py-4 rounded-xl border text-base transition-all ${
