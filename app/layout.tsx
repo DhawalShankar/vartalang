@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { DarkModeProvider } from "@/lib/DarkModeContext";
 import { AuthProvider } from "@/lib/AuthContext";
-import { SocketProvider } from "@/lib/SocketContext";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -32,9 +32,9 @@ export default function RootLayout({
       
       <AuthProvider>
         <DarkModeProvider>
-          <SocketProvider>
+          
         {children}
-         </SocketProvider>
+       
         </DarkModeProvider>
       </AuthProvider>
      
