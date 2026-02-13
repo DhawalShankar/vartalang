@@ -320,22 +320,31 @@ function ChatsContent() {
     fetchChats();
   }, [fetchChats]);
 
-  useEffect(() => {
-    const openChatFromUrl = async () => {
-      if (!chatParam) return;
-      
-      console.log(`🎯 Opening chat from URL: ${chatParam}`);
-      await fetchChats();
-      
-      setSelectedChat(chatParam);
-      await fetchChatMessages(chatParam);
-    };
+  // ✅ NEW CODE WITH PLEDGE CHECK
+useEffect(() => {
+  const openChatFromUrl = async () => {
+    if (!chatParam) return;
     
-    if (chatParam && !loading) {
-      openChatFromUrl();
+    console.log(`🎯 Opening chat from URL: ${chatParam}`);
+    
+    // ✅ CHECK PLEDGE FIRST!
+    if (!hasPledged) {
+      console.log("⚠️ User hasn't pledged yet, showing modal");
+      setShowPledgeModal(true);
+      sessionStorage.setItem("pendingChatId", chatParam);
+      return;
     }
-  }, [chatParam, loading, fetchChats]);
-
+    
+    // If pledged, proceed normally
+    await fetchChats();
+    setSelectedChat(chatParam);
+    await fetchChatMessages(chatParam);
+  };
+  
+  if (chatParam && !loading) {
+    openChatFromUrl();
+  }
+  }, [chatParam, loading, hasPledged, fetchChats]); // ✅ Add hasPledged to dependencies
   const deleteNotificationsForChat = async (chatId: string) => {
     const token = localStorage.getItem("token");
     if (!token) return;
