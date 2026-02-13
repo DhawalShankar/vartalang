@@ -1,8 +1,9 @@
+// app/auth/login/page.tsx (Updated)
 "use client";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, Sparkles } from "lucide-react";
+import { Mail, Lock, Sparkles, AlertCircle } from "lucide-react";
 import { useGoogleLogin } from '@react-oauth/google';
 import { useDarkMode } from '@/lib/DarkModeContext';
 import { useAuth } from '@/lib/AuthContext';
@@ -14,6 +15,7 @@ export default function SigninPage() {
   const { setIsLoggedIn } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(""); // ← ADD THIS
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -22,6 +24,8 @@ export default function SigninPage() {
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
+        setError(""); // ← Clear previous errors
+        
         // Get user info from Google
         const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
@@ -42,6 +46,23 @@ export default function SigninPage() {
         const data = await res.json();
 
         if (!res.ok) {
+          // ✅ CHECK IF USER NOT FOUND
+          if (res.status === 404 || data.error?.includes('not found')) {
+            // Store Google info in sessionStorage for signup page
+            sessionStorage.setItem('googleSignupData', JSON.stringify({
+              email: userInfo.email,
+              name: userInfo.name,
+              picture: userInfo.picture,
+              accessToken: tokenResponse.access_token
+            }));
+            
+            // Redirect to signup
+            router.push('/auth/signup?from=google');
+            return;
+          }
+          
+          // Other errors
+          setError(data.error || "Login failed. Please try again.");
           return;
         }
 
@@ -52,16 +73,19 @@ export default function SigninPage() {
         
       } catch (error) {
         console.error("Google login error:", error);
+        setError("Something went wrong. Please try again.");
       }
     },
     onError: () => {
       console.log("Google login failed");
+      setError("Google login cancelled or failed.");
     },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(""); // ← Clear previous errors
 
     try {
       const res = await fetch(`${API_URL}/auth/login`, {
@@ -75,6 +99,7 @@ export default function SigninPage() {
       const data = await res.json();
 
       if (!res.ok) {
+        setError(data.error || "Invalid email or password");
         setLoading(false);
         return;
       }
@@ -85,6 +110,7 @@ export default function SigninPage() {
       router.push("/profile");
     } catch (error) {
       console.error("Login error:", error);
+      setError("Network error. Please check your connection.");
       setLoading(false);
     }
   };
@@ -118,6 +144,22 @@ export default function SigninPage() {
             </div>
             <p className={`text-sm ${darkMode ? "text-orange-200/70" : "text-orange-700/70"}`}>Sign in to continue learning</p>
           </div>
+
+          {/* ✅ ERROR MESSAGE */}
+          {error && (
+            <div className={`mb-4 p-3 rounded-xl border flex items-start gap-2 ${
+              darkMode 
+                ? 'bg-red-900/20 border-red-800/30' 
+                : 'bg-red-50 border-red-200'
+            }`}>
+              <AlertCircle className={`w-5 h-5 shrink-0 mt-0.5 ${
+                darkMode ? 'text-red-400' : 'text-red-600'
+              }`} />
+              <p className={`text-sm ${darkMode ? 'text-red-200' : 'text-red-900'}`}>
+                {error}
+              </p>
+            </div>
+          )}
 
           {/* Custom Google Login Button */}
           <div className="mb-6">
