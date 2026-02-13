@@ -79,10 +79,9 @@ export default function Navbar() {
               {isLoggedIn ? (
                 <>
                   {[
-                    { name: "Learn", href: "/learn" },
+                    { name: "Learn and Practice", href: "/learn" },
                     { name: "Matches", href: "/matches" },
                     { name: "Chats", href: "/chats" },
-                    { name: "Practice", href: "/practice" },
                     { name: "Jobs", href: "/jobs" },
                     { name: "About", href: "/about" },
                   ].map((item) => (
@@ -226,7 +225,7 @@ export default function Navbar() {
                         : "text-gray-700 hover:bg-orange-50"
                     }`}
                   >
-                    Learn
+                    Learn and Practice
                   </Link>
                   <Link
                     href="/matches"
@@ -249,17 +248,6 @@ export default function Navbar() {
                     }`}
                   >
                     Chats
-                  </Link>
-                  <Link
-                    href="/practice"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
-                      darkMode
-                        ? "text-orange-200 hover:bg-orange-900/40"
-                        : "text-gray-700 hover:bg-orange-50"
-                    }`}
-                  >
-                    Practice
                   </Link>
                   <Link
                     href="/jobs"
