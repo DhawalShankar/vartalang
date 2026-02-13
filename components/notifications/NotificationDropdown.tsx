@@ -1,11 +1,11 @@
 // components/notifications/NotificationDropdown.tsx
-// MOBILE FIXED VERSION ✅
+// ✅ NAVBAR STYLE DROPDOWN - EXACTLY LIKE MOBILE MENU
 
 "use client";
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, MessageCircle, Loader2, X } from "lucide-react";
+import { Bell, MessageCircle, Loader2 } from "lucide-react";
 import { useDarkMode } from "@/lib/DarkModeContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
@@ -85,13 +85,6 @@ export default function NotificationDropdown({
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showDropdown]);
-
-  useEffect(() => {
-    document.body.style.overflow = showDropdown ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [showDropdown]);
 
   const fetchUnreadCount = async () => {
@@ -332,54 +325,28 @@ export default function NotificationDropdown({
         </button>
       )}
 
-      {/* ✅ MOBILE BACKDROP */}
-      {showDropdown && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={() => setShowDropdown(false)}
-        />
-      )}
-
-      {/* ✅ FIXED DROPDOWN - Mobile Full Screen Modal Style */}
+      {/* ✅ DROPDOWN - EXACTLY LIKE NAVBAR MOBILE MENU */}
       {showDropdown && (
         <div
-          className={`
-            fixed md:absolute
-            inset-x-0 md:inset-x-auto
-            bottom-0 md:bottom-auto
-            md:right-0
-            md:top-full md:mt-2
-            max-h-[85vh] md:max-h-96
-            w-full md:w-96
-            overflow-hidden
-            rounded-t-3xl md:rounded-2xl
-            shadow-2xl
-            border-t md:border
-            z-50
-            ${darkMode
-              ? "bg-[#2a1f1a] md:bg-[#2a1f1a]/95 border-orange-800/30 md:backdrop-blur-sm"
-              : "bg-white border-orange-200"
-            }
-          `}
-          style={{
-            animation: 'slideUp 0.3s ease-out'
-          }}
+          className={`fixed left-0 right-0 top-18 z-40 px-4 md:absolute md:left-auto md:right-0 md:top-full md:mt-2 md:w-96 md:px-0 ${
+            darkMode ? "" : ""
+          }`}
         >
-          {/* ✅ STICKY HEADER */}
           <div
-            className={`p-4 border-b sticky top-0 z-10 ${
+            className={`rounded-2xl border backdrop-blur-xl overflow-hidden max-h-[calc(100vh-100px)] md:max-h-96 ${
               darkMode
-                ? "border-orange-800/30 bg-[#2a1f1a]"
-                : "border-orange-200 bg-white"
+                ? "bg-[#2a1f1a]/90 border-orange-900/30"
+                : "bg-white/90 border-orange-100"
             }`}
           >
-            <div className="flex items-center justify-between">
-              <h3 className={`font-bold text-lg md:text-base flex items-center gap-2 ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
-                Notifications
-                {isFetching && <Loader2 className="w-3 h-3 animate-spin text-orange-500" />}
-              </h3>
-              
-              <div className="flex items-center gap-3">
+            {/* ✅ HEADER */}
+            <div className={`p-4 border-b ${darkMode ? "border-orange-900/30" : "border-orange-100"}`}>
+              <div className="flex items-center justify-between">
+                <h3 className={`font-bold text-base flex items-center gap-2 ${darkMode ? "text-orange-100" : "text-gray-900"}`}>
+                  Notifications
+                  {isFetching && <Loader2 className="w-4 h-4 animate-spin text-orange-500" />}
+                </h3>
+                
                 {notifications.length > 0 && (
                   <button
                     onClick={clearAllNotifications}
@@ -391,47 +358,103 @@ export default function NotificationDropdown({
                     {isLoading ? "Clearing..." : "Clear all"}
                   </button>
                 )}
-                
-                {/* ✅ CLOSE BUTTON - Mobile Only */}
-                <button
-                  onClick={() => setShowDropdown(false)}
-                  className={`md:hidden p-2 rounded-full transition-all ${
-                    darkMode ? "hover:bg-orange-900/30" : "hover:bg-orange-100"
-                  }`}
-                >
-                  <X className={`w-5 h-5 ${darkMode ? "text-orange-300" : "text-orange-700"}`} />
-                </button>
               </div>
             </div>
-          </div>
 
-          {error && (
-            <div className="p-4 bg-red-500/10 border-b border-red-500/20">
-              <p className="text-sm text-red-500">{error}</p>
-            </div>
-          )}
-
-          {/* ✅ SCROLLABLE CONTENT */}
-          <div className="overflow-y-auto max-h-[calc(85vh-80px)] md:max-h-80">
-            {notifications.length === 0 ? (
-              <div className="p-8 text-center">
-                <MessageCircle className={`w-12 h-12 mx-auto mb-2 ${darkMode ? "text-orange-400/50" : "text-orange-600/50"}`} />
-                <p className={`text-sm ${darkMode ? "text-orange-200/70" : "text-orange-700/70"}`}>
-                  No new notifications
-                </p>
+            {error && (
+              <div className="p-3 bg-red-500/10 border-b border-red-500/20">
+                <p className="text-sm text-red-500">{error}</p>
               </div>
-            ) : (
-              <div className={`divide-y ${darkMode ? "divide-orange-800/30" : "divide-orange-200"}`}>
-                {notifications.map((notif) => {
-                  const actualMatchId = extractId(notif.matchId);
-                  const actualChatId = extractId(notif.chatId);
-                  
-                  // ✅ Match request uses DIV, not nested buttons
-                  if (notif.type === 'match_request') {
+            )}
+
+            {/* ✅ SCROLLABLE CONTENT */}
+            <div className="overflow-y-auto max-h-[calc(100vh-180px)] md:max-h-80">
+              {notifications.length === 0 ? (
+                <div className="p-8 text-center">
+                  <MessageCircle className={`w-12 h-12 mx-auto mb-3 ${darkMode ? "text-orange-400/50" : "text-orange-600/50"}`} />
+                  <p className={`text-sm ${darkMode ? "text-orange-200/70" : "text-orange-700/70"}`}>
+                    No new notifications
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col">
+                  {notifications.map((notif) => {
+                    const actualMatchId = extractId(notif.matchId);
+                    const actualChatId = extractId(notif.chatId);
+                    
+                    // ✅ Match request
+                    if (notif.type === 'match_request') {
+                      return (
+                        <div
+                          key={notif._id}
+                          className={`p-4 border-b transition-all ${
+                            darkMode 
+                              ? "border-orange-900/30 hover:bg-orange-900/20" 
+                              : "border-orange-100 hover:bg-orange-50"
+                          } ${!notif.read ? (darkMode ? "bg-orange-900/10" : "bg-orange-50/50") : ""}`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-semibold text-sm shrink-0">
+                              {notif.sender?.name?.slice(0, 2).toUpperCase() || "??"}
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <p className={`text-sm font-semibold truncate ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
+                                  {notif.sender?.name || "Someone"}
+                                </p>
+                                {!notif.read && (
+                                  <div className="w-2 h-2 rounded-full bg-orange-500 shrink-0 animate-pulse"></div>
+                                )}
+                              </div>
+
+                              <p className={`text-sm mb-3 ${darkMode ? "text-orange-200/80" : "text-orange-800"}`}>
+                                Sent you a match request
+                              </p>
+
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => handleMatchAction(e, notif._id, notif.matchId, 'accept')}
+                                  disabled={isLoading || processingMatchId === actualMatchId}
+                                  className="flex-1 px-4 py-2 rounded-lg text-sm font-semibold bg-linear-to-r from-orange-500 to-red-600 text-white hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  {processingMatchId === actualMatchId ? "..." : "Accept"}
+                                </button>
+                                <button
+                                  onClick={(e) => handleMatchAction(e, notif._id, notif.matchId, 'reject')}
+                                  disabled={isLoading || processingMatchId === actualMatchId}
+                                  className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 ${
+                                    darkMode 
+                                      ? "bg-orange-900/30 text-orange-200 hover:bg-orange-900/50" 
+                                      : "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                                  }`}
+                                >
+                                  {processingMatchId === actualMatchId ? "..." : "Reject"}
+                                </button>
+                              </div>
+
+                              <p className={`text-xs mt-2 ${darkMode ? "text-orange-300/50" : "text-orange-600/50"}`}>
+                                {new Date(notif.createdAt).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // ✅ Other notifications
                     return (
-                      <div
+                      <button
                         key={notif._id}
-                        className={`p-4 ${!notif.read ? (darkMode ? "bg-orange-900/20" : "bg-orange-50/50") : ""}`}
+                        onClick={() => handleNotificationClick(notif._id, actualChatId, actualMatchId)}
+                        className={`w-full text-left p-4 border-b transition-all active:scale-[0.98] ${
+                          darkMode 
+                            ? "border-orange-900/30 hover:bg-orange-900/20" 
+                            : "border-orange-100 hover:bg-orange-50"
+                        } ${!notif.read ? (darkMode ? "bg-orange-900/10" : "bg-orange-50/50") : ""}`}
                       >
                         <div className="flex items-start gap-3">
                           <div className="w-10 h-10 rounded-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-semibold text-sm shrink-0">
@@ -448,33 +471,19 @@ export default function NotificationDropdown({
                               )}
                             </div>
 
-                            <p className={`text-sm mb-3 ${darkMode ? "text-orange-200/80" : "text-orange-800"}`}>
-                              Sent you a match request
-                            </p>
+                            {notif.type === "new_message" && (
+                              <p className={`text-sm line-clamp-2 ${darkMode ? "text-orange-200/80" : "text-orange-800"}`}>
+                                {notif.message || "Sent you a message"}
+                              </p>
+                            )}
 
-                            {/* ✅ Standalone buttons */}
-                            <div className="flex gap-2">
-                              <button
-                                onClick={(e) => handleMatchAction(e, notif._id, notif.matchId, 'accept')}
-                                disabled={isLoading || processingMatchId === actualMatchId}
-                                className="flex-1 md:flex-none px-4 py-2.5 rounded-lg text-sm font-semibold bg-linear-to-r from-orange-500 to-red-600 text-white hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
-                              >
-                                {processingMatchId === actualMatchId ? "..." : "Accept"}
-                              </button>
-                              <button
-                                onClick={(e) => handleMatchAction(e, notif._id, notif.matchId, 'reject')}
-                                disabled={isLoading || processingMatchId === actualMatchId}
-                                className={`flex-1 md:flex-none px-4 py-2.5 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 ${
-                                  darkMode 
-                                    ? "bg-orange-900/30 text-orange-200 hover:bg-orange-900/50" 
-                                    : "bg-orange-100 text-orange-700 hover:bg-orange-200"
-                                }`}
-                              >
-                                {processingMatchId === actualMatchId ? "..." : "Reject"}
-                              </button>
-                            </div>
+                            {notif.type === "match_accepted" && (
+                              <p className={`text-sm ${darkMode ? "text-orange-200/80" : "text-orange-800"}`}>
+                                Accepted your match request! 🎉
+                              </p>
+                            )}
 
-                            <p className={`text-xs mt-2 ${darkMode ? "text-orange-300/50" : "text-orange-600/50"}`}>
+                            <p className={`text-xs mt-1 ${darkMode ? "text-orange-300/50" : "text-orange-600/50"}`}>
                               {new Date(notif.createdAt).toLocaleTimeString([], {
                                 hour: "2-digit",
                                 minute: "2-digit",
@@ -482,74 +491,15 @@ export default function NotificationDropdown({
                             </p>
                           </div>
                         </div>
-                      </div>
+                      </button>
                     );
-                  }
-
-                  // ✅ Other notification types use button wrapper
-                  return (
-                    <button
-                      key={notif._id}
-                      onClick={() => handleNotificationClick(notif._id, actualChatId, actualMatchId)}
-                      className={`w-full text-left transition-all p-4 active:scale-[0.98] ${
-                        !notif.read ? (darkMode ? "bg-orange-900/20" : "bg-orange-50/50") : ""
-                      } ${darkMode ? "hover:bg-orange-900/10" : "hover:bg-orange-50"}`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-semibold text-sm shrink-0">
-                          {notif.sender?.name?.slice(0, 2).toUpperCase() || "??"}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className={`text-sm font-semibold truncate ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
-                              {notif.sender?.name || "Someone"}
-                            </p>
-                            {!notif.read && (
-                              <div className="w-2 h-2 rounded-full bg-orange-500 shrink-0 animate-pulse"></div>
-                            )}
-                          </div>
-
-                          {notif.type === "new_message" && (
-                            <p className={`text-sm line-clamp-2 ${darkMode ? "text-orange-200/80" : "text-orange-800"}`}>
-                              {notif.message || "Sent you a message"}
-                            </p>
-                          )}
-
-                          {notif.type === "match_accepted" && (
-                            <p className={`text-sm ${darkMode ? "text-orange-200/80" : "text-orange-800"}`}>
-                              Accepted your match request! 🎉
-                            </p>
-                          )}
-
-                          <p className={`text-xs mt-1 ${darkMode ? "text-orange-300/50" : "text-orange-600/50"}`}>
-                            {new Date(notif.createdAt).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
-
-      {/* ✅ ADD THIS CSS TO YOUR globals.css */}
-      <style jsx global>{`
-        @keyframes slideUp {
-          from {
-            transform: translateY(100%);
-          }
-          to {
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </div>
   );
 }
