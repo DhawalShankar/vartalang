@@ -15,7 +15,8 @@ import {
   BookOpen,
   Sparkles,
   CheckCircle2,
-  ArrowRight
+  ArrowRight,
+  Clock
 } from "lucide-react";
 import { useDarkMode } from '@/lib/DarkModeContext';
 
@@ -45,14 +46,16 @@ export default function MatchesPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
-  const [animating, setAnimating] = useState(false); // Changed from 'swiping' to 'animating'
+  const [animating, setAnimating] = useState(false);
   
   // Pledge Modal State
   const [showPledgeModal, setShowPledgeModal] = useState(false);
   const [isAgreed, setIsAgreed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [pendingMatch, setPendingMatch] = useState<{ matchId: string } | null>(null);
+  const [isMutualMatch, setIsMutualMatch] = useState(false);
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   // Swipe state
   const [touchStart, setTouchStart] = useState({ x: 0, y: 0 });
@@ -119,15 +122,33 @@ export default function MatchesPage() {
     }
   };
 
-  const handleSwipe = (swipeDirection: 'left' | 'right') => {
+  const handleSwipe = async (swipeDirection: 'left' | 'right') => {
     if (!currentMatch || animating || showPledgeModal) return;
 
     setShowDetails(false);
 
-    // If swiping left (skip), just animate and move to next card
+    // If swiping left (skip)
     if (swipeDirection === 'left') {
       setAnimating(true);
       setDirection(swipeDirection);
+
+      // ✅ Call backend API to record skip
+      const token = localStorage.getItem("token");
+      try {
+        await fetch(`${API_URL}/matches/swipe`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            targetUserId: currentMatch._id, // ✅ Correct parameter name
+            action: 'skip',
+          }),
+        });
+      } catch (error) {
+        console.error("❌ Skip error:", error);
+      }
       
       setTimeout(() => {
         if (currentIndex < matches.length - 1) {
@@ -139,16 +160,93 @@ export default function MatchesPage() {
       return;
     }
 
-    // If swiping right (like), show pledge modal IMMEDIATELY
-    // Do NOT call API yet - only store match in state
-    setPendingMatch({
-      matchId: currentMatch._id
-    });
-    setShowPledgeModal(true);
+    // If swiping right (like), call backend FIRST to check if mutual
+    const token = localStorage.getItem("token");
+    
+    try {
+      const swipeRes = await fetch(`${API_URL}/matches/swipe`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          targetUserId: currentMatch._id, // ✅ Correct parameter name
+          action: 'like',
+        }),
+      });
+
+      if (!swipeRes.ok) {
+        const errorData = await swipeRes.json();
+        throw new Error(errorData.error || "Failed to process swipe");
+      }
+
+      const swipeData = await swipeRes.json();
+      console.log("🎯 Swipe response:", swipeData);
+
+      // ✅ Check if it's a mutual match
+      if (swipeData.matched && swipeData.chatId) {
+        // MUTUAL MATCH! Show pledge immediately
+        setIsMutualMatch(true);
+        setChatId(swipeData.chatId);
+        setShowPledgeModal(true);
+        console.log("🎉 MUTUAL MATCH! Chat ID:", swipeData.chatId);
+      } else {
+        // NOT mutual - just notification sent
+        console.log("💌 Match request sent - waiting for other user");
+        
+        // Animate card away
+        setAnimating(true);
+        setDirection('right');
+        
+        setTimeout(() => {
+          if (currentIndex < matches.length - 1) {
+            setCurrentIndex(currentIndex + 1);
+          }
+          setDirection(null);
+          setAnimating(false);
+        }, 300);
+      }
+
+    } catch (error) {
+      console.error("❌ Swipe error:", error);
+      setErrorMessage(error instanceof Error ? error.message : "Failed to process swipe");
+      
+      // Still move to next card on error
+      setAnimating(true);
+      setDirection('right');
+      
+      setTimeout(() => {
+        if (currentIndex < matches.length - 1) {
+          setCurrentIndex(currentIndex + 1);
+        }
+        setDirection(null);
+        setAnimating(false);
+        setErrorMessage(null);
+      }, 2000);
+    }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentIndex < matches.length - 1 && !animating) {
+      // Call skip API
+      const token = localStorage.getItem("token");
+      try {
+        await fetch(`${API_URL}/matches/swipe`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            targetUserId: currentMatch._id,
+            action: 'skip',
+          }),
+        });
+      } catch (error) {
+        console.error("❌ Skip error:", error);
+      }
+
       setDirection('left');
       setShowDetails(false);
       setAnimating(true);
@@ -200,75 +298,47 @@ export default function MatchesPage() {
   };
 
   const handlePledgeSubmit = async () => {
-    if (!isAgreed || !pendingMatch) {
+    if (!isAgreed) {
       alert("Please accept the pledge to continue");
+      return;
+    }
+
+    if (!isMutualMatch || !chatId) {
+      alert("Match data not found. Please try again.");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const token = localStorage.getItem("token");
-
-      // NOW we call the swipe API to create the match and get chatId
-      const swipeRes = await fetch(`${API_URL}/matches/swipe`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          targetUserId: pendingMatch.matchId,
-          action: 'like',
-        }),
-      });
-
-      if (!swipeRes.ok) {
-        const errorData = await swipeRes.json();
-        throw new Error(errorData.error || "Failed to create match");
-      }
-
-      const swipeData = await swipeRes.json();
-
-      if (!swipeData.matched || !swipeData.chatId) {
-        throw new Error("Match creation failed");
-      }
-
-      // Record pledge acceptance
-      await fetch(`${API_URL}/matches/accept-pledge`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          matchId: pendingMatch.matchId,
-          acceptedAt: new Date().toISOString(),
-        }),
-      });
-
-      // Show success animation
+      // Show success animation immediately
       setShowSuccess(true);
 
-      // Redirect to chat after animation
+      // Wait for animation, then redirect
       setTimeout(() => {
-        router.push(`/chats?chat=${swipeData.chatId}`);
+        router.push(`/chats?chat=${chatId}`);
       }, 2000);
 
     } catch (error) {
-      console.error("Pledge submission error:", error);
-      alert("Failed to create match. Please try again.");
+      console.error("❌ Pledge error:", error);
+      alert("Something went wrong. Redirecting to chat...");
       setIsSubmitting(false);
       setShowSuccess(false);
+      
+      // Redirect anyway
+      if (chatId) {
+        router.push(`/chats?chat=${chatId}`);
+      }
     }
   };
 
   const handleClosePledgeModal = () => {
     setShowPledgeModal(false);
     setIsAgreed(false);
-    setPendingMatch(null);
+    setIsMutualMatch(false);
+    setChatId(null);
     
-    // Animate the card away after closing modal
+    // Animate the card away
     setAnimating(true);
     setDirection('right');
     
@@ -356,6 +426,13 @@ export default function MatchesPage() {
   return (
     <div className={`min-h-screen ${darkMode ? "bg-[#1a1410]" : "bg-[#FFF9F5]"}`}>
       <Navbar />
+      
+      {/* Error Toast */}
+      {errorMessage && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 px-4 py-3 rounded-lg bg-red-500 text-white shadow-lg animate-slide-down">
+          <p className="text-sm font-medium">{errorMessage}</p>
+        </div>
+      )}
       
       <div className="max-w-2xl mx-auto px-4 pt-24 pb-8">
         
@@ -705,8 +782,8 @@ export default function MatchesPage() {
       </div>
       <Footer />
 
-      {/* Pledge Modal */}
-      {showPledgeModal && (
+      {/* Pledge Modal - ONLY shows on mutual match */}
+      {showPledgeModal && isMutualMatch && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           {showSuccess ? (
             /* Success Screen */
@@ -764,11 +841,11 @@ export default function MatchesPage() {
                 <div className="flex items-center gap-2 mb-2">
                   <Sparkles className="w-5 h-5 text-orange-500" />
                   <h3 className={`text-lg font-bold ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
-                    Congratulations on Your Match!
+                    It's a Match! 🎉
                   </h3>
                 </div>
                 <p className={`text-sm ${darkMode ? "text-orange-200/80" : "text-orange-800"}`}>
-                  You're about to start an incredible language learning journey with <span className="font-semibold">{currentMatch.name}</span>. 
+                  You and <span className="font-semibold">{currentMatch.name}</span> both want to learn together! 
                   Before you begin chatting, please read and accept our community pledge.
                 </p>
               </div>
@@ -870,7 +947,7 @@ export default function MatchesPage() {
                   {isSubmitting ? (
                     <>
                       <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      <span>Creating Match...</span>
+                      <span>Opening Chat...</span>
                     </>
                   ) : (
                     <>
@@ -908,6 +985,16 @@ export default function MatchesPage() {
             transform: translateY(0);
           }
         }
+        @keyframes slide-down {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
         @keyframes scale-in {
           from { transform: scale(0); }
           to { transform: scale(1); }
@@ -917,6 +1004,9 @@ export default function MatchesPage() {
         }
         .animate-slide-up {
           animation: slide-up 0.4s ease-out;
+        }
+        .animate-slide-down {
+          animation: slide-down 0.3s ease-out;
         }
         .animate-scale-in {
           animation: scale-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
