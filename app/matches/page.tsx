@@ -123,7 +123,7 @@ export default function MatchesPage() {
     }
 
     // Success - request sent
-    setSuccessMessage("Match request sent! 💌");
+    setSuccessMessage("Match request sent!");
     setProcessingId(null); // Pehle processing band karo
     
     // Thoda delay do message dikhne ke liye, phir match remove karo
@@ -206,7 +206,7 @@ export default function MatchesPage() {
       )}
 
       {successMessage && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-lg bg-green-500 text-white shadow-lg animate-slide-down">
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-lg bg-green-800 text-white shadow-lg animate-slide-down">
           {successMessage}
         </div>
       )}
