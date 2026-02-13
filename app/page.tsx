@@ -355,7 +355,6 @@ export default function VartaLangLanding() {
 
               <div className="space-y-3 mb-5">
                 {[
-                  'AI-powered compatibility scoring',
                   'Match based on languages, level & location',
                   'Safe & verified community',
                   'Unlimited practice partners'

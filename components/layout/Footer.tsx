@@ -81,6 +81,7 @@ export default function Footer() {
                 darkMode ? "text-orange-200/70" : "text-gray-600"
               }`}>
                 India's inclusive language learning ecosystem. Connecting learners with creators, tradition with opportunity—for every Indian.
+                <br /> Images shown are for representation purposes only. 
               </p>
               
               {/* Social Links */}
