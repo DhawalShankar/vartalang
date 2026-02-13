@@ -10,7 +10,7 @@ export default function Analytics() {
   useEffect(() => {
     const url = pathname + (searchParams?.toString() ? `?${searchParams}` : '')
 
-    window.gtag?.('config', 'G-ZX9RMWTWVR', {
+    window.gtag?.('config', 'G-7WM95MNBGL', {
       page_path: url,
     })
   }, [pathname, searchParams])

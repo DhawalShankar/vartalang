@@ -35,9 +35,8 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
 
-        {/* Google Analytics (GA4) – Consent Mode, no cookies by default */}
         <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-ZX9RMWTWVR"
+          src="https://www.googletagmanager.com/gtag/js?id=G-7WM95MNBGL"
           strategy="afterInteractive"
         />
 
@@ -48,7 +47,7 @@ export default function RootLayout({
 
             gtag('js', new Date());
 
-            gtag('config', 'G-ZX9RMWTWVR', {
+            gtag('config', 'G-7WM95MNBGL', {
               anonymize_ip: true,
               send_page_view: false
             });
