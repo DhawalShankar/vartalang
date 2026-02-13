@@ -45,6 +45,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [editedProfile, setEditedProfile] = useState<UserProfile | null>(null);
+  const [imageError, setImageError] = useState(false);
 
   const languages = [
     "Hindi", "English", "Tamil", "Telugu", "Kannada", "Malayalam", "Maithili",
@@ -90,6 +91,11 @@ export default function ProfilePage() {
         window.location.href = "/auth/login";
       });
   }, []);
+
+  // Reset image error when profile photo changes
+  useEffect(() => {
+    setImageError(false);
+  }, [profile?.profilePhoto]);
 
   const handleSave = async () => {
     if (!editedProfile) return;
@@ -208,19 +214,19 @@ export default function ProfilePage() {
                       ? 'border-[#1a1410] bg-orange-900/30' 
                       : 'border-white bg-orange-50'
                   }`}>
-                    {profile.profilePhoto ? (
-                      <img src={profile.profilePhoto} alt={profile.name} className="w-full h-full object-cover" />
+                    {profile.profilePhoto && !imageError ? (
+                      <img 
+                        src={profile.profilePhoto} 
+                        alt={profile.name} 
+                        className="w-full h-full object-cover"
+                        onError={() => setImageError(true)}
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <User className={`w-16 h-16 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
                       </div>
                     )}
                   </div>
-                  {isEditing && (
-                    <button className="absolute bottom-2 right-2 p-2 rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-all">
-                      <Camera className="w-4 h-4" />
-                    </button>
-                  )}
                 </div>
 
                 <div className="flex gap-2 mt-4 sm:mt-0">
