@@ -2,47 +2,33 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Sun, Moon, Bell, User, MessageCircle, GraduationCap } from "lucide-react";
+import { Menu, X, Sun, Moon, User, GraduationCap } from "lucide-react";
 import { useDarkMode } from "@/lib/DarkModeContext";
 import { useAuth } from "@/lib/AuthContext";
-import { useRouter } from "next/navigation";
+import NotificationDropdown from "@/components/notifications/NotificationDropdown";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [notifications, setNotifications] = useState<any[]>([]);
-  
-  // ✅ Track user role
   const [userRole, setUserRole] = useState<'learner' | 'teacher' | null>(null);
   
-  const notificationRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
-  const pathname = usePathname(); // ✅ Get current path
-  
+  const pathname = usePathname();
   const { darkMode, setDarkMode } = useDarkMode();
   const { isLoggedIn } = useAuth();
-  
-  // ✅ Check if we're on chats page (handles query params too)
-  const isOnChatsPage = pathname.startsWith('/chats');
 
   // ✅ Fetch user profile to get role
   useEffect(() => {
     if (isLoggedIn) {
       fetchUserProfile();
-      fetchUnreadCount();
-      fetchNotifications();
     } else {
       setUserRole(null);
     }
   }, [isLoggedIn]);
 
-  // ✅ Fetch user profile
   const fetchUserProfile = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -61,127 +47,8 @@ export default function Navbar() {
     }
   };
 
-  // ✅ Poll for notifications
-  useEffect(() => {
-    if (!isLoggedIn) return;
-
-    fetchUnreadCount();
-    fetchNotifications();
-
-    const interval = setInterval(() => {
-      fetchUnreadCount();
-    }, 30000); // every 30 sec
-
-    return () => clearInterval(interval);
-  }, [isLoggedIn]);
-
-  // ✅ Clear all chat notifications when visiting chats page
-  useEffect(() => {
-    if (isOnChatsPage && isLoggedIn && unreadCount > 0) {
-      clearAllChatNotifications();
-    }
-  }, [isOnChatsPage, isLoggedIn, unreadCount]);
-
-  // Close notification dropdown on outside click
-  useEffect(() => {
-    if (!showNotifications) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (notificationRef.current && !notificationRef.current.contains(e.target as Node)) {
-        setShowNotifications(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showNotifications]);
-
-  const fetchUnreadCount = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    try {
-      const res = await fetch(`${API_URL}/notifications/unread-count`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      setUnreadCount(data.count);
-    } catch (error) {
-      console.error("Fetch unread count error:", error);
-    }
-  };
-
-  const fetchNotifications = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    try {
-      const res = await fetch(`${API_URL}/notifications`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      setNotifications(data.notifications);
-    } catch (error) {
-      console.error("Fetch notifications error:", error);
-    }
-  };
-
-  // ✅ Clear all chat notifications (for chats page visit)
-  const clearAllChatNotifications = async () => {
-    const token = localStorage.getItem("token");
-    if (!token || unreadCount === 0) return;
-
-    try {
-      console.log("🧹 Clearing all chat notifications...");
-      
-      const response = await fetch(`${API_URL}/notifications/messages/all`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log(`✅ Cleared ${data.count} notifications`);
-
-      // Immediately update UI
-      setNotifications([]);
-      setUnreadCount(0);
-      
-      // Then refresh from server to be sure
-      setTimeout(() => {
-        fetchUnreadCount();
-        fetchNotifications();
-      }, 100);
-    } catch (error) {
-      console.error("❌ Clear chat notifications error:", error);
-    }
-  };
-
-  const handleNotificationClick = async (notificationId: string, chatId: string) => {
-    const token = localStorage.getItem("token");
-    
-    try {
-      await fetch(`${API_URL}/notifications/${notificationId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      setNotifications(prev => prev.filter(n => n._id !== notificationId));
-      setUnreadCount(prev => Math.max(0, prev - 1));
-      
-      setShowNotifications(false);
-      setMobileMenuOpen(false);
-      router.push(`/chats?chat=${chatId}`);
-    } catch (error) {
-      console.error("Delete notification error:", error);
-    }
-  };
-
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 py-4 transition-opacity`}>
+    <nav className="fixed top-0 left-0 right-0 z-50 py-4 transition-opacity">
       <div className="max-w-6xl mx-auto px-4 lg:px-6">
         <div
           className={`backdrop-blur-xl rounded-full border transition-all ${
@@ -247,29 +114,10 @@ export default function Navbar() {
                     </Link>
                   )}
 
-                  {/* Notification Bell - Desktop */}
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowNotifications(!showNotifications)}
-                      className={`p-2 rounded-full transition-all relative ${
-                        darkMode
-                          ? "bg-orange-900/30 hover:bg-orange-900/50"
-                          : "bg-orange-50 hover:bg-orange-100"
-                      }`}
-                    >
-                      <Bell
-                        className={`w-4 h-4 ${
-                          darkMode ? "text-orange-300" : "text-orange-700"
-                        }`}
-                      />
-                      {unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
-                          {unreadCount > 9 ? '9+' : unreadCount}
-                        </span>
-                      )}
-                    </button>
-                  </div>
+                  {/* ✅ Notification Dropdown Component */}
+                  <NotificationDropdown showBellIcon={true} />
 
+                  {/* Profile Button */}
                   <Link href="/profile">
                     <button
                       className={`p-2 rounded-full transition-all ${
@@ -307,6 +155,7 @@ export default function Navbar() {
                 </>
               )}
 
+              {/* Dark Mode Toggle */}
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 className={`p-2 rounded-full transition-all hover:scale-110 ${
@@ -326,19 +175,7 @@ export default function Navbar() {
             {/* MOBILE BUTTONS */}
             <div className="md:hidden flex items-center gap-2">
               {isLoggedIn && (
-                <button
-                  onClick={() => setShowNotifications(!showNotifications)}
-                  className={`p-1.5 rounded-full relative ${
-                    darkMode ? "bg-orange-900/30" : "bg-orange-50"
-                  }`}
-                >
-                  <Bell className={`w-4 h-4 ${darkMode ? "text-orange-300" : "text-orange-700"}`} />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
-                      {unreadCount > 9 ? '9' : unreadCount}
-                    </span>
-                  )}
-                </button>
+                <NotificationDropdown showBellIcon={true} />
               )}
               
               <button
@@ -367,106 +204,6 @@ export default function Navbar() {
             </div>
           </div>
         </div>
-
-        {/* NOTIFICATION DROPDOWN */}
-        {showNotifications && isLoggedIn && (
-          <div 
-            ref={notificationRef}
-            className={`absolute right-4 md:right-auto md:left-auto mt-3 w-[calc(100%-2rem)] md:w-96 max-h-[80vh] md:max-h-96 overflow-y-auto rounded-2xl shadow-2xl border z-50 ${
-              darkMode ? "bg-[#2a1f1a]/95 border-orange-800/30 backdrop-blur-sm" : "bg-white border-orange-200"
-            }`}
-          >
-            <div className={`p-4 border-b sticky top-0 z-10 ${
-              darkMode ? "border-orange-800/30 bg-[#2a1f1a]/95" : "border-orange-200 bg-white"
-            }`}>
-              <div className="flex items-center justify-between">
-                <h3 className={`font-bold ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
-                  Messages
-                </h3>
-                {notifications.length > 0 && (
-                  <button
-                    onClick={async () => {
-                      const token = localStorage.getItem("token");
-                      try {
-                        console.log("🧹 Clearing all notifications from button...");
-                        
-                        const response = await fetch(`${API_URL}/notifications/messages/all`, {
-                          method: "DELETE",
-                          headers: { Authorization: `Bearer ${token}` },
-                        });
-
-                        if (!response.ok) {
-                          throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-
-                        const data = await response.json();
-                        console.log(`✅ Cleared ${data.count} notifications`);
-                        
-                        setNotifications([]);
-                        setUnreadCount(0);
-                        setShowNotifications(false);
-                      } catch (error) {
-                        console.error("❌ Clear all error:", error);
-                      }
-                    }}
-                    className={`text-xs ${darkMode ? "text-orange-400 hover:text-orange-300" : "text-orange-600 hover:text-orange-700"}`}
-                  >
-                    Clear all
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {notifications.length === 0 ? (
-              <div className="p-8 text-center">
-                <MessageCircle className={`w-12 h-12 mx-auto mb-2 ${darkMode ? "text-orange-400/50" : "text-orange-600/50"}`} />
-                <p className={`text-sm ${darkMode ? "text-orange-200/70" : "text-orange-700/70"}`}>
-                  No new messages
-                </p>
-              </div>
-            ) : (
-              notifications.map((notif) => (
-                <div 
-                  key={notif._id} 
-                  className={`border-b last:border-b-0 ${
-                    darkMode ? "border-orange-800/30" : "border-orange-200"
-                  } ${
-                    !notif.read ? (darkMode ? "bg-orange-900/20" : "bg-orange-50/50") : ""
-                  }`}
-                >
-                  {notif.type === 'new_message' && (
-                    <button
-                      onClick={() => handleNotificationClick(notif._id, notif.chatId)}
-                      className="w-full text-left hover:opacity-80 transition-opacity p-4"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-semibold text-sm shrink-0">
-                          {notif.sender?.name?.slice(0, 2).toUpperCase() || "??"}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className={`text-sm font-semibold truncate ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
-                              {notif.sender?.name || "Someone"}
-                            </p>
-                            {!notif.read && (
-                              <div className="w-2 h-2 rounded-full bg-orange-500 shrink-0"></div>
-                            )}
-                          </div>
-                          <p className={`text-sm line-clamp-2 ${darkMode ? "text-orange-200/80" : "text-orange-800"}`}>
-                            {notif.message || "Sent you a message"}
-                          </p>
-                          <p className={`text-xs mt-1 ${darkMode ? "text-orange-300/50" : "text-orange-600/50"}`}>
-                            {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        )}
 
         {/* MOBILE DROPDOWN MENU */}
         {mobileMenuOpen && (
@@ -564,6 +301,7 @@ export default function Navbar() {
                   )}
 
                   <div className="h-px bg-linear-to-r from-transparent via-orange-500/30 to-transparent my-2"></div>
+                  
                   <Link
                     href="/profile"
                     onClick={() => setMobileMenuOpen(false)}
