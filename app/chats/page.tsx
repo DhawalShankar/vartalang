@@ -2,6 +2,7 @@
 import { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
+import PledgeModal from "@/components/PledgeModal";
 import { 
   MessageCircle, 
   Search, 
@@ -72,7 +73,8 @@ function ChatsContent() {
   const [sending, setSending] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [reportReason, setReportReason] = useState("");
-  
+  const [showPledgeModal, setShowPledgeModal] = useState(false);
+  const [hasPledged, setHasPledged] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const currentUserId = typeof window !== 'undefined' ? localStorage.getItem("userId") : null;
 
@@ -97,6 +99,14 @@ function ChatsContent() {
     };
 
     clearAllChatNotifications();
+  }, []);
+
+  useEffect(() => {
+  // Check if user has already accepted the pledge
+  const pledgeAccepted = localStorage.getItem("pledgeAccepted");
+  if (pledgeAccepted === "true") {
+    setHasPledged(true);
+  }
   }, []);
 
   const fetchChats = useCallback(async () => {
@@ -452,11 +462,39 @@ function ChatsContent() {
     }
   };
 
-  const handleChatClick = (chatId: string) => {
-    setSelectedChat(chatId);
-    router.push(`/chats?chat=${chatId}`, { scroll: false });
-    fetchChatMessages(chatId);
+ const handleChatClick = (chatId: string) => {
+  // Check if user has pledged before opening chat
+  if (!hasPledged) {
+    setShowPledgeModal(true);
+    // Store the chatId to open after pledge is accepted
+    sessionStorage.setItem("pendingChatId", chatId);
+    return;
+  }
+  
+  setSelectedChat(chatId);
+  router.push(`/chats?chat=${chatId}`, { scroll: false });
+  fetchChatMessages(chatId);
   };
+  const handlePledgeAccept = () => {
+  // Store pledge acceptance in localStorage
+  localStorage.setItem("pledgeAccepted", "true");
+  setHasPledged(true);
+  setShowPledgeModal(false);
+  
+  // Open the pending chat if there is one
+      const pendingChatId = sessionStorage.getItem("pendingChatId");
+      if (pendingChatId) {
+        setSelectedChat(pendingChatId);
+        router.push(`/chats?chat=${pendingChatId}`, { scroll: false });
+        fetchChatMessages(pendingChatId);
+        sessionStorage.removeItem("pendingChatId");
+      }
+    };
+
+    const handlePledgeClose = () => {
+      setShowPledgeModal(false);
+      sessionStorage.removeItem("pendingChatId");
+    };
 
   const handleBack = () => {
     setSelectedChat(null);
@@ -992,6 +1030,12 @@ function ChatsContent() {
           </div>
         </div>
       )}
+      {/* Pledge Modal */}
+      <PledgeModal 
+        isOpen={showPledgeModal}
+        onAccept={handlePledgeAccept}
+        onClose={handlePledgeClose}
+      />
     </div>
   );
 }

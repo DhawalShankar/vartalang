@@ -182,53 +182,63 @@ export default function NotificationDropdown({
   };
 
   const handleMatchAction = async (notificationId: string, matchId: string, action: 'accept' | 'reject') => {
-    const token = localStorage.getItem("token");
-    if (!token || isLoading || !matchId) return;
+  const token = localStorage.getItem("token");
+  if (!token || isLoading || !matchId) return;
 
-    setIsLoading(true);
+  setIsLoading(true);
 
-    try {
-      console.log(`🤝 ${action === 'accept' ? 'Accepting' : 'Rejecting'} match ${matchId}...`);
+  try {
+    console.log(`🤝 ${action === 'accept' ? 'Accepting' : 'Rejecting'} match ${matchId}...`);
+    console.log(`📍 API URL: ${API_URL}/matches/${matchId}/${action}`); // ✅ Debug log
 
-      const response = await fetch(`${API_URL}/matches/${matchId}/${action}`, {
-        method: "POST",
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-      });
+    const response = await fetch(`${API_URL}/matches/${matchId}/${action}`, {
+      method: "POST",
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+    });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to ${action} match`);
-      }
+    console.log(`📥 Response status: ${response.status}`); // ✅ Debug log
 
-      const data = await response.json();
-      console.log(`✅ Match ${action}ed successfully`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error(`❌ Error data:`, errorData); // ✅ Debug log
+      throw new Error(errorData.error || `Failed to ${action} match`);
+    }
 
-      setNotifications(prev => prev.filter(n => n._id !== notificationId));
-      setUnreadCount(prev => Math.max(0, prev - 1));
+    const data = await response.json();
+    console.log(`✅ Match ${action}ed successfully:`, data);
+
+    // ✅ Remove notification from list
+    setNotifications(prev => prev.filter(n => n._id !== notificationId));
+    setUnreadCount(prev => Math.max(0, prev - 1));
+    
+    // ✅ If accepted, redirect to chat
+    if (action === 'accept' && data.chatId) {
       setShowDropdown(false);
-
-      if (action === 'accept' && data.chatId) {
-        router.push(`/chats?chat=${data.chatId}`);
-      }
-
       setTimeout(() => {
+        router.push(`/chats?chat=${data.chatId}`);
+      }, 300);
+    } else {
+      // ✅ If rejected, just close dropdown
+      setTimeout(() => {
+        setShowDropdown(false);
         fetchUnreadCount();
         fetchNotifications();
-      }, 500);
-
-    } catch (error) {
-      console.error(`❌ ${action} match error:`, error);
-      alert(error instanceof Error ? error.message : `Failed to ${action} match request`);
-      
-      fetchNotifications();
-      fetchUnreadCount();
-    } finally {
-      setIsLoading(false);
+      }, 300);
     }
-  };
+
+  } catch (error) {
+    console.error(`❌ ${action} match error:`, error);
+    alert(error instanceof Error ? error.message : `Failed to ${action} match request`);
+    
+    fetchNotifications();
+    fetchUnreadCount();
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const clearAllNotifications = async () => {
     const token = localStorage.getItem("token");
