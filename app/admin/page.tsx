@@ -538,19 +538,19 @@ export default function AdminPortal() {
                       {reports.map((report) => (
                         <tr key={report._id} className={darkMode ? 'hover:bg-orange-900/10' : 'hover:bg-orange-50/50'}>
                           <td className={`px-6 py-4 ${darkMode ? 'text-orange-100' : 'text-gray-900'}`}>
-                            <p className="font-medium">{report.reporter.name}</p>
+                            <p className="font-medium">{String(report.reporter?.name || 'Unknown')}</p>
                             <p className={`text-xs ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
-                              {report.reporter.email}
+                              {String(report.reporter?.email || 'N/A')}
                             </p>
                           </td>
                           <td className={`px-6 py-4 ${darkMode ? 'text-orange-100' : 'text-gray-900'}`}>
-                            <p className="font-medium">{report.reportedUser.name}</p>
+                            <p className="font-medium">{String(report.reportedUser?.name || 'Unknown')}</p>
                             <p className={`text-xs ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
-                              {report.reportedUser.email}
+                              {String(report.reportedUser?.email || 'N/A')}
                             </p>
                           </td>
                           <td className={`px-6 py-4 text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-700'}`}>
-                            <p className="line-clamp-2">{report.reason}</p>
+                            <p className="line-clamp-2">{String(report.reason || 'No reason')}</p>
                           </td>
                           <td className={`px-6 py-4 text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-700'}`}>
                             {formatDate(report.timestamp)}
