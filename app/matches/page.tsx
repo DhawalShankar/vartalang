@@ -146,63 +146,61 @@ export default function MatchesPage() {
       return;
     }
 
-    // If swiping right (like)
     const token = localStorage.getItem("token");
-    
-    try {
-      const swipeRes = await fetch(`${API_URL}/matches/swipe`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          targetUserId: currentMatch._id,
-          action: 'like',
-        }),
-      });
+  
+  try {
+    const swipeRes = await fetch(`${API_URL}/matches/swipe`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        targetUserId: currentMatch._id,
+        action: 'like',
+      }),
+    });
 
-      if (!swipeRes.ok) {
-        const errorData = await swipeRes.json();
-        throw new Error(errorData.error || "Failed to process swipe");
-      }
+    // ✅ FIX 1: Parse response FIRST (before checking ok)
+    const swipeData = await swipeRes.json();
+    console.log("🎯 Swipe response:", swipeData);
 
-      const swipeData = await swipeRes.json();
-      console.log("🎯 Swipe response:", swipeData);
+    // ✅ FIX 2: Handle "already swiped" gracefully - just skip to next
+    if (swipeData.error === "You already swiped on this user" || 
+        swipeData.error === "You already interacted with this user") {
+      console.log("⏭️ Already swiped, moving to next card");
+      setAnimating(true);
+      setDirection('right');
+      setTimeout(() => {
+        if (currentIndex < matches.length - 1) {
+          setCurrentIndex(currentIndex + 1);
+        }
+        setDirection(null);
+        setAnimating(false);
+      }, 300);
+      return;
+    }
 
-      // Check if it's a mutual match
-      if (swipeData.matched && swipeData.chatId) {
-        // MUTUAL MATCH! Redirect directly to chat
-        console.log("🎉 MUTUAL MATCH! Redirecting to chat:", swipeData.chatId);
-        setSuccessMessage(`It's a match with ${currentMatch.name}! 🎉`);
-        
-        setTimeout(() => {
-          router.push(`/chats?chat=${swipeData.chatId}`);
-        }, 1500);
-      } else {
-        // NOT mutual - notification sent
-        console.log("💌 Match request sent - waiting for other user");
-        setSuccessMessage("Match request sent! 💌");
-        
-        // Animate card away
-        setAnimating(true);
-        setDirection('right');
-        
-        setTimeout(() => {
-          if (currentIndex < matches.length - 1) {
-            setCurrentIndex(currentIndex + 1);
-          }
-          setDirection(null);
-          setAnimating(false);
-          setSuccessMessage(null);
-        }, 1500);
-      }
+    // ✅ FIX 3: NOW check for other errors
+    if (!swipeRes.ok) {
+      throw new Error(swipeData.error || "Failed to process swipe");
+    }
 
-    } catch (error) {
-      console.error("❌ Swipe error:", error);
-      setErrorMessage(error instanceof Error ? error.message : "Failed to process swipe");
+    // ✅ SUCCESS - Check if mutual match
+    if (swipeData.matched && swipeData.chatId) {
+      // MUTUAL MATCH! Redirect to chat
+      console.log("🎉 MUTUAL MATCH! Redirecting to chat:", swipeData.chatId);
+      setSuccessMessage(`It's a match with ${currentMatch.name}! 🎉`);
       
-      // Still move to next card on error
+      setTimeout(() => {
+        router.push(`/chats?chat=${swipeData.chatId}`);
+      }, 1500);
+    } else {
+      // NOT mutual - notification sent
+      console.log("💌 Match request sent");
+      setSuccessMessage("Match request sent! 💌");
+      
+      // Animate card away
       setAnimating(true);
       setDirection('right');
       
@@ -212,10 +210,28 @@ export default function MatchesPage() {
         }
         setDirection(null);
         setAnimating(false);
-        setErrorMessage(null);
-      }, 2000);
+        setSuccessMessage(null);
+      }, 1500);
     }
-  };
+
+  } catch (error) {
+    console.error("❌ Swipe error:", error);
+    setErrorMessage(error instanceof Error ? error.message : "Failed to process swipe");
+    
+    // Still move to next card on error
+    setAnimating(true);
+    setDirection('right');
+    
+    setTimeout(() => {
+      if (currentIndex < matches.length - 1) {
+        setCurrentIndex(currentIndex + 1);
+      }
+      setDirection(null);
+      setAnimating(false);
+      setErrorMessage(null);
+    }, 2000);
+  }
+};
 
   const handleNext = async () => {
     if (currentIndex < matches.length - 1 && !animating) {
