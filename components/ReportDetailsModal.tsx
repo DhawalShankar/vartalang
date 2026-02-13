@@ -15,7 +15,7 @@ interface Report {
     name: string;
     email: string;
   };
-  chatId: string;
+  chatId: string | { _id: string; [key: string]: any };
   reason: string;
   timestamp: string;
 }
@@ -30,14 +30,34 @@ interface ReportDetailsModalProps {
 export default function ReportDetailsModal({ report, onClose, onDelete, isLoading }: ReportDetailsModalProps) {
   const { darkMode } = useDarkMode();
 
+  // Debug logging
+  console.log('📋 Report data:', report);
+  console.log('Reporter:', report.reporter);
+  console.log('Reported User:', report.reportedUser);
+
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    try {
+      return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.error('Date format error:', error);
+      return 'Invalid date';
+    }
+  };
+
+  // Helper to safely extract chatId (handles both string and populated object)
+  const getChatId = () => {
+    if (typeof report.chatId === 'string') {
+      return report.chatId;
+    } else if (report.chatId && typeof report.chatId === 'object' && '_id' in report.chatId) {
+      return report.chatId._id;
+    }
+    return 'N/A';
   };
 
   return (
@@ -63,7 +83,7 @@ export default function ReportDetailsModal({ report, onClose, onDelete, isLoadin
               Reporter
             </label>
             <p className={`text-sm ${darkMode ? 'text-orange-100' : 'text-gray-900'}`}>
-              {report.reporter.name} ({report.reporter.email})
+              {String(report.reporter?.name || 'N/A')} ({String(report.reporter?.email || 'N/A')})
             </p>
           </div>
 
@@ -72,7 +92,7 @@ export default function ReportDetailsModal({ report, onClose, onDelete, isLoadin
               Reported User
             </label>
             <p className={`text-sm ${darkMode ? 'text-orange-100' : 'text-gray-900'}`}>
-              {report.reportedUser.name} ({report.reportedUser.email})
+              {String(report.reportedUser?.name || 'N/A')} ({String(report.reportedUser?.email || 'N/A')})
             </p>
           </div>
 
@@ -81,7 +101,7 @@ export default function ReportDetailsModal({ report, onClose, onDelete, isLoadin
               Reason
             </label>
             <p className={`text-sm ${darkMode ? 'text-orange-100' : 'text-gray-900'} whitespace-pre-wrap`}>
-              {report.reason}
+              {String(report.reason || 'No reason provided')}
             </p>
           </div>
 
@@ -99,7 +119,7 @@ export default function ReportDetailsModal({ report, onClose, onDelete, isLoadin
               Chat ID
             </label>
             <p className={`text-xs font-mono ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>
-              {report.chatId}
+              {getChatId()}
             </p>
           </div>
         </div>
