@@ -650,7 +650,7 @@ useEffect(() => {
     chat.user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const showOnlyChat = selectedChat !== null;
+  
 
   if (loading) {
     return (
@@ -694,7 +694,7 @@ useEffect(() => {
         <div className="grid md:grid-cols-3 gap-4 h-[calc(100vh-120px)]">
           
           {/* Chat List Sidebar */}
-          <div className={`${showOnlyChat ? 'hidden md:block' : 'block'} rounded-3xl overflow-hidden ${darkMode ? "bg-orange-900/10 border border-orange-800/30" : "bg-white border border-orange-200 shadow-lg"}`}>
+          <div className={`${selectedChat ? 'hidden' : 'block'} md:block  rounded-3xl overflow-hidden ${darkMode ? "bg-orange-900/10 border border-orange-800/30" : "bg-white border border-orange-200 shadow-lg"}`}>
             
             <div className={`p-4 border-b ${darkMode ? 'border-orange-800/30' : 'border-orange-200'}`}>
               <h2 className={`text-xl font-bold mb-3 ${darkMode ? "text-orange-50" : "text-orange-950"}`}>
