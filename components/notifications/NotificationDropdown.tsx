@@ -1,5 +1,5 @@
 // components/notifications/NotificationDropdown.tsx
-// FIXED VERSION - Properly handles match accept/reject
+// FIXED VERSION - Handles object rendering properly
 
 "use client";
 
@@ -15,13 +15,14 @@ interface Notification {
   _id: string;
   type: string;
   sender?: {
+    _id?: string;
     name: string;
     languagesKnow?: any[];
     primaryLanguageToLearn?: string;
   };
   message?: string;
-  chatId?: string;
-  matchId?: string;
+  chatId?: string | { _id: string };  // ✅ Can be string or object
+  matchId?: string | { _id: string }; // ✅ Can be string or object
   read: boolean;
   createdAt: string;
 }
@@ -47,16 +48,22 @@ export default function NotificationDropdown({
   const router = useRouter();
   const { darkMode } = useDarkMode();
 
+  // ✅ Helper function to extract ID from object or string
+  const extractId = (value: string | { _id: string } | undefined): string | undefined => {
+    if (!value) return undefined;
+    if (typeof value === 'string') return value;
+    if (typeof value === 'object' && '_id' in value) return value._id;
+    return undefined;
+  };
+
   // ✅ Initial fetch and polling setup
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    // Initial fetch
     fetchUnreadCount();
     fetchNotifications();
 
-    // Setup polling
     const interval = setInterval(() => {
       fetchUnreadCount();
       if (showDropdown) {
@@ -154,9 +161,13 @@ export default function NotificationDropdown({
     }
   };
 
-  const handleNotificationClick = async (notificationId: string, chatId?: string, matchId?: string) => {
+  const handleNotificationClick = async (notificationId: string, chatId?: string | { _id: string }, matchId?: string | { _id: string }) => {
     const token = localStorage.getItem("token");
     if (!token) return;
+    
+    // ✅ Extract actual IDs
+    const actualChatId = extractId(chatId);
+    const actualMatchId = extractId(matchId);
     
     try {
       const res = await fetch(`${API_URL}/notifications/${notificationId}`, {
@@ -170,9 +181,9 @@ export default function NotificationDropdown({
       setUnreadCount(prev => Math.max(0, prev - 1));
       setShowDropdown(false);
 
-      if (chatId) {
-        router.push(`/chats?chat=${chatId}`);
-      } else if (matchId) {
+      if (actualChatId) {
+        router.push(`/chats?chat=${actualChatId}`);
+      } else if (actualMatchId) {
         router.push(`/matches`);
       }
     } catch (error) {
@@ -182,37 +193,37 @@ export default function NotificationDropdown({
     }
   };
 
-  // ✅ FIXED: Proper match action handler with better error handling and logging
-  const handleMatchAction = async (notificationId: string, matchId: string | undefined, action: 'accept' | 'reject') => {
+  const handleMatchAction = async (notificationId: string, matchId: string | { _id: string } | undefined, action: 'accept' | 'reject') => {
     const token = localStorage.getItem("token");
     
-    // ✅ Validate inputs first
+    // ✅ Extract actual match ID
+    const actualMatchId = extractId(matchId);
+    
     if (!token) {
       console.error("❌ No token found");
       alert("Please login again");
       return;
     }
 
-    if (!matchId) {
-      console.error("❌ No matchId provided");
+    if (!actualMatchId) {
+      console.error("❌ No matchId provided", matchId);
       alert("Invalid match request");
       return;
     }
 
-    if (processingMatchId === matchId) {
+    if (processingMatchId === actualMatchId) {
       console.log("⏳ Already processing this match");
       return;
     }
 
-    setProcessingMatchId(matchId);
+    setProcessingMatchId(actualMatchId);
     setIsLoading(true);
 
     try {
-      const url = `${API_URL}/matches/${matchId}/${action}`;
+      const url = `${API_URL}/matches/${actualMatchId}/${action}`;
       console.log(`🔄 ${action === 'accept' ? 'Accepting' : 'Rejecting'} match...`);
       console.log(`📍 Request URL: ${url}`);
-      console.log(`🎫 Match ID: ${matchId}`);
-      console.log(`📋 Notification ID: ${notificationId}`);
+      console.log(`🎫 Match ID: ${actualMatchId}`);
 
       const response = await fetch(url, {
         method: "POST",
@@ -224,7 +235,6 @@ export default function NotificationDropdown({
 
       console.log(`📥 Response status: ${response.status}`);
       
-      // ✅ Get response text first to handle both JSON and non-JSON responses
       const responseText = await response.text();
       console.log(`📄 Response body: ${responseText}`);
 
@@ -239,7 +249,6 @@ export default function NotificationDropdown({
         throw new Error(errorMessage);
       }
 
-      // ✅ Parse response
       let data;
       try {
         data = JSON.parse(responseText);
@@ -250,29 +259,23 @@ export default function NotificationDropdown({
 
       console.log(`✅ Match ${action}ed successfully:`, data);
 
-      // ✅ Remove notification from list immediately
+      // ✅ Remove notification from list
       setNotifications(prev => prev.filter(n => n._id !== notificationId));
       setUnreadCount(prev => Math.max(0, prev - 1));
       
-      // ✅ Show success message
-      const successMessage = action === 'accept' 
-        ? "Match accepted! Redirecting to chat..." 
-        : "Match request rejected";
-      
-      // ✅ If accepted, redirect to chat
       if (action === 'accept') {
-        if (data.chatId) {
-          console.log(`💬 Redirecting to chat: ${data.chatId}`);
+        const actualChatId = extractId(data.chatId);
+        if (actualChatId) {
+          console.log(`💬 Redirecting to chat: ${actualChatId}`);
           setShowDropdown(false);
           setTimeout(() => {
-            router.push(`/chats?chat=${data.chatId}`);
+            router.push(`/chats?chat=${actualChatId}`);
           }, 500);
         } else {
-          console.warn("⚠️ No chatId in response, staying on notifications");
-          alert(successMessage);
+          console.warn("⚠️ No chatId in response");
+          alert("Match accepted!");
         }
       } else {
-        // ✅ If rejected, just show success and refresh
         console.log(`✅ Match rejected successfully`);
         setTimeout(() => {
           fetchUnreadCount();
@@ -289,7 +292,6 @@ export default function NotificationDropdown({
       
       alert(errorMessage);
       
-      // ✅ Refresh notifications on error
       setTimeout(() => {
         fetchNotifications();
         fetchUnreadCount();
@@ -324,14 +326,13 @@ export default function NotificationDropdown({
 
       const data = await response.json();
       console.log(`✅ Cleared ${data.count} notifications`);
-      console.log(`✅ Auto-rejected ${data.rejectedMatches || 0} pending matches`);
       
       setNotifications([]);
       setUnreadCount(0);
       setShowDropdown(false);
       setError(null);
       
-      alert(`Cleared ${data.count} notifications and rejected ${data.rejectedMatches || 0} pending matches`);
+      alert(`Cleared ${data.count} notifications`);
       
       setTimeout(() => {
         fetchUnreadCount();
@@ -443,7 +444,6 @@ export default function NotificationDropdown({
                   </button>
                 )}
                 
-                {/* Close button - Mobile only */}
                 <button
                   onClick={() => setShowDropdown(false)}
                   className={`md:hidden p-1 rounded-full transition-all ${
@@ -483,133 +483,135 @@ export default function NotificationDropdown({
             </div>
           ) : (
             <div className="divide-y divide-orange-800/30 md:divide-orange-200">
-              {notifications.map((notif) => (
-                <div
-                  key={notif._id}
-                  className={`
-                    ${!notif.read
-                      ? darkMode
-                        ? "bg-orange-900/20"
-                        : "bg-orange-50/50"
-                      : ""
-                    }
-                  `}
-                >
-                  <button
-                    onClick={() => {
-                      if (notif.type !== 'match_request') {
-                        handleNotificationClick(notif._id, notif.chatId, notif.matchId);
+              {notifications.map((notif) => {
+                // ✅ Extract IDs at render time
+                const actualMatchId = extractId(notif.matchId);
+                const actualChatId = extractId(notif.chatId);
+                
+                return (
+                  <div
+                    key={notif._id}
+                    className={`
+                      ${!notif.read
+                        ? darkMode
+                          ? "bg-orange-900/20"
+                          : "bg-orange-50/50"
+                        : ""
                       }
-                    }}
-                    className={`w-full text-left transition-opacity p-4 ${
-                      notif.type !== 'match_request' ? 'hover:opacity-80 active:opacity-60 cursor-pointer' : 'cursor-default'
-                    }`}
-                    disabled={isLoading || notif.type === 'match_request'}
+                    `}
                   >
-                    <div className="flex items-start gap-3">
-                      {/* Avatar */}
-                      <div className="w-10 h-10 rounded-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-semibold text-sm shrink-0">
-                        {notif.sender?.name?.slice(0, 2).toUpperCase() || "??"}
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p
-                            className={`text-sm font-semibold truncate ${
-                              darkMode ? "text-orange-100" : "text-orange-900"
-                            }`}
-                          >
-                            {notif.sender?.name || "Someone"}
-                          </p>
-                          {!notif.read && (
-                            <div className="w-2 h-2 rounded-full bg-orange-500 shrink-0 animate-pulse"></div>
-                          )}
+                    <button
+                      onClick={() => {
+                        if (notif.type !== 'match_request') {
+                          handleNotificationClick(notif._id, actualChatId, actualMatchId);
+                        }
+                      }}
+                      className={`w-full text-left transition-opacity p-4 ${
+                        notif.type !== 'match_request' ? 'hover:opacity-80 active:opacity-60 cursor-pointer' : 'cursor-default'
+                      }`}
+                      disabled={isLoading || notif.type === 'match_request'}
+                    >
+                      <div className="flex items-start gap-3">
+                        {/* Avatar */}
+                        <div className="w-10 h-10 rounded-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-semibold text-sm shrink-0">
+                          {notif.sender?.name?.slice(0, 2).toUpperCase() || "??"}
                         </div>
 
-                        {/* Message Preview */}
-                        {notif.type === "new_message" && (
-                          <p
-                            className={`text-sm line-clamp-2 ${
-                              darkMode ? "text-orange-200/80" : "text-orange-800"
-                            }`}
-                          >
-                            {notif.message || "Sent you a message"}
-                          </p>
-                        )}
-
-                        {/* Match Request with Action Buttons */}
-                        {notif.type === "match_request" && (
-                          <>
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
                             <p
-                              className={`text-sm mb-3 ${
+                              className={`text-sm font-semibold truncate ${
+                                darkMode ? "text-orange-100" : "text-orange-900"
+                              }`}
+                            >
+                              {notif.sender?.name || "Someone"}
+                            </p>
+                            {!notif.read && (
+                              <div className="w-2 h-2 rounded-full bg-orange-500 shrink-0 animate-pulse"></div>
+                            )}
+                          </div>
+
+                          {/* Message Preview */}
+                          {notif.type === "new_message" && (
+                            <p
+                              className={`text-sm line-clamp-2 ${
                                 darkMode ? "text-orange-200/80" : "text-orange-800"
                               }`}
                             >
-                              Sent you a match request
+                              {notif.message || "Sent you a message"}
                             </p>
-                            {/* ✅ Debug info - remove in production */}
-                            <p className="text-xs text-gray-500 mb-2">
-                              Match ID: {notif.matchId || 'Missing!'}
-                            </p>
-                            <div className="flex gap-2">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleMatchAction(notif._id, notif.matchId, 'accept');
-                                }}
-                                disabled={isLoading || processingMatchId === notif.matchId}
-                                className="flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-semibold bg-linear-to-r from-orange-500 to-red-600 text-white hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                {processingMatchId === notif.matchId ? "..." : "Accept"}
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleMatchAction(notif._id, notif.matchId, 'reject');
-                                }}
-                                disabled={isLoading || processingMatchId === notif.matchId}
-                                className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 ${
-                                  darkMode 
-                                    ? "bg-orange-900/30 text-orange-200 hover:bg-orange-900/50" 
-                                    : "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                          )}
+
+                          {/* Match Request with Action Buttons */}
+                          {notif.type === "match_request" && (
+                            <>
+                              <p
+                                className={`text-sm mb-3 ${
+                                  darkMode ? "text-orange-200/80" : "text-orange-800"
                                 }`}
                               >
-                                {processingMatchId === notif.matchId ? "..." : "Reject"}
-                              </button>
-                            </div>
-                          </>
-                        )}
+                                Sent you a match request
+                              </p>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMatchAction(notif._id, notif.matchId, 'accept');
+                                  }}
+                                  disabled={isLoading || processingMatchId === actualMatchId}
+                                  className="flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-semibold bg-linear-to-r from-orange-500 to-red-600 text-white hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  {processingMatchId === actualMatchId ? "..." : "Accept"}
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMatchAction(notif._id, notif.matchId, 'reject');
+                                  }}
+                                  disabled={isLoading || processingMatchId === actualMatchId}
+                                  className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 ${
+                                    darkMode 
+                                      ? "bg-orange-900/30 text-orange-200 hover:bg-orange-900/50" 
+                                      : "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                                  }`}
+                                >
+                                  {processingMatchId === actualMatchId ? "..." : "Reject"}
+                                </button>
+                              </div>
+                            </>
+                          )}
 
-                        {/* Match Accepted */}
-                        {notif.type === "match_accepted" && (
+                          {/* Match Accepted */}
+                          {notif.type === "match_accepted" && (
+                            <p
+                              className={`text-sm ${
+                                darkMode ? "text-orange-200/80" : "text-orange-800"
+                              }`}
+                            >
+                              Accepted your match request! 🎉
+                            </p>
+                          )}
+
+                          {/* Timestamp */}
                           <p
-                            className={`text-sm ${
-                              darkMode ? "text-orange-200/80" : "text-orange-800"
+                            className={`text-xs mt-1 ${
+                              darkMode
+                                ? "text-orange-300/50"
+                                : "text-orange-600/50"
                             }`}
                           >
-                            Accepted your match request! 🎉
+                            {new Date(notif.createdAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
                           </p>
-                        )}
-
-                        {/* Timestamp */}
-                        <p
-                          className={`text-xs mt-1 ${
-                            darkMode
-                              ? "text-orange-300/50"
-                              : "text-orange-600/50"
-                          }`}
-                        >
-                          {new Date(notif.createdAt).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </p>
+                        </div>
                       </div>
-                    </div>
-                  </button>
-                </div>
-              ))}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
