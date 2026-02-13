@@ -1,13 +1,15 @@
 // components/notifications/NotificationDropdown.tsx
+// Production-Grade + Mobile-First Implementation
 
 "use client";
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, MessageCircle } from "lucide-react";
+import { Bell, MessageCircle, Loader2, X } from "lucide-react";
 import { useDarkMode } from "@/lib/DarkModeContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const POLLING_INTERVAL = 30000; // 30 seconds
 
 interface Notification {
   _id: string;
@@ -25,9 +27,7 @@ interface Notification {
 }
 
 interface NotificationDropdownProps {
-  /** Whether to show the bell icon (true for desktop, false for mobile where it's separate) */
   showBellIcon?: boolean;
-  /** Custom class for positioning/styling */
   className?: string;
 }
 
@@ -39,24 +39,37 @@ export default function NotificationDropdown({
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { darkMode } = useDarkMode();
 
-  // ✅ Fetch notifications and count on mount
+  // ✅ Initial fetch and polling setup
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    // Initial fetch
     fetchUnreadCount();
     fetchNotifications();
 
-    // Poll every 30 seconds
+    // Setup polling
     const interval = setInterval(() => {
       fetchUnreadCount();
-      fetchNotifications();
-    }, 30000);
+      if (showDropdown) {
+        fetchNotifications();
+      }
+    }, POLLING_INTERVAL);
 
-    return () => clearInterval(interval);
-  }, []);
+    console.log(`🔄 Notification polling started (every ${POLLING_INTERVAL/1000}s)`);
+
+    return () => {
+      clearInterval(interval);
+      console.log("🛑 Notification polling stopped");
+    };
+  }, [showDropdown]);
 
   // ✅ Close dropdown on outside click
   useEffect(() => {
@@ -72,6 +85,19 @@ export default function NotificationDropdown({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showDropdown]);
 
+  // ✅ Prevent body scroll when dropdown is open on mobile
+  useEffect(() => {
+    if (showDropdown) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showDropdown]);
+
   const fetchUnreadCount = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -81,12 +107,19 @@ export default function NotificationDropdown({
         headers: { Authorization: `Bearer ${token}` },
       });
       
-      if (!res.ok) throw new Error("Failed to fetch count");
+      if (!res.ok) {
+        if (res.status === 401) {
+          console.error("❌ Unauthorized - token may be invalid");
+          return;
+        }
+        throw new Error(`HTTP ${res.status}`);
+      }
       
       const data = await res.json();
       setUnreadCount(data.count);
+      setError(null);
     } catch (error) {
-      console.error("Fetch unread count error:", error);
+      console.error("❌ Fetch unread count error:", error);
     }
   };
 
@@ -94,56 +127,69 @@ export default function NotificationDropdown({
     const token = localStorage.getItem("token");
     if (!token) return;
 
+    setIsFetching(true);
+    setError(null);
+
     try {
       const res = await fetch(`${API_URL}/notifications`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       
-      if (!res.ok) throw new Error("Failed to fetch notifications");
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error("Session expired. Please login again.");
+        }
+        throw new Error(`Failed to fetch notifications (${res.status})`);
+      }
       
       const data = await res.json();
-      setNotifications(data.notifications);
+      setNotifications(data.notifications || []);
+      console.log(`📥 Fetched ${data.notifications?.length || 0} notifications`);
     } catch (error) {
-      console.error("Fetch notifications error:", error);
+      console.error("❌ Fetch notifications error:", error);
+      setError(error instanceof Error ? error.message : "Failed to load notifications");
+    } finally {
+      setIsFetching(false);
     }
   };
 
   const handleNotificationClick = async (notificationId: string, chatId?: string, matchId?: string) => {
     const token = localStorage.getItem("token");
+    if (!token) return;
     
     try {
-      // Delete notification
-      await fetch(`${API_URL}/notifications/${notificationId}`, {
+      const res = await fetch(`${API_URL}/notifications/${notificationId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Update UI
+      if (!res.ok) throw new Error("Failed to delete notification");
+
       setNotifications(prev => prev.filter(n => n._id !== notificationId));
       setUnreadCount(prev => Math.max(0, prev - 1));
       setShowDropdown(false);
 
-      // Navigate based on notification type
       if (chatId) {
         router.push(`/chats?chat=${chatId}`);
       } else if (matchId) {
         router.push(`/matches`);
       }
     } catch (error) {
-      console.error("Delete notification error:", error);
+      console.error("❌ Delete notification error:", error);
+      fetchNotifications();
+      fetchUnreadCount();
     }
   };
 
   const handleMatchAction = async (notificationId: string, matchId: string, action: 'accept' | 'reject') => {
     const token = localStorage.getItem("token");
-    if (!token || isLoading) return;
+    if (!token || isLoading || !matchId) return;
 
     setIsLoading(true);
 
     try {
       console.log(`🤝 ${action === 'accept' ? 'Accepting' : 'Rejecting'} match ${matchId}...`);
 
-      // Call backend API
       const response = await fetch(`${API_URL}/matches/${matchId}/${action}`, {
         method: "POST",
         headers: { 
@@ -153,32 +199,32 @@ export default function NotificationDropdown({
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to ${action} match`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to ${action} match`);
       }
 
       const data = await response.json();
-      console.log(`✅ Match ${action}ed:`, data);
+      console.log(`✅ Match ${action}ed successfully`);
 
-      // Remove notification from UI
       setNotifications(prev => prev.filter(n => n._id !== notificationId));
       setUnreadCount(prev => Math.max(0, prev - 1));
+      setShowDropdown(false);
 
-      // Show success message and refresh
-      if (action === 'accept') {
-        // Navigate to chat
-        if (data.chatId) {
-          router.push(`/chats?chat=${data.chatId}`);
-        } else {
-          router.push('/matches');
-        }
+      if (action === 'accept' && data.chatId) {
+        router.push(`/chats?chat=${data.chatId}`);
       }
 
-      // Close dropdown
-      setShowDropdown(false);
+      setTimeout(() => {
+        fetchUnreadCount();
+        fetchNotifications();
+      }, 500);
 
     } catch (error) {
       console.error(`❌ ${action} match error:`, error);
-      alert(`Failed to ${action} match request. Please try again.`);
+      alert(error instanceof Error ? error.message : `Failed to ${action} match request`);
+      
+      fetchNotifications();
+      fetchUnreadCount();
     } finally {
       setIsLoading(false);
     }
@@ -199,24 +245,24 @@ export default function NotificationDropdown({
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`Failed to clear notifications (${response.status})`);
       }
 
       const data = await response.json();
       console.log(`✅ Cleared ${data.count} notifications`);
       
-      // Update UI
       setNotifications([]);
       setUnreadCount(0);
       setShowDropdown(false);
+      setError(null);
       
-      // Refresh from server
       setTimeout(() => {
         fetchUnreadCount();
         fetchNotifications();
       }, 100);
     } catch (error) {
       console.error("❌ Clear all error:", error);
+      setError("Failed to clear notifications");
     } finally {
       setIsLoading(false);
     }
@@ -227,7 +273,12 @@ export default function NotificationDropdown({
       {/* Bell Icon Button */}
       {showBellIcon && (
         <button
-          onClick={() => setShowDropdown(!showDropdown)}
+          onClick={() => {
+            setShowDropdown(!showDropdown);
+            if (!showDropdown) {
+              fetchNotifications();
+            }
+          }}
           className={`p-2 rounded-full transition-all relative ${
             darkMode
               ? "bg-orange-900/30 hover:bg-orange-900/50"
@@ -241,21 +292,43 @@ export default function NotificationDropdown({
             }`}
           />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold animate-pulse">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
         </button>
       )}
 
-      {/* Dropdown */}
+      {/* Mobile Overlay */}
+      {showDropdown && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setShowDropdown(false)}
+        />
+      )}
+
+      {/* Dropdown - Mobile First */}
       {showDropdown && (
         <div
-          className={`absolute right-0 md:right-auto mt-3 w-[calc(100vw-2rem)] md:w-96 max-h-[80vh] md:max-h-96 overflow-y-auto rounded-2xl shadow-2xl border z-50 ${
-            darkMode
+          className={`
+            fixed md:absolute
+            inset-x-4 md:inset-x-auto
+            top-20 md:top-auto
+            bottom-4 md:bottom-auto
+            md:right-0 md:left-auto
+            md:mt-3
+            w-auto md:w-96
+            max-h-none md:max-h-96
+            overflow-y-auto
+            rounded-2xl
+            shadow-2xl
+            border
+            z-50
+            ${darkMode
               ? "bg-[#2a1f1a]/95 border-orange-800/30 backdrop-blur-sm"
               : "bg-white border-orange-200"
-          }`}
+            }
+          `}
         >
           {/* Header */}
           <div
@@ -267,27 +340,52 @@ export default function NotificationDropdown({
           >
             <div className="flex items-center justify-between">
               <h3
-                className={`font-bold ${
+                className={`font-bold flex items-center gap-2 ${
                   darkMode ? "text-orange-100" : "text-orange-900"
                 }`}
               >
                 Notifications
+                {isFetching && (
+                  <Loader2 className="w-3 h-3 animate-spin text-orange-500" />
+                )}
               </h3>
-              {notifications.length > 0 && (
+              
+              <div className="flex items-center gap-2">
+                {notifications.length > 0 && (
+                  <button
+                    onClick={clearAllNotifications}
+                    disabled={isLoading}
+                    className={`text-xs ${
+                      darkMode
+                        ? "text-orange-400 hover:text-orange-300"
+                        : "text-orange-600 hover:text-orange-700"
+                    } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
+                    {isLoading ? "Clearing..." : "Clear all"}
+                  </button>
+                )}
+                
+                {/* Close button - Mobile only */}
                 <button
-                  onClick={clearAllNotifications}
-                  disabled={isLoading}
-                  className={`text-xs ${
+                  onClick={() => setShowDropdown(false)}
+                  className={`md:hidden p-1 rounded-full transition-all ${
                     darkMode
-                      ? "text-orange-400 hover:text-orange-300"
-                      : "text-orange-600 hover:text-orange-700"
-                  } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                      ? "hover:bg-orange-900/30"
+                      : "hover:bg-orange-100"
+                  }`}
                 >
-                  {isLoading ? "Clearing..." : "Clear all"}
+                  <X className={`w-4 h-4 ${darkMode ? "text-orange-300" : "text-orange-700"}`} />
                 </button>
-              )}
+              </div>
             </div>
           </div>
+
+          {/* Error State */}
+          {error && (
+            <div className="p-4 bg-red-500/10 border-b border-red-500/20">
+              <p className="text-sm text-red-500">{error}</p>
+            </div>
+          )}
 
           {/* Notification List */}
           {notifications.length === 0 ? (
@@ -306,125 +404,131 @@ export default function NotificationDropdown({
               </p>
             </div>
           ) : (
-            notifications.map((notif) => (
-              <div
-                key={notif._id}
-                className={`border-b last:border-b-0 ${
-                  darkMode ? "border-orange-800/30" : "border-orange-200"
-                } ${
-                  !notif.read
-                    ? darkMode
-                      ? "bg-orange-900/20"
-                      : "bg-orange-50/50"
-                    : ""
-                }`}
-              >
-                <button
-                  onClick={() => {
-                    // Only navigate for non-match_request notifications
-                    if (notif.type !== 'match_request') {
-                      handleNotificationClick(notif._id, notif.chatId, notif.matchId);
+            <div className="divide-y divide-orange-800/30 md:divide-orange-200">
+              {notifications.map((notif) => (
+                <div
+                  key={notif._id}
+                  className={`
+                    ${!notif.read
+                      ? darkMode
+                        ? "bg-orange-900/20"
+                        : "bg-orange-50/50"
+                      : ""
                     }
-                  }}
-                  className="w-full text-left hover:opacity-80 transition-opacity p-4"
-                  disabled={notif.type === 'match_request'}
+                  `}
                 >
-                  <div className="flex items-start gap-3">
-                    {/* Avatar */}
-                    <div className="w-10 h-10 rounded-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-semibold text-sm shrink-0">
-                      {notif.sender?.name?.slice(0, 2).toUpperCase() || "??"}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p
-                          className={`text-sm font-semibold truncate ${
-                            darkMode ? "text-orange-100" : "text-orange-900"
-                          }`}
-                        >
-                          {notif.sender?.name || "Someone"}
-                        </p>
-                        {!notif.read && (
-                          <div className="w-2 h-2 rounded-full bg-orange-500 shrink-0"></div>
-                        )}
+                  <button
+                    onClick={() => {
+                      if (notif.type !== 'match_request') {
+                        handleNotificationClick(notif._id, notif.chatId, notif.matchId);
+                      }
+                    }}
+                    className={`w-full text-left transition-opacity p-4 ${
+                      notif.type !== 'match_request' ? 'hover:opacity-80 active:opacity-60 cursor-pointer' : 'cursor-default'
+                    }`}
+                    disabled={isLoading || notif.type === 'match_request'}
+                  >
+                    <div className="flex items-start gap-3">
+                      {/* Avatar */}
+                      <div className="w-10 h-10 rounded-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-semibold text-sm shrink-0">
+                        {notif.sender?.name?.slice(0, 2).toUpperCase() || "??"}
                       </div>
 
-                      {/* Message Preview */}
-                      {notif.type === "new_message" && (
-                        <p
-                          className={`text-sm line-clamp-2 ${
-                            darkMode ? "text-orange-200/80" : "text-orange-800"
-                          }`}
-                        >
-                          {notif.message || "Sent you a message"}
-                        </p>
-                      )}
-
-                      {notif.type === "match_request" && (
-                        <>
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
                           <p
-                            className={`text-sm mb-2 ${
+                            className={`text-sm font-semibold truncate ${
+                              darkMode ? "text-orange-100" : "text-orange-900"
+                            }`}
+                          >
+                            {notif.sender?.name || "Someone"}
+                          </p>
+                          {!notif.read && (
+                            <div className="w-2 h-2 rounded-full bg-orange-500 shrink-0 animate-pulse"></div>
+                          )}
+                        </div>
+
+                        {/* Message Preview */}
+                        {notif.type === "new_message" && (
+                          <p
+                            className={`text-sm line-clamp-2 ${
                               darkMode ? "text-orange-200/80" : "text-orange-800"
                             }`}
                           >
-                            Sent you a match request
+                            {notif.message || "Sent you a message"}
                           </p>
-                          <div className="flex gap-2 mt-2">
-                            <button
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                await handleMatchAction(notif._id, notif.matchId!, 'accept');
-                              }}
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-linear-to-r from-orange-500 to-red-600 text-white hover:scale-105 transition-all"
-                            >
-                              Accept
-                            </button>
-                            <button
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                await handleMatchAction(notif._id, notif.matchId!, 'reject');
-                              }}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                                darkMode 
-                                  ? "bg-orange-900/30 text-orange-200 hover:bg-orange-900/50" 
-                                  : "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                        )}
+
+                        {/* Match Request with Action Buttons */}
+                        {notif.type === "match_request" && (
+                          <>
+                            <p
+                              className={`text-sm mb-3 ${
+                                darkMode ? "text-orange-200/80" : "text-orange-800"
                               }`}
                             >
-                              Reject
-                            </button>
-                          </div>
-                        </>
-                      )}
+                              Sent you a match request
+                            </p>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMatchAction(notif._id, notif.matchId!, 'accept');
+                                }}
+                                disabled={isLoading}
+                                className="flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-semibold bg-linear-to-r from-orange-500 to-red-600 text-white hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {isLoading ? "..." : "Accept"}
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMatchAction(notif._id, notif.matchId!, 'reject');
+                                }}
+                                disabled={isLoading}
+                                className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 ${
+                                  darkMode 
+                                    ? "bg-orange-900/30 text-orange-200 hover:bg-orange-900/50" 
+                                    : "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                                }`}
+                              >
+                                {isLoading ? "..." : "Reject"}
+                              </button>
+                            </div>
+                          </>
+                        )}
 
-                      {notif.type === "match_accepted" && (
+                        {/* Match Accepted */}
+                        {notif.type === "match_accepted" && (
+                          <p
+                            className={`text-sm ${
+                              darkMode ? "text-orange-200/80" : "text-orange-800"
+                            }`}
+                          >
+                            Accepted your match request! 🎉
+                          </p>
+                        )}
+
+                        {/* Timestamp */}
                         <p
-                          className={`text-sm ${
-                            darkMode ? "text-orange-200/80" : "text-orange-800"
+                          className={`text-xs mt-1 ${
+                            darkMode
+                              ? "text-orange-300/50"
+                              : "text-orange-600/50"
                           }`}
                         >
-                          Accepted your match request!
+                          {new Date(notif.createdAt).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </p>
-                      )}
-
-                      {/* Timestamp */}
-                      <p
-                        className={`text-xs mt-1 ${
-                          darkMode
-                            ? "text-orange-300/50"
-                            : "text-orange-600/50"
-                        }`}
-                      >
-                        {new Date(notif.createdAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
+                      </div>
                     </div>
-                  </div>
-                </button>
-              </div>
-            ))
+                  </button>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}
