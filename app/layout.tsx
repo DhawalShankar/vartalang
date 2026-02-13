@@ -5,7 +5,7 @@ import "./globals.css";
 import { DarkModeProvider } from "@/lib/DarkModeContext";
 import { AuthProvider } from "@/lib/AuthContext";
 import Analytics from "@/components/Analytics";
-
+import { GoogleOAuthProvider } from '@react-oauth/google';
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -53,14 +53,14 @@ export default function RootLayout({
             });
           `}
         </Script>
-
+        <GoogleOAuthProvider clientId={process.env.CLIENT_ID || ""}>
         <AuthProvider>
           <DarkModeProvider>
             <Analytics />
             {children}
           </DarkModeProvider>
         </AuthProvider>
-
+            </GoogleOAuthProvider>
       </body>
     </html>
   );

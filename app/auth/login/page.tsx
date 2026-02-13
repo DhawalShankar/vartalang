@@ -3,6 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Mail, Lock } from "lucide-react";
+import { GoogleLogin } from '@react-oauth/google';
 import { useDarkMode } from '@/lib/DarkModeContext';
 import { useAuth } from '@/lib/AuthContext';
 
@@ -39,17 +40,42 @@ export default function SigninPage() {
         return;
       }
 
-      // Save token and update auth state
       localStorage.setItem("token", data.token);
       localStorage.setItem("userId", data.userId); 
       setIsLoggedIn(true);
-      
-      // Redirect to profile page
       router.push("/profile");
     } catch (error) {
       console.error("Login error:", error);
       alert("Network error. Please check your connection and try again.");
       setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async (credentialResponse: any) => {
+    try {
+      const res = await fetch(`${API_URL}/auth/google-login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          googleToken: credentialResponse.credential 
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Google login failed");
+        return;
+      }
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userId", data.userId);
+      setIsLoggedIn(true);
+      router.push("/profile");
+      
+    } catch (error) {
+      console.error("Google login error:", error);
+      alert("Network error. Please try again.");
     }
   };
 
@@ -64,14 +90,11 @@ export default function SigninPage() {
         
         {/* Logo */}
         <Link href="/" className="flex items-center justify-center gap-2 mb-8">
-          
-              <img
-                src="/logo.png"
-                alt="VartaLang logo"
-                className="w-20 h-auto object-cover"
-              />
-           
-
+          <img
+            src="/logo.png"
+            alt="VartaLang logo"
+            className="w-20 h-auto object-cover"
+          />
           <span className={`text-xl font-bold ${darkMode ? "text-orange-100" : "text-orange-900"}`}>VartaLang</span>
         </Link>
 
@@ -81,6 +104,25 @@ export default function SigninPage() {
           <div className="text-center mb-6">
             <h1 className={`text-2xl font-bold mb-2 ${darkMode ? "text-orange-50" : "text-orange-950"}`}>Welcome Back</h1>
             <p className={darkMode ? "text-orange-200/70" : "text-orange-700/70"}>Sign in to continue learning</p>
+          </div>
+
+          {/* Google Login Button */}
+          <div className="mb-6">
+            <GoogleLogin
+              onSuccess={handleGoogleLogin}
+              onError={() => {
+                alert("Google login failed. Please try again.");
+              }}
+              text="signin_with"
+              shape="rectangular"
+              theme={darkMode ? "filled_black" : "outline"}
+              size="large"
+              width="100%"
+            />
+            
+            <div className={`my-6 text-center text-sm ${darkMode ? "text-orange-200/70" : "text-orange-700/70"}`}>
+              or continue with email
+            </div>
           </div>
 
           {/* Form */}

@@ -2,7 +2,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Upload, GraduationCap, BookOpen } from "lucide-react";
+import { GraduationCap, BookOpen } from "lucide-react";
+import { GoogleLogin } from '@react-oauth/google';
 import { useDarkMode } from '@/lib/DarkModeContext';
 import { useAuth } from '@/lib/AuthContext';
 
@@ -55,12 +56,39 @@ export default function SignupPage() {
     setFormData({ ...formData, languagesKnow: updated });
   };
 
+  const handleGoogleSignup = async (credentialResponse: any) => {
+    try {
+      const res = await fetch(`${API_URL}/auth/google-signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          googleToken: credentialResponse.credential 
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Google signup failed");
+        return;
+      }
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userId", data.userId);
+      setIsLoggedIn(true);
+      router.push("/profile");
+      
+    } catch (error) {
+      console.error("Google signup error:", error);
+      alert("Network error. Please try again.");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Validate that at least one language is filled
       const validLanguages = formData.languagesKnow.filter(
         lang => lang.language && lang.fluency
       );
@@ -92,11 +120,8 @@ export default function SignupPage() {
         return;
       }
 
-      // Save token and update auth state
       localStorage.setItem("token", data.token);
       setIsLoggedIn(true);
-      
-      // Redirect to profile page
       router.push("/profile");
     } catch (error) {
       console.error("Signup error:", error);
@@ -112,11 +137,11 @@ export default function SignupPage() {
       <div className={`py-6 px-4 ${darkMode ? "border-b border-orange-900/30" : "border-b border-orange-200"}`}>
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-               <img
-                src="/logo.png"
-                alt="VartaLang logo"
-                className="w-20 h-auto object-cover"
-              />
+            <img
+              src="/logo.png"
+              alt="VartaLang logo"
+              className="w-20 h-auto object-cover"
+            />
             <span className={`font-bold ${darkMode ? "text-orange-100" : "text-orange-900"}`}>VartaLang</span>
           </Link>
           <Link href="/auth/login" className={`text-sm ${darkMode ? "text-orange-300 hover:text-orange-200" : "text-orange-600 hover:text-orange-700"}`}>
@@ -136,10 +161,30 @@ export default function SignupPage() {
             <p className={darkMode ? "text-orange-200/70" : "text-orange-700/70"}>Complete your profile in one step</p>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className={`rounded-3xl p-6 md:p-8 ${darkMode ? "bg-orange-900/10 border border-orange-800/30" : "bg-white border border-orange-200 shadow-lg"}`}>
+          {/* Form Container */}
+          <div className={`rounded-3xl p-6 md:p-8 ${darkMode ? "bg-orange-900/10 border border-orange-800/30" : "bg-white border border-orange-200 shadow-lg"}`}>
             
-            <div className="space-y-5">
+            {/* Google Signup Button */}
+            <div className="mb-6">
+              <GoogleLogin
+                onSuccess={handleGoogleSignup}
+                onError={() => {
+                  alert("Google signup failed. Please try again.");
+                }}
+                text="signup_with"
+                shape="rectangular"
+                theme={darkMode ? "filled_black" : "outline"}
+                size="large"
+                width="100%"
+              />
+              
+              <div className={`my-6 text-center text-sm ${darkMode ? "text-orange-200/70" : "text-orange-700/70"}`}>
+                or continue with email
+              </div>
+            </div>
+
+            {/* Email Signup Form */}
+            <form onSubmit={handleSubmit} className="space-y-5">
               
               {/* Name & Email */}
               <div className="grid md:grid-cols-2 gap-4">
@@ -424,8 +469,8 @@ export default function SignupPage() {
                   Sign In
                 </Link>
               </p>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
     </div>

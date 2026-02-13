@@ -3,8 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   User, Edit, Save, X, Camera, MapPin, Languages, 
-  GraduationCap, Award, BookOpen, Star,
-  Settings, LogOut, Shield, Bell
+  GraduationCap, Award, BookOpen, Star, LogOut
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -31,6 +30,7 @@ interface UserProfile {
   secondaryLanguageToLearn?: string;
   languagesKnow: LanguageKnown[];
   primaryRole: 'learner' | 'teacher';
+  authProvider?: 'local' | 'google';
   createdAt: string;
   totalConnections?: number;
   coursesCompleted?: number;
@@ -149,6 +149,9 @@ export default function ProfilePage() {
     setEditedProfile({ ...editedProfile, languagesKnow: updated });
   };
 
+  // Check if user is Google user
+  const isGoogleUser = profile?.authProvider === 'google';
+
   if (loading) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-[#1a1410]' : 'bg-[#FFF9F5]'}`}>
@@ -222,22 +225,13 @@ export default function ProfilePage() {
 
                 <div className="flex gap-2 mt-4 sm:mt-0">
                   {!isEditing ? (
-                    <>
-                      <button
-                        onClick={() => setIsEditing(true)}
-                        className="px-6 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all flex items-center gap-2"
-                      >
-                        <Edit className="w-4 h-4" />
-                        Edit Profile
-                      </button>
-                      {/* <button className={`px-4 py-3 rounded-xl border transition-all ${
-                        darkMode 
-                          ? 'border-orange-800/30 text-orange-200 hover:bg-orange-900/20' 
-                          : 'border-orange-200 text-gray-700 hover:bg-orange-50'
-                      }`}>
-                        <Settings className="w-5 h-5" />
-                      </button> */}
-                    </>
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="px-6 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all flex items-center gap-2"
+                    >
+                      <Edit className="w-4 h-4" />
+                      Edit Profile
+                    </button>
                   ) : (
                     <>
                       <button
@@ -274,6 +268,11 @@ export default function ProfilePage() {
                     </h1>
                     <p className={`text-sm mb-3 ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
                       {profile.email}
+                      {isGoogleUser && (
+                        <span className={`ml-2 text-xs px-2 py-1 rounded ${darkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-700'}`}>
+                          Google Account
+                        </span>
+                      )}
                     </p>
                     {profile.bio && (
                       <p className={`text-base leading-relaxed ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
@@ -283,17 +282,25 @@ export default function ProfilePage() {
                   </>
                 ) : (
                   <div className="space-y-3">
-                    <input
-                      type="text"
-                      value={editedProfile.name}
-                      onChange={(e) => setEditedProfile({ ...editedProfile, name: e.target.value })}
-                      className={`w-full px-4 py-3 rounded-xl border text-2xl font-bold outline-none ${
-                        darkMode 
-                          ? 'bg-orange-900/20 border-orange-800/30 text-orange-50' 
-                          : 'bg-orange-50 border-orange-200 text-gray-900'
-                      }`}
-                      placeholder="Your Name"
-                    />
+                    <div>
+                      <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
+                        Name {isGoogleUser && <span className="text-xs opacity-70">(Cannot be changed - Google account)</span>}
+                      </label>
+                      <input
+                        type="text"
+                        value={editedProfile.name}
+                        onChange={(e) => setEditedProfile({ ...editedProfile, name: e.target.value })}
+                        disabled={isGoogleUser}
+                        className={`w-full px-4 py-3 rounded-xl border text-2xl font-bold outline-none ${
+                          isGoogleUser ? 'opacity-50 cursor-not-allowed' : ''
+                        } ${
+                          darkMode 
+                            ? 'bg-orange-900/20 border-orange-800/30 text-orange-50' 
+                            : 'bg-orange-50 border-orange-200 text-gray-900'
+                        }`}
+                        placeholder="Your Name"
+                      />
+                    </div>
                     <textarea
                       rows={3}
                       value={editedProfile.bio || ''}
@@ -308,40 +315,6 @@ export default function ProfilePage() {
                   </div>
                 )}
               </div>
-
-              {/* Quick Stats */}
-              {/* <div className="grid grid-cols-3 gap-4">
-                <div className={`p-4 rounded-xl text-center ${
-                  darkMode ? 'bg-orange-900/20' : 'bg-orange-50'
-                }`}>
-                  <div className={`text-2xl font-bold mb-1 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                    {profile.totalConnections || 0}
-                  </div>
-                  <div className={`text-xs ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>
-                    Connections
-                  </div>
-                </div>
-                <div className={`p-4 rounded-xl text-center ${
-                  darkMode ? 'bg-orange-900/20' : 'bg-orange-50'
-                }`}>
-                  <div className={`text-2xl font-bold mb-1 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                    {profile.coursesCompleted || 0}
-                  </div>
-                  <div className={`text-xs ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>
-                    Courses Done
-                  </div>
-                </div>
-                <div className={`p-4 rounded-xl text-center ${
-                  darkMode ? 'bg-orange-900/20' : 'bg-orange-50'
-                }`}>
-                  <div className={`text-2xl font-bold mb-1 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                    {profile.hoursLearned || 0}h
-                  </div>
-                  <div className={`text-xs ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>
-                    Hours Learned
-                  </div>
-                </div>
-              </div> */}
             </div>
           </div>
 
@@ -711,22 +684,6 @@ export default function ProfilePage() {
               Account
             </h3>
             <div className="space-y-2">
-              {/* <button className={`w-full px-4 py-3 rounded-xl text-left flex items-center gap-3 transition-all ${
-                darkMode 
-                  ? 'hover:bg-orange-900/20 text-orange-200' 
-                  : 'hover:bg-orange-50 text-gray-700'
-              }`}>
-                <Bell className="w-5 h-5" />
-                Notification Preferences
-              </button>
-              <button className={`w-full px-4 py-3 rounded-xl text-left flex items-center gap-3 transition-all ${
-                darkMode 
-                  ? 'hover:bg-orange-900/20 text-orange-200' 
-                  : 'hover:bg-orange-50 text-gray-700'
-              }`}>
-                <Shield className="w-5 h-5" />
-                Privacy & Safety
-              </button> */}
               <button
                 onClick={handleLogout}
                 className={`w-full px-4 py-3 rounded-xl text-left flex items-center gap-3 transition-all ${
