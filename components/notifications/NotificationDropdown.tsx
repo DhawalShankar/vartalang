@@ -1,5 +1,5 @@
 // components/notifications/NotificationDropdown.tsx
-// Production-Grade + Mobile-First Implementation
+// FIXED VERSION - Properly handles match accept/reject
 
 "use client";
 
@@ -41,6 +41,7 @@ export default function NotificationDropdown({
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [processingMatchId, setProcessingMatchId] = useState<string | null>(null);
   
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -181,68 +182,131 @@ export default function NotificationDropdown({
     }
   };
 
-  const handleMatchAction = async (notificationId: string, matchId: string, action: 'accept' | 'reject') => {
-  const token = localStorage.getItem("token");
-  if (!token || isLoading || !matchId) return;
-
-  setIsLoading(true);
-
-  try {
-    console.log(`🤝 ${action === 'accept' ? 'Accepting' : 'Rejecting'} match ${matchId}...`);
-    console.log(`📍 API URL: ${API_URL}/matches/${matchId}/${action}`); // ✅ Debug log
-
-    const response = await fetch(`${API_URL}/matches/${matchId}/${action}`, {
-      method: "POST",
-      headers: { 
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-    });
-
-    console.log(`📥 Response status: ${response.status}`); // ✅ Debug log
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error(`❌ Error data:`, errorData); // ✅ Debug log
-      throw new Error(errorData.error || `Failed to ${action} match`);
+  // ✅ FIXED: Proper match action handler with better error handling and logging
+  const handleMatchAction = async (notificationId: string, matchId: string | undefined, action: 'accept' | 'reject') => {
+    const token = localStorage.getItem("token");
+    
+    // ✅ Validate inputs first
+    if (!token) {
+      console.error("❌ No token found");
+      alert("Please login again");
+      return;
     }
 
-    const data = await response.json();
-    console.log(`✅ Match ${action}ed successfully:`, data);
+    if (!matchId) {
+      console.error("❌ No matchId provided");
+      alert("Invalid match request");
+      return;
+    }
 
-    // ✅ Remove notification from list
-    setNotifications(prev => prev.filter(n => n._id !== notificationId));
-    setUnreadCount(prev => Math.max(0, prev - 1));
-    
-    // ✅ If accepted, redirect to chat
-    if (action === 'accept' && data.chatId) {
-      setShowDropdown(false);
+    if (processingMatchId === matchId) {
+      console.log("⏳ Already processing this match");
+      return;
+    }
+
+    setProcessingMatchId(matchId);
+    setIsLoading(true);
+
+    try {
+      const url = `${API_URL}/matches/${matchId}/${action}`;
+      console.log(`🔄 ${action === 'accept' ? 'Accepting' : 'Rejecting'} match...`);
+      console.log(`📍 Request URL: ${url}`);
+      console.log(`🎫 Match ID: ${matchId}`);
+      console.log(`📋 Notification ID: ${notificationId}`);
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+      });
+
+      console.log(`📥 Response status: ${response.status}`);
+      
+      // ✅ Get response text first to handle both JSON and non-JSON responses
+      const responseText = await response.text();
+      console.log(`📄 Response body: ${responseText}`);
+
+      if (!response.ok) {
+        let errorMessage = `Failed to ${action} match`;
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (e) {
+          errorMessage = responseText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      // ✅ Parse response
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error("❌ Failed to parse response JSON:", e);
+        data = { message: responseText };
+      }
+
+      console.log(`✅ Match ${action}ed successfully:`, data);
+
+      // ✅ Remove notification from list immediately
+      setNotifications(prev => prev.filter(n => n._id !== notificationId));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      
+      // ✅ Show success message
+      const successMessage = action === 'accept' 
+        ? "Match accepted! Redirecting to chat..." 
+        : "Match request rejected";
+      
+      // ✅ If accepted, redirect to chat
+      if (action === 'accept') {
+        if (data.chatId) {
+          console.log(`💬 Redirecting to chat: ${data.chatId}`);
+          setShowDropdown(false);
+          setTimeout(() => {
+            router.push(`/chats?chat=${data.chatId}`);
+          }, 500);
+        } else {
+          console.warn("⚠️ No chatId in response, staying on notifications");
+          alert(successMessage);
+        }
+      } else {
+        // ✅ If rejected, just show success and refresh
+        console.log(`✅ Match rejected successfully`);
+        setTimeout(() => {
+          fetchUnreadCount();
+          fetchNotifications();
+        }, 500);
+      }
+
+    } catch (error) {
+      console.error(`❌ ${action} match error:`, error);
+      
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : `Failed to ${action} match request`;
+      
+      alert(errorMessage);
+      
+      // ✅ Refresh notifications on error
       setTimeout(() => {
-        router.push(`/chats?chat=${data.chatId}`);
-      }, 300);
-    } else {
-      // ✅ If rejected, just close dropdown
-      setTimeout(() => {
-        setShowDropdown(false);
-        fetchUnreadCount();
         fetchNotifications();
-      }, 300);
+        fetchUnreadCount();
+      }, 500);
+    } finally {
+      setIsLoading(false);
+      setProcessingMatchId(null);
     }
-
-  } catch (error) {
-    console.error(`❌ ${action} match error:`, error);
-    alert(error instanceof Error ? error.message : `Failed to ${action} match request`);
-    
-    fetchNotifications();
-    fetchUnreadCount();
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   const clearAllNotifications = async () => {
     const token = localStorage.getItem("token");
     if (!token || isLoading) return;
+
+    if (!confirm("This will reject all pending match requests. Continue?")) {
+      return;
+    }
 
     setIsLoading(true);
     
@@ -260,11 +324,14 @@ export default function NotificationDropdown({
 
       const data = await response.json();
       console.log(`✅ Cleared ${data.count} notifications`);
+      console.log(`✅ Auto-rejected ${data.rejectedMatches || 0} pending matches`);
       
       setNotifications([]);
       setUnreadCount(0);
       setShowDropdown(false);
       setError(null);
+      
+      alert(`Cleared ${data.count} notifications and rejected ${data.rejectedMatches || 0} pending matches`);
       
       setTimeout(() => {
         fetchUnreadCount();
@@ -273,6 +340,7 @@ export default function NotificationDropdown({
     } catch (error) {
       console.error("❌ Clear all error:", error);
       setError("Failed to clear notifications");
+      alert("Failed to clear notifications");
     } finally {
       setIsLoading(false);
     }
@@ -480,30 +548,34 @@ export default function NotificationDropdown({
                             >
                               Sent you a match request
                             </p>
+                            {/* ✅ Debug info - remove in production */}
+                            <p className="text-xs text-gray-500 mb-2">
+                              Match ID: {notif.matchId || 'Missing!'}
+                            </p>
                             <div className="flex gap-2">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleMatchAction(notif._id, notif.matchId!, 'accept');
+                                  handleMatchAction(notif._id, notif.matchId, 'accept');
                                 }}
-                                disabled={isLoading}
+                                disabled={isLoading || processingMatchId === notif.matchId}
                                 className="flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-semibold bg-linear-to-r from-orange-500 to-red-600 text-white hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                               >
-                                {isLoading ? "..." : "Accept"}
+                                {processingMatchId === notif.matchId ? "..." : "Accept"}
                               </button>
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleMatchAction(notif._id, notif.matchId!, 'reject');
+                                  handleMatchAction(notif._id, notif.matchId, 'reject');
                                 }}
-                                disabled={isLoading}
+                                disabled={isLoading || processingMatchId === notif.matchId}
                                 className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 ${
                                   darkMode 
                                     ? "bg-orange-900/30 text-orange-200 hover:bg-orange-900/50" 
                                     : "bg-orange-100 text-orange-700 hover:bg-orange-200"
                                 }`}
                               >
-                                {isLoading ? "..." : "Reject"}
+                                {processingMatchId === notif.matchId ? "..." : "Reject"}
                               </button>
                             </div>
                           </>
