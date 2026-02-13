@@ -739,41 +739,51 @@ useEffect(() => {
                           : "hover:bg-orange-50 border-orange-200"
                     }`}
                   >
-                    <div className="flex items-start gap-3">
-                      <div className="relative">
-                        <div className="w-12 h-12 rounded-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-semibold">
-                          {getInitials(chat.user.name)}
-                        </div>
-                      </div>
-                      <div className="flex-1 text-left min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <h3 className={`font-semibold truncate ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
-                            {chat.user.name}
-                          </h3>
-                          <span className={`text-xs ${darkMode ? "text-orange-300/70" : "text-orange-600/70"}`}>
-                            {formatTimestamp(chat.timestamp)}
-                          </span>
-                        </div>
-                        <p className={`text-sm truncate ${darkMode ? "text-orange-200/70" : "text-orange-700/70"}`}>
-                          {chat.lastMessage || 'No messages yet'}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${darkMode ? "bg-orange-800/30 text-orange-300" : "bg-orange-200 text-orange-800"}`}>
-                            Teaches: {chat.user.languagesKnow[0]?.language || 'N/A'}
-                          </span>
-                          {chat.isBlocked && (
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${darkMode ? "bg-red-900/30 text-red-400" : "bg-red-100 text-red-700"}`}>
-                              Blocked
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      {chat.unread > 0 && selectedChat !== chat.id && (
-                        <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center shrink-0">
-                          <span className="text-xs text-white font-semibold">{chat.unread}</span>
-                        </div>
-                      )}
-                    </div>
+                    {/* Chat List Item - Around line 700 */}
+<div className="flex items-start gap-3">
+  <div className="relative">
+    <div className="w-12 h-12 rounded-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-semibold">
+      {getInitials(chat.user.name)}
+    </div>
+  </div>
+  <div className="flex-1 text-left min-w-0">
+    <div className="flex items-center justify-between mb-1">
+      <h3 className={`font-semibold truncate ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
+        {chat.user.name}
+      </h3>
+      <span className={`text-xs ${darkMode ? "text-orange-300/70" : "text-orange-600/70"}`}>
+        {formatTimestamp(chat.timestamp)}
+      </span>
+    </div>
+    
+    <p className={`text-sm truncate ${darkMode ? "text-orange-200/70" : "text-orange-700/70"}`}>
+      {chat.lastMessage || 'No messages yet'}
+    </p>
+    
+    {/* ✅ NEW LAYOUT - Badges in separate row with proper spacing */}
+    <div className="flex flex-wrap items-center gap-2 mt-2">
+      <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${
+        darkMode ? "bg-orange-800/30 text-orange-300" : "bg-orange-200 text-orange-800"
+      }`}>
+        Teaches: {chat.user.languagesKnow[0]?.language || 'N/A'}
+      </span>
+      
+      {chat.isBlocked && (
+        <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${
+          darkMode ? "bg-red-900/30 text-red-400" : "bg-red-100 text-red-700"
+        }`}>
+          Blocked
+        </span>
+      )}
+    </div>
+  </div>
+  
+  {chat.unread > 0 && selectedChat !== chat.id && (
+    <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center shrink-0">
+      <span className="text-xs text-white font-semibold">{chat.unread}</span>
+    </div>
+  )}
+</div>
                   </button>
                 ))
               )}

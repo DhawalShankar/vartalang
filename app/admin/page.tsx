@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
+import ExtendJobModal from '@/components/ExtendJobModal';
+import ReportDetailsModal from '@/components/ReportDetailsModal';
 import { 
   Shield, Users, Briefcase, TrendingUp, Clock, 
   Trash2, Calendar, Loader2, AlertTriangle, CheckCircle,
-  X, AlertCircle as ReportIcon, Eye
+  AlertCircle as ReportIcon, Eye
 } from 'lucide-react';
 import { useDarkMode } from '@/lib/DarkModeContext';
 
@@ -71,7 +73,6 @@ export default function AdminPortal() {
   const [reports, setReports] = useState<Report[]>([]);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const [extendDays, setExtendDays] = useState(7);
   const [showExtendModal, setShowExtendModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -150,7 +151,7 @@ export default function AdminPortal() {
     }
   };
 
-  const handleExtendJob = async () => {
+  const handleExtendJob = async (days: number) => {
     if (!selectedJob) return;
 
     setActionLoading(true);
@@ -163,13 +164,13 @@ export default function AdminPortal() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ days: extendDays })
+        body: JSON.stringify({ days })
       });
 
       const data = await res.json();
 
       if (data.success) {
-        alert(`Job extended by ${extendDays} days!`);
+        alert(`Job extended by ${days} days!`);
         setShowExtendModal(false);
         setSelectedJob(null);
         await fetchJobs();
@@ -212,14 +213,15 @@ export default function AdminPortal() {
     }
   };
 
-  const handleDeleteReport = async (reportId: string) => {
+  const handleDeleteReport = async () => {
+    if (!selectedReport) return;
     if (!confirm('Mark this report as reviewed and delete it?')) return;
 
     setActionLoading(true);
     const token = localStorage.getItem('token');
 
     try {
-      const res = await fetch(`${API_URL}/admin/reports/${reportId}`, {
+      const res = await fetch(`${API_URL}/admin/reports/${selectedReport._id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -565,13 +567,6 @@ export default function AdminPortal() {
                               >
                                 <Eye className="w-4 h-4" />
                               </button>
-                              <button
-                                onClick={() => handleDeleteReport(report._id)}
-                                className="p-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-all"
-                                title="Mark as reviewed"
-                              >
-                                <CheckCircle className="w-4 h-4" />
-                              </button>
                             </div>
                           </td>
                         </tr>
@@ -585,162 +580,29 @@ export default function AdminPortal() {
         </div>
       </div>
 
-      {/* Extend Job Modal */}
+      {/* Modals */}
       {showExtendModal && selectedJob && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className={`max-w-md w-full rounded-2xl border p-6 ${
-            darkMode ? 'bg-[#1a1410] border-orange-800/30' : 'bg-white border-orange-100'
-          }`}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className={`text-xl font-bold ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-                Extend Job Duration
-              </h3>
-              <button
-                onClick={() => setShowExtendModal(false)}
-                className={`p-2 rounded-lg hover:bg-orange-900/20 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <p className={`text-sm mb-4 ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-              {selectedJob.title}
-            </p>
-
-            <div className="mb-6">
-              <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
-                Extend by (days)
-              </label>
-              <input
-                type="number"
-                min="1"
-                max="365"
-                value={extendDays}
-                onChange={(e) => setExtendDays(parseInt(e.target.value))}
-                className={`w-full px-4 py-3 rounded-xl border outline-none ${
-                  darkMode 
-                    ? 'bg-orange-900/10 border-orange-800/30 text-orange-50' 
-                    : 'bg-white border-orange-100 text-gray-900'
-                }`}
-              />
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={handleExtendJob}
-                disabled={actionLoading}
-                className="flex-1 px-6 py-3 rounded-xl bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-all disabled:opacity-50"
-              >
-                {actionLoading ? 'Extending...' : `Extend by ${extendDays} days`}
-              </button>
-              <button
-                onClick={() => setShowExtendModal(false)}
-                className={`px-6 py-3 rounded-xl border font-semibold ${
-                  darkMode 
-                    ? 'border-orange-800/30 text-orange-200 hover:bg-orange-900/20' 
-                    : 'border-orange-200 text-gray-700 hover:bg-orange-50'
-                }`}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <ExtendJobModal
+          job={selectedJob}
+          onClose={() => {
+            setShowExtendModal(false);
+            setSelectedJob(null);
+          }}
+          onExtend={handleExtendJob}
+          isLoading={actionLoading}
+        />
       )}
 
-      {/* Report Details Modal */}
       {showReportModal && selectedReport && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className={`max-w-2xl w-full rounded-2xl border p-6 ${
-            darkMode ? 'bg-[#1a1410] border-orange-800/30' : 'bg-white border-orange-100'
-          }`}>
-            <div className="flex items-center justify-between mb-6">
-              <h3 className={`text-xl font-bold ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-                Report Details
-              </h3>
-              <button
-                onClick={() => setShowReportModal(false)}
-                className={`p-2 rounded-lg hover:bg-orange-900/20 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4 mb-6">
-              <div>
-                <label className={`block text-xs font-semibold mb-1 ${darkMode ? 'text-orange-300' : 'text-gray-600'}`}>
-                  Reporter
-                </label>
-                <p className={`text-sm ${darkMode ? 'text-orange-100' : 'text-gray-900'}`}>
-                  {selectedReport.reporter.name} ({selectedReport.reporter.email})
-                </p>
-              </div>
-
-              <div>
-                <label className={`block text-xs font-semibold mb-1 ${darkMode ? 'text-orange-300' : 'text-gray-600'}`}>
-                  Reported User
-                </label>
-                <p className={`text-sm ${darkMode ? 'text-orange-100' : 'text-gray-900'}`}>
-                  {selectedReport.reportedUser.name} ({selectedReport.reportedUser.email})
-                </p>
-              </div>
-
-              <div>
-                <label className={`block text-xs font-semibold mb-1 ${darkMode ? 'text-orange-300' : 'text-gray-600'}`}>
-                  Reason
-                </label>
-                <p className={`text-sm ${darkMode ? 'text-orange-100' : 'text-gray-900'} whitespace-pre-wrap`}>
-                  {selectedReport.reason}
-                </p>
-              </div>
-
-              <div>
-                <label className={`block text-xs font-semibold mb-1 ${darkMode ? 'text-orange-300' : 'text-gray-600'}`}>
-                  Reported On
-                </label>
-                <p className={`text-sm ${darkMode ? 'text-orange-100' : 'text-gray-900'}`}>
-                  {formatDate(selectedReport.timestamp)}
-                </p>
-              </div>
-
-              <div>
-                <label className={`block text-xs font-semibold mb-1 ${darkMode ? 'text-orange-300' : 'text-gray-600'}`}>
-                  Chat ID
-                </label>
-                <p className={`text-xs font-mono ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>
-                  {selectedReport.chatId}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => handleDeleteReport(selectedReport._id)}
-                disabled={actionLoading}
-                className="flex-1 px-6 py-3 rounded-xl bg-green-500 text-white font-semibold hover:bg-green-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {actionLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    <CheckCircle className="w-5 h-5" />
-                    Mark as Reviewed & Delete
-                  </>
-                )}
-              </button>
-              <button
-                onClick={() => setShowReportModal(false)}
-                className={`px-6 py-3 rounded-xl border font-semibold ${
-                  darkMode 
-                    ? 'border-orange-800/30 text-orange-200 hover:bg-orange-900/20' 
-                    : 'border-orange-200 text-gray-700 hover:bg-orange-50'
-                }`}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        <ReportDetailsModal
+          report={selectedReport}
+          onClose={() => {
+            setShowReportModal(false);
+            setSelectedReport(null);
+          }}
+          onDelete={handleDeleteReport}
+          isLoading={actionLoading}
+        />
       )}
     </div>
   );
