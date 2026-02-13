@@ -8,7 +8,7 @@ import {
   Languages, Target, Award, TrendingUp, AlertCircle,
   Send, CheckCircle, ArrowRight, Eye, Users, Sparkles,
   BookOpen, MessageSquare, FileText, Zap, Star, Ban,
-  ChevronDown, Loader2, Info, Shield
+  ChevronDown, Loader2, Info, Shield, IndianRupee
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -16,7 +16,6 @@ import { useDarkMode } from '@/lib/DarkModeContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
-// Type definitions
 // Type definitions
 interface Job {
   _id: string;
@@ -35,7 +34,12 @@ interface Job {
   expiryDate: string;
   status: 'active' | 'expired';
   views: number;
-  // ✅ ADD THESE
+  // ✅ NEW SALARY FIELDS
+  salaryMin?: number;
+  salaryMax?: number;
+  salaryCurrency?: string;
+  salaryPeriod?: 'hour' | 'month' | 'year';
+  employmentType?: 'full-time' | 'part-time' | 'contract' | 'freelance';
   postedBy?: {
     _id: string;
     name: string;
@@ -56,6 +60,12 @@ interface JobFormData {
   responsibilities: string;
   requirements: string;
   contactEmail: string;
+  // ✅ NEW FIELDS
+  salaryMin: string;
+  salaryMax: string;
+  salaryCurrency: string;
+  salaryPeriod: string;
+  employmentType: string;
 }
 
 interface FormErrors {
@@ -98,7 +108,12 @@ export default function VartaLangJobsBoard() {
     description: '',
     responsibilities: '',
     requirements: '',
-    contactEmail: ''
+    contactEmail: '',
+    salaryMin: '',
+    salaryMax: '',
+    salaryCurrency: 'INR',
+    salaryPeriod: 'month',
+    employmentType: 'full-time'
   });
 
   const languages = [
@@ -118,6 +133,13 @@ export default function VartaLangJobsBoard() {
   ];
 
   const proficiencyLevels = ['Basic', 'Intermediate', 'Advanced', 'Native'];
+
+  const employmentTypes = [
+    { value: 'full-time', label: 'Full-time' },
+    { value: 'part-time', label: 'Part-time' },
+    { value: 'contract', label: 'Contract' },
+    { value: 'freelance', label: 'Freelance' }
+  ];
 
   useEffect(() => {
     fetchJobs();
@@ -197,100 +219,129 @@ export default function VartaLangJobsBoard() {
   };
 
   const handlePostJob = async (e: React.FormEvent) => {
-  e.preventDefault();
-  
-  setFormErrors({});
+    e.preventDefault();
+    
+    setFormErrors({});
 
-  if (!validateForm()) {
-    return;
-  }
-
-  setSubmitting(true);
-
-  try {
-    // ✅ GET TOKEN
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setFormErrors({
-        general: 'You must be logged in to post a job. Please log in and try again.'
-      });
-      setSubmitting(false);
+    if (!validateForm()) {
       return;
     }
 
-    const processedResponsibilities = formData.responsibilities
-      .split('\n')
-      .map(r => r.trim().replace(/^[•\-*]\s*/, ''))
-      .filter(r => r.length > 0);
+    setSubmitting(true);
 
-    const processedRequirements = formData.requirements
-      .split('\n')
-      .map(r => r.trim().replace(/^[•\-*]\s*/, ''))
-      .filter(r => r.length > 0);
-
-    const jobData = {
-      ...formData,
-      title: formData.title.trim(),
-      companyName: formData.companyName.trim(),
-      location: formData.location.trim(),
-      description: formData.description.trim(),
-      contactEmail: formData.contactEmail.trim().toLowerCase(),
-      responsibilities: processedResponsibilities,
-      requirements: processedRequirements
-    };
-
-    // ✅ ADD AUTHORIZATION HEADER
-    const res = await fetch(`${API_URL}/jobs/listings`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`  // ← ADD THIS
-      },
-      body: JSON.stringify(jobData)
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      setShowSuccessMessage(true);
-      
-      setTimeout(() => {
-        setShowPostModal(false);
-        setShowSuccessMessage(false);
-        fetchJobs();
-        
-        setFormData({
-          title: '',
-          language: 'Hindi',
-          proficiencyLevel: 'Intermediate',
-          jobType: 'translation',
-          companyName: '',
-          location: '',
-          isRemote: false,
-          description: '',
-          responsibilities: '',
-          requirements: '',
-          contactEmail: ''
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setFormErrors({
+          general: 'You must be logged in to post a job. Please log in and try again.'
         });
-      }, 2000);
-    } else {
-      setFormErrors({
-        general: data.error || 'Failed to post job. Please try again.'
+        setSubmitting(false);
+        return;
+      }
+
+      const processedResponsibilities = formData.responsibilities
+        .split('\n')
+        .map(r => r.trim().replace(/^[•\-*]\s*/, ''))
+        .filter(r => r.length > 0);
+
+      const processedRequirements = formData.requirements
+        .split('\n')
+        .map(r => r.trim().replace(/^[•\-*]\s*/, ''))
+        .filter(r => r.length > 0);
+
+      const jobData = {
+        ...formData,
+        title: formData.title.trim(),
+        companyName: formData.companyName.trim(),
+        location: formData.location.trim(),
+        description: formData.description.trim(),
+        contactEmail: formData.contactEmail.trim().toLowerCase(),
+        responsibilities: processedResponsibilities,
+        requirements: processedRequirements,
+        salaryMin: formData.salaryMin ? Number(formData.salaryMin) : undefined,
+        salaryMax: formData.salaryMax ? Number(formData.salaryMax) : undefined,
+        salaryCurrency: formData.salaryCurrency,
+        salaryPeriod: formData.salaryPeriod,
+        employmentType: formData.employmentType
+      };
+
+      const res = await fetch(`${API_URL}/jobs/listings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(jobData)
       });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setShowSuccessMessage(true);
+        
+        setTimeout(() => {
+          setShowPostModal(false);
+          setShowSuccessMessage(false);
+          fetchJobs();
+          
+          setFormData({
+            title: '',
+            language: 'Hindi',
+            proficiencyLevel: 'Intermediate',
+            jobType: 'translation',
+            companyName: '',
+            location: '',
+            isRemote: false,
+            description: '',
+            responsibilities: '',
+            requirements: '',
+            contactEmail: '',
+            salaryMin: '',
+            salaryMax: '',
+            salaryCurrency: 'INR',
+            salaryPeriod: 'month',
+            employmentType: 'full-time'
+          });
+        }, 2000);
+      } else {
+        setFormErrors({
+          general: data.error || 'Failed to post job. Please try again.'
+        });
+      }
+    } catch (error) {
+      console.error("Error posting job:", error);
+      setFormErrors({
+        general: 'Network error. Please check your connection and try again.'
+      });
+    } finally {
+      setSubmitting(false);
     }
-  } catch (error) {
-    console.error("Error posting job:", error);
-    setFormErrors({
-      general: 'Network error. Please check your connection and try again.'
-    });
-  } finally {
-    setSubmitting(false);
-  }
-};
+  };
 
   const getJobTypeLabel = (type: string) => {
     const jobType = jobTypes.find(jt => jt.value === type);
     return jobType ? jobType.label : type;
+  };
+
+  const getEmploymentTypeLabel = (type: string) => {
+    const empType = employmentTypes.find(et => et.value === type);
+    return empType ? empType.label : type;
+  };
+
+  const formatSalary = (job: Job) => {
+    if (!job.salaryMin && !job.salaryMax) return null;
+    
+    const currency = job.salaryCurrency === 'INR' ? '₹' : '$';
+    const period = job.salaryPeriod || 'month';
+    
+    if (job.salaryMin && job.salaryMax) {
+      return `${currency}${job.salaryMin.toLocaleString()} - ${currency}${job.salaryMax.toLocaleString()}/${period}`;
+    } else if (job.salaryMin) {
+      return `${currency}${job.salaryMin.toLocaleString()}+/${period}`;
+    } else if (job.salaryMax) {
+      return `Up to ${currency}${job.salaryMax.toLocaleString()}/${period}`;
+    }
+    return null;
   };
 
   const formatDate = (dateString: string) => {
@@ -409,34 +460,35 @@ export default function VartaLangJobsBoard() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               <select
-                  value={selectedLanguage}
-                  onChange={(e) => setSelectedLanguage(e.target.value)}
-                  className={`px-4 py-3 rounded-xl border outline-none transition-all ${
-                    darkMode 
-                      ? 'bg-orange-900/20 border-orange-800/30 text-orange-100 focus:border-orange-600 [&>option]:bg-orange-900 [&>option]:text-orange-100' 
-                      : 'bg-white border-orange-100 text-gray-900 focus:border-orange-400'
-                  }`}
-                >
-                  <option value="all">All Languages</option>
-                  {languages.map(lang => (
-                    <option key={lang} value={lang}>{lang}</option>
-                  ))}
-                </select>
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+                className={`px-4 py-3 rounded-xl border outline-none transition-all ${
+                  darkMode 
+                    ? 'bg-orange-900/20 border-orange-800/30 text-orange-100 focus:border-orange-600' 
+                    : 'bg-white border-orange-100 text-gray-900 focus:border-orange-400'
+                }`}
+              >
+                <option value="all">All Languages</option>
+                {languages.map(lang => (
+                  <option key={lang} value={lang}>{lang}</option>
+                ))}
+              </select>
 
-                <select
-                  value={selectedJobType}
-                  onChange={(e) => setSelectedJobType(e.target.value)}
-                  className={`px-4 py-3 rounded-xl border outline-none transition-all ${
-                    darkMode 
-                      ? 'bg-orange-900/20 border-orange-800/30 text-orange-100 focus:border-orange-600 [&>option]:bg-orange-900 [&>option]:text-orange-100' 
-                      : 'bg-white border-orange-100 text-gray-900 focus:border-orange-400'
-                  }`}
-                >
-                  <option value="all">All Job Types</option>
-                  {jobTypes.map(type => (
-                    <option key={type.value} value={type.value}>{type.label}</option>
-                  ))}
-                </select>
+              <select
+                value={selectedJobType}
+                onChange={(e) => setSelectedJobType(e.target.value)}
+                className={`px-4 py-3 rounded-xl border outline-none transition-all ${
+                  darkMode 
+                    ? 'bg-orange-900/20 border-orange-800/30 text-orange-100 focus:border-orange-600' 
+                    : 'bg-white border-orange-100 text-gray-900 focus:border-orange-400'
+                }`}
+              >
+                <option value="all">All Job Types</option>
+                {jobTypes.map(type => (
+                  <option key={type.value} value={type.value}>{type.label}</option>
+                ))}
+              </select>
+
               <input
                 type="text"
                 placeholder="Filter by location..."
@@ -502,7 +554,7 @@ export default function VartaLangJobsBoard() {
         </div>
       </section>
 
-      {/* Jobs List */}
+      {/* Jobs List - NEW CARD DESIGN */}
       <section className="py-8 px-4 pb-20">
         <div className="max-w-7xl mx-auto">
           {filteredJobs.length === 0 ? (
@@ -532,126 +584,101 @@ export default function VartaLangJobsBoard() {
               </button>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredJobs.map((job) => (
                 <div
                   key={job._id}
-                  className={`group p-6 rounded-2xl border transition-all hover:scale-[1.01] cursor-pointer ${
+                  className={`group relative rounded-2xl border transition-all hover:scale-[1.02] cursor-pointer overflow-hidden ${
                     darkMode 
-                      ? 'bg-orange-900/10 border-orange-800/30 hover:bg-orange-900/20' 
-                      : 'bg-white border-orange-100 hover:shadow-xl'
+                      ? 'bg-linear-to-br from-orange-950/40 to-orange-900/20 border-orange-800/30 hover:border-orange-700/50' 
+                      : 'bg-white border-orange-100 hover:shadow-2xl'
                   }`}
                   onClick={() => setSelectedJob(job)}
                 >
-                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-start gap-3 mb-3">
-                        <div className={`p-3 rounded-xl ${
-                          darkMode ? 'bg-orange-500/20' : 'bg-orange-50'
-                        }`}>
-                          <Briefcase className={`w-6 h-6 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className={`text-xl font-bold mb-1 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-                            {job.title}
-                          </h3>
-                          <p className={`text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                            {job.companyName}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          darkMode ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-50 text-orange-700'
-                        }`}>
-                          <Languages className="w-3 h-3 inline mr-1" />
-                          {job.language}
-                        </span>
-                        <span className={`px-3 py-1 rounded-full text-sm ${
-                          darkMode ? 'bg-orange-900/30 text-orange-300' : 'bg-orange-50 text-orange-700'
-                        }`}>
-                          {job.proficiencyLevel}
-                        </span>
-                        <span className={`px-3 py-1 rounded-full text-sm ${
-                          darkMode ? 'bg-orange-900/30 text-orange-300' : 'bg-orange-50 text-orange-700'
-                        }`}>
-                          {getJobTypeLabel(job.jobType)}
-                        </span>
-                        {job.isRemote && (
-                          <span className={`px-3 py-1 rounded-full text-sm ${
-                            darkMode ? 'bg-green-900/30 text-green-300' : 'bg-green-50 text-green-700'
-                          }`}>
-                            <Globe className="w-3 h-3 inline mr-1" />
-                            Remote
-                          </span>
-                        )}
-                      </div>
-
-                      <p className={`text-sm line-clamp-2 mb-3 ${
-                        darkMode ? 'text-orange-200/70' : 'text-gray-600'
-                      }`}>
-                        {job.description}
-                      </p>
-
-                     <div className="flex items-center gap-4 text-sm">
-                        <div className="flex items-center gap-1">
-                          <MapPin className={`w-4 h-4 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
-                          <span className={darkMode ? 'text-orange-200' : 'text-gray-700'}>
-                            {job.location}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Eye className={`w-4 h-4 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
-                          <span className={darkMode ? 'text-orange-200/70' : 'text-gray-500'}>
-                            {job.views} views
-                          </span>
-                        </div>
-                        {/* ✅ ADD THIS */}
-                        {job.postedByName && (
-                          <div className="flex items-center gap-1">
-                            <Users className={`w-4 h-4 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
-                            <span className={darkMode ? 'text-orange-200/70' : 'text-gray-500'}>
-                              Posted by {job.postedByName}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col items-end gap-2">
-                      <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        getDaysRemaining(job.expiryDate) <= 2
-                          ? darkMode ? 'bg-red-900/30 text-red-300' : 'bg-red-50 text-red-700'
-                          : darkMode ? 'bg-green-900/30 text-green-300' : 'bg-green-50 text-green-700'
-                      }`}>
-                        {getDaysRemaining(job.expiryDate)} days left
-                      </div>
-                      <span className={`text-xs ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
-                        Posted {formatDate(job.postedDate)}
-                      </span>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedJob(job);
-                        }}
-                        className="px-4 py-2 rounded-lg bg-linear-to-r from-orange-500 to-red-600 text-white text-sm font-semibold hover:shadow-lg transition-all"
-                      >
-                        View Details
-                      </button>
-                    </div>
-                    
+                  {/* Live Jobs Badge */}
+                  <div className="absolute top-4 left-4 z-10">
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-linear-to-r from-orange-500 to-red-600 text-white shadow-lg">
+                      Live Jobs
+                    </span>
                   </div>
-                  
+
+                  <div className="p-6 pt-14">
+                    {/* Company Icon & Title */}
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className={`p-3 rounded-xl shrink-0 ${
+                        darkMode ? 'bg-orange-500/20' : 'bg-orange-50'
+                      }`}>
+                        <Briefcase className={`w-6 h-6 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className={`text-lg font-bold mb-1 line-clamp-2 ${
+                          darkMode ? 'text-orange-50' : 'text-gray-900'
+                        }`}>
+                          {job.title}
+                        </h3>
+                        <p className={`text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                          {job.companyName}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Tags */}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        darkMode ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-50 text-orange-700'
+                      }`}>
+                        <Languages className="w-3 h-3 inline mr-1" />
+                        {job.language}
+                      </span>
+                      <span className={`px-3 py-1 rounded-full text-xs ${
+                        darkMode ? 'bg-orange-900/30 text-orange-300' : 'bg-orange-50 text-orange-700'
+                      }`}>
+                        <MapPin className="w-3 h-3 inline mr-1" />
+                        {job.location}
+                      </span>
+                      {job.employmentType && (
+                        <span className={`px-3 py-1 rounded-full text-xs ${
+                          darkMode ? 'bg-orange-900/30 text-orange-300' : 'bg-orange-50 text-orange-700'
+                        }`}>
+                          {getEmploymentTypeLabel(job.employmentType)}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Salary */}
+                    {formatSalary(job) && (
+                      <div className={`mb-4 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                        <div className="text-2xl font-bold flex items-center gap-1">
+                          {formatSalary(job)}
+                        </div>
+                        <div className={`text-xs mt-1 flex items-center gap-1 ${
+                          darkMode ? 'text-orange-200/70' : 'text-gray-500'
+                        }`}>
+                          <Eye className="w-3 h-3" />
+                          {job.views} views
+                        </div>
+                      </div>
+                    )}
+
+                    {/* View Button */}
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedJob(job);
+                      }}
+                      className="w-full py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white text-sm font-bold hover:shadow-lg transition-all"
+                    >
+                      View Details & Apply
+                    </button>
+                  </div>
                 </div>
-                
               ))}
             </div>
           )}
         </div>
       </section>
 
-      {/* Job Details Modal */}
+      {/* Job Details Modal - UPDATED */}
       {selectedJob && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className={`max-w-3xl w-full max-h-[90vh] overflow-y-auto rounded-2xl border ${
@@ -682,6 +709,13 @@ export default function VartaLangJobsBoard() {
                     }`}>
                       {getJobTypeLabel(selectedJob.jobType)}
                     </span>
+                    {selectedJob.employmentType && (
+                      <span className={`px-3 py-1 rounded-full text-sm ${
+                        darkMode ? 'bg-orange-900/30 text-orange-300' : 'bg-orange-50 text-orange-700'
+                      }`}>
+                        {getEmploymentTypeLabel(selectedJob.employmentType)}
+                      </span>
+                    )}
                     {selectedJob.isRemote && (
                       <span className={`px-3 py-1 rounded-full text-sm ${
                         darkMode ? 'bg-green-900/30 text-green-300' : 'bg-green-50 text-green-700'
@@ -703,7 +737,25 @@ export default function VartaLangJobsBoard() {
               </div>
             </div>
 
-           <div className="p-6 space-y-6">
+            <div className="p-6 space-y-6">
+              {/* Salary Display */}
+              {formatSalary(selectedJob) && (
+                <div className={`p-6 rounded-xl border ${
+                  darkMode 
+                    ? 'bg-linear-to-br from-orange-950/40 to-orange-900/20 border-orange-800/30' 
+                    : 'bg-linear-to-br from-orange-50 to-red-50 border-orange-200'
+                }`}>
+                  <div className={`text-3xl font-black mb-2 ${
+                    darkMode ? 'text-orange-50' : 'text-gray-900'
+                  }`}>
+                    {formatSalary(selectedJob)}
+                  </div>
+                  <p className={`text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                    Salary Range
+                  </p>
+                </div>
+              )}
+
               <div className="flex items-center gap-4 flex-wrap">
                 <div className="flex items-center gap-2">
                   <MapPin className={`w-4 h-4 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
@@ -717,7 +769,6 @@ export default function VartaLangJobsBoard() {
                     Posted {formatDate(selectedJob.postedDate)}
                   </span>
                 </div>
-                {/* ✅ ADD THIS */}
                 {selectedJob.postedByName && (
                   <div className="flex items-center gap-2">
                     <Users className={`w-4 h-4 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
@@ -727,7 +778,6 @@ export default function VartaLangJobsBoard() {
                   </div>
                 )}
               </div>
-
 
               <div>
                 <h3 className={`text-lg font-bold mb-3 flex items-center gap-2 ${
@@ -840,7 +890,7 @@ export default function VartaLangJobsBoard() {
         </div>
       )}
 
-      {/* Post Job Modal - FIXED SCROLLING VERSION */}
+      {/* Post Job Modal - WITH SALARY FIELDS */}
       {showPostModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className={`max-w-3xl w-full max-h-[90vh] rounded-2xl border overflow-hidden flex flex-col ${
@@ -856,7 +906,7 @@ export default function VartaLangJobsBoard() {
                     Post a Language Job
                   </h2>
                   <p className={`text-sm mt-1 ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                    Free for 7 days
+                    Free for 7 days • One job per account
                   </p>
                 </div>
                 <button 
@@ -977,23 +1027,106 @@ export default function VartaLangJobsBoard() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
+                      Type of Work *
+                    </label>
+                    <select
+                      value={formData.jobType}
+                      onChange={(e) => setFormData({ ...formData, jobType: e.target.value })}
+                      className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${
+                        darkMode 
+                          ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 focus:border-orange-600' 
+                          : 'bg-white border-orange-100 text-gray-900 focus:border-orange-400'
+                      }`}
+                    >
+                      {jobTypes.map(type => (
+                        <option key={type.value} value={type.value}>{type.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
+                      Employment Type *
+                    </label>
+                    <select
+                      value={formData.employmentType}
+                      onChange={(e) => setFormData({ ...formData, employmentType: e.target.value })}
+                      className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${
+                        darkMode 
+                          ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 focus:border-orange-600' 
+                          : 'bg-white border-orange-100 text-gray-900 focus:border-orange-400'
+                      }`}
+                    >
+                      {employmentTypes.map(type => (
+                        <option key={type.value} value={type.value}>{type.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* ✅ SALARY FIELDS */}
                 <div>
-                  <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
-                    Type of Work *
+                  <label className={`block text-sm font-semibold mb-3 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
+                    Salary Range (Optional)
                   </label>
-                  <select
-                    value={formData.jobType}
-                    onChange={(e) => setFormData({ ...formData, jobType: e.target.value })}
-                    className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${
-                      darkMode 
-                        ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 focus:border-orange-600' 
-                        : 'bg-white border-orange-100 text-gray-900 focus:border-orange-400'
-                    }`}
-                  >
-                    {jobTypes.map(type => (
-                      <option key={type.value} value={type.value}>{type.label}</option>
-                    ))}
-                  </select>
+                  <div className="grid grid-cols-2 gap-4 mb-3">
+                    <div>
+                      <input
+                        type="number"
+                        value={formData.salaryMin}
+                        onChange={(e) => setFormData({ ...formData, salaryMin: e.target.value })}
+                        placeholder="Min (e.g., 20000)"
+                        className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${
+                          darkMode 
+                            ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
+                            : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="number"
+                        value={formData.salaryMax}
+                        onChange={(e) => setFormData({ ...formData, salaryMax: e.target.value })}
+                        placeholder="Max (e.g., 35000)"
+                        className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${
+                          darkMode 
+                            ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 placeholder-orange-300/50 focus:border-orange-600' 
+                            : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <select
+                      value={formData.salaryCurrency}
+                      onChange={(e) => setFormData({ ...formData, salaryCurrency: e.target.value })}
+                      className={`px-4 py-3 rounded-xl border outline-none transition-all ${
+                        darkMode 
+                          ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 focus:border-orange-600' 
+                          : 'bg-white border-orange-100 text-gray-900 focus:border-orange-400'
+                      }`}
+                    >
+                      <option value="INR">₹ INR</option>
+                      <option value="USD">$ USD</option>
+                    </select>
+                    <select
+                      value={formData.salaryPeriod}
+                      onChange={(e) => setFormData({ ...formData, salaryPeriod: e.target.value })}
+                      className={`px-4 py-3 rounded-xl border outline-none transition-all ${
+                        darkMode 
+                          ? 'bg-orange-900/10 border-orange-800/30 text-orange-50 focus:border-orange-600' 
+                          : 'bg-white border-orange-100 text-gray-900 focus:border-orange-400'
+                      }`}
+                    >
+                      <option value="hour">Per Hour</option>
+                      <option value="month">Per Month</option>
+                      <option value="year">Per Year</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div>

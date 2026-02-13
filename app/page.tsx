@@ -165,10 +165,10 @@ export default function VartaLangLanding() {
           <h1 className={`text-3xl md:text-5xl font-black mb-4 leading-tight ${
             darkMode ? 'text-orange-50' : 'text-gray-900'
           }`}>
-            Indian Languages
+            India's Languages
             <br />
             <span className={`${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-              Deserve Better
+              Deserve Better!
             </span>
           </h1>
 
@@ -232,7 +232,7 @@ export default function VartaLangLanding() {
 
           {/* Trust Indicator */}
           <p className={`text-xs ${darkMode ? 'text-orange-300/60' : 'text-gray-500'}`}>
-            Free to use • No credit card required • Join thousands of learners
+            Free to use • Join thousands of potential learners
           </p>
         </div>
       </section>
