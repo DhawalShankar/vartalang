@@ -4,6 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import { DarkModeProvider } from "@/lib/DarkModeContext";
 import { AuthProvider } from "@/lib/AuthContext";
+import Analytics from "@/components/Analytics";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,26 +41,23 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
 
-        <Script id="ga4-consent-init" strategy="afterInteractive">
+        <Script id="ga-init" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
 
-            // Default: no cookies, no tracking storage
-            gtag('consent', 'default', {
-              analytics_storage: 'denied'
-            });
-
             gtag('js', new Date());
+
             gtag('config', 'G-ZX9RMWTWVR', {
               anonymize_ip: true,
-              page_path: window.location.pathname,
+              send_page_view: false
             });
           `}
         </Script>
 
         <AuthProvider>
           <DarkModeProvider>
+            <Analytics />
             {children}
           </DarkModeProvider>
         </AuthProvider>
