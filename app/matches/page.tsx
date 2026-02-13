@@ -93,53 +93,56 @@ export default function MatchesPage() {
     }
   };
 
-  const handleSendRequest = async (match: Match) => {
-    setProcessingId(match._id);
-    const token = localStorage.getItem("token");
+ const handleSendRequest = async (match: Match) => {
+  setProcessingId(match._id);
+  const token = localStorage.getItem("token");
 
-    try {
-      const res = await fetch(`${API_URL}/matches/swipe`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          targetUserId: match._id,
-          action: 'like',
-        }),
-      });
+  try {
+    const res = await fetch(`${API_URL}/matches/swipe`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        targetUserId: match._id,
+        action: 'like',
+      }),
+    });
 
-      const data = await res.json();
-      console.log("Response:", data);
+    const data = await res.json();
+    console.log("Response:", data);
 
-      // Check if mutual match
-      if (data.matched && data.chatId) {
-        setSuccessMessage(`🎉 It's a match with ${match.name}!`);
-        setTimeout(() => {
-          router.push(`/chats?chat=${data.chatId}`);
-        }, 1500);
-        return;
-      }
+    // Check if mutual match
+    if (data.matched && data.chatId) {
+      setSuccessMessage(`🎉 It's a match with ${match.name}!`);
+      setTimeout(() => {
+        router.push(`/chats?chat=${data.chatId}`);
+      }, 1500);
+      return;
+    }
 
-      // Success - request sent
-      setSuccessMessage("Match request sent! 💌");
+    // Success - request sent
+    setSuccessMessage("Match request sent! 💌");
+    setProcessingId(null); // Pehle processing band karo
+    
+    // Thoda delay do message dikhne ke liye, phir match remove karo
+    setTimeout(() => {
       setMatches(matches.filter(m => m._id !== match._id));
-      
       setTimeout(() => {
         setSuccessMessage(null);
-        setProcessingId(null);
-      }, 2000);
+      }, 1500); // Message thoda aur time dikhe
+    }, 1000); // 1 second message dikhe
 
-    } catch (error) {
-      console.error("Send request error:", error);
-      setErrorMessage("Failed to send request");
-      
-      setTimeout(() => {
-        setErrorMessage(null);
-        setProcessingId(null);
-      }, 2000);
-    }
+  } catch (error) {
+    console.error("Send request error:", error);
+    setErrorMessage("Failed to send request");
+    setProcessingId(null);
+    
+    setTimeout(() => {
+      setErrorMessage(null);
+    }, 2000);
+  }
   };
 
   const getInitials = (name: string) => {
