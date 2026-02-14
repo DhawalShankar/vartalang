@@ -62,6 +62,7 @@ export default function TargetRolesPage() {
     {
       title: 'Regional Radio Jockey (RJ)',
       nativeTitle: 'रेडियो जॉकी',
+      slug: 'regional-radio-jockey',
       icon: Radio,
       category: 'media',
       level: 'Intermediate',
@@ -76,6 +77,7 @@ export default function TargetRolesPage() {
     {
       title: 'News Reader/Anchor',
       nativeTitle: 'समाचार वाचक',
+      slug: 'news-reader-anchor',
       icon: Tv,
       category: 'media',
       level: 'Intermediate',
@@ -90,6 +92,7 @@ export default function TargetRolesPage() {
     {
       title: 'Video Content Creator',
       nativeTitle: 'वीडियो निर्माता',
+      slug: 'video-content-creator',
       icon: Video,
       category: 'media',
       level: 'Beginner',
@@ -104,6 +107,7 @@ export default function TargetRolesPage() {
     {
       title: 'Voice-over Artist',
       nativeTitle: 'आवाज कलाकार',
+      slug: 'voice-over-artist',
       icon: Headphones,
       category: 'media',
       level: 'Intermediate',
@@ -120,6 +124,7 @@ export default function TargetRolesPage() {
     {
       title: 'Regional Newspaper Editor',
       nativeTitle: 'समाचार पत्र संपादक',
+      slug: 'regional-newspaper-editor',
       icon: Newspaper,
       category: 'editorial',
       level: 'Advanced',
@@ -134,6 +139,7 @@ export default function TargetRolesPage() {
     {
       title: 'Content Writer/Copywriter',
       nativeTitle: 'विषय लेखक',
+      slug: 'content-writer-copywriter',
       icon: PenTool,
       category: 'editorial',
       level: 'Beginner',
@@ -148,6 +154,7 @@ export default function TargetRolesPage() {
     {
       title: 'Script Writer',
       nativeTitle: 'पटकथा लेखक',
+      slug: 'script-writer',
       icon: Edit3,
       category: 'editorial',
       level: 'Intermediate',
@@ -162,6 +169,7 @@ export default function TargetRolesPage() {
     {
       title: 'Subtitler/Translator',
       nativeTitle: 'उपशीर्षक अनुवादक',
+      slug: 'subtitler-translator',
       icon: FileText,
       category: 'editorial',
       level: 'Beginner',
@@ -178,6 +186,7 @@ export default function TargetRolesPage() {
     {
       title: 'UN Interpreter',
       nativeTitle: 'संयुक्त राष्ट्र दुभाषिया',
+      slug: 'un-interpreter',
       icon: Languages,
       category: 'international',
       level: 'Advanced',
@@ -192,6 +201,7 @@ export default function TargetRolesPage() {
     {
       title: 'Embassy/Consulate Officer',
       nativeTitle: 'राजदूतावास अधिकारी',
+      slug: 'embassy-consulate-officer',
       icon: Building2,
       category: 'international',
       level: 'Advanced',
@@ -206,6 +216,7 @@ export default function TargetRolesPage() {
     {
       title: 'International Tour Guide',
       nativeTitle: 'अंतर्राष्ट्रीय पर्यटन गाइड',
+      slug: 'international-tour-guide',
       icon: Globe,
       category: 'international',
       level: 'Intermediate',
@@ -220,6 +231,7 @@ export default function TargetRolesPage() {
     {
       title: 'Foreign Language Trainer',
       nativeTitle: 'विदेशी भाषा प्रशिक्षक',
+      slug: 'foreign-language-trainer',
       icon: GraduationCap,
       category: 'international',
       level: 'Intermediate',
@@ -236,6 +248,7 @@ export default function TargetRolesPage() {
     {
       title: 'Localization Specialist',
       nativeTitle: 'स्थानीयकरण विशेषज्ञ',
+      slug: 'localization-specialist',
       icon: Target,
       category: 'corporate',
       level: 'Intermediate',
@@ -250,6 +263,7 @@ export default function TargetRolesPage() {
     {
       title: 'Regional Marketing Manager',
       nativeTitle: 'क्षेत्रीय विपणन प्रबंधक',
+      slug: 'regional-marketing-manager',
       icon: TrendingUp,
       category: 'corporate',
       level: 'Advanced',
@@ -264,6 +278,7 @@ export default function TargetRolesPage() {
     {
       title: 'Customer Support (Multilingual)',
       nativeTitle: 'ग्राहक सेवा प्रतिनिधि',
+      slug: 'customer-support-multilingual',
       icon: Headphones,
       category: 'corporate',
       level: 'Beginner',
@@ -278,6 +293,7 @@ export default function TargetRolesPage() {
     {
       title: 'Technical Writer (Regional)',
       nativeTitle: 'तकनीकी लेखक',
+      slug: 'technical-writer-regional',
       icon: BookOpen,
       category: 'corporate',
       level: 'Intermediate',
@@ -294,6 +310,7 @@ export default function TargetRolesPage() {
     {
       title: 'Film Dialogue Writer',
       nativeTitle: 'संवाद लेखक',
+      slug: 'film-dialogue-writer',
       icon: Film,
       category: 'entertainment',
       level: 'Intermediate',
@@ -308,6 +325,7 @@ export default function TargetRolesPage() {
     {
       title: 'Lyricist',
       nativeTitle: 'गीतकार',
+      slug: 'lyricist',
       icon: Mic,
       category: 'entertainment',
       level: 'Advanced',
@@ -322,6 +340,7 @@ export default function TargetRolesPage() {
     {
       title: 'Stand-up Comedian',
       nativeTitle: 'स्टैंड-अप कॉमेडियन',
+      slug: 'stand-up-comedian',
       icon: MessageSquare,
       category: 'entertainment',
       level: 'Intermediate',
@@ -336,6 +355,7 @@ export default function TargetRolesPage() {
     {
       title: 'Podcast Host/Producer',
       nativeTitle: 'पॉडकास्ट होस्ट',
+      slug: 'podcast-host-producer',
       icon: Radio,
       category: 'entertainment',
       level: 'Beginner',
@@ -352,6 +372,7 @@ export default function TargetRolesPage() {
     {
       title: 'ISL (Indian Sign Language) Interpreter',
       nativeTitle: 'संकेत भाषा दुभाषिया',
+      slug: 'isl-interpreter',
       icon: Users,
       category: 'accessibility',
       level: 'Advanced',
@@ -366,6 +387,7 @@ export default function TargetRolesPage() {
     {
       title: 'Braille Transcriber',
       nativeTitle: 'ब्रेल लिपिकार',
+      slug: 'braille-transcriber',
       icon: BookOpen,
       category: 'accessibility',
       level: 'Intermediate',
@@ -380,6 +402,7 @@ export default function TargetRolesPage() {
     {
       title: 'Accessibility Content Creator',
       nativeTitle: 'सुलभता सामग्री निर्माता',
+      slug: 'accessibility-content-creator',
       icon: Heart,
       category: 'accessibility',
       level: 'Intermediate',
@@ -396,6 +419,7 @@ export default function TargetRolesPage() {
     {
       title: 'Regional Language Teacher',
       nativeTitle: 'भाषा शिक्षक',
+      slug: 'regional-language-teacher',
       icon: GraduationCap,
       category: 'education',
       level: 'Intermediate',
@@ -410,6 +434,7 @@ export default function TargetRolesPage() {
     {
       title: 'E-Learning Content Developer',
       nativeTitle: 'ई-लर्निंग सामग्री निर्माता',
+      slug: 'elearning-content-developer',
       icon: Lightbulb,
       category: 'education',
       level: 'Intermediate',
@@ -424,6 +449,7 @@ export default function TargetRolesPage() {
     {
       title: 'Language Assessment Specialist',
       nativeTitle: 'भाषा मूल्यांकन विशेषज्ञ',
+      slug: 'language-assessment-specialist',
       icon: BadgeCheck,
       category: 'education',
       level: 'Advanced',
@@ -440,6 +466,7 @@ export default function TargetRolesPage() {
     {
       title: 'Official Language Officer',
       nativeTitle: 'राजभाषा अधिकारी',
+      slug: 'official-language-officer',
       icon: Building2,
       category: 'government',
       level: 'Advanced',
@@ -454,6 +481,7 @@ export default function TargetRolesPage() {
     {
       title: 'Court Interpreter',
       nativeTitle: 'न्यायालय दुभाषिया',
+      slug: 'court-interpreter',
       icon: Scale,
       category: 'government',
       level: 'Advanced',
@@ -734,8 +762,9 @@ export default function TargetRolesPage() {
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredRoles.map((role, i) => (
-                <div
+                <Link
                   key={i}
+                  href={`/roles/${role.slug}`}
                   className={`group relative p-6 rounded-2xl border transition-all duration-300 hover:scale-[1.02] overflow-hidden ${
                     darkMode 
                       ? 'bg-linear-to-br from-orange-900/10 to-red-900/5 border-orange-800/30 hover:bg-orange-900/20 hover:border-orange-700/50' 
@@ -899,7 +928,7 @@ export default function TargetRolesPage() {
 
                   {/* Hover Effect Border */}
                   <div className={`absolute inset-0 rounded-2xl bg-linear-to-r ${role.color} opacity-0 group-hover:opacity-20 transition-opacity duration-300 pointer-events-none`}></div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
