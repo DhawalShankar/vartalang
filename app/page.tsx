@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Heart, ArrowRight, MessageCircle, Target, Users, Globe, Shield, Sparkles, Briefcase, GraduationCap, TrendingUp, CheckCircle, Zap, User, Building2, IndianRupee, MapPin, Languages, Eye, Clock, Award, BarChart3, UserCheck, FileText } from 'lucide-react';
+import { ArrowRight, MessageCircle, Target, Shield, Briefcase, CheckCircle, MapPin, Languages, Eye, Clock, FileText, Compass, BookOpen, Headphones, Lightbulb, TrendingUp, Globe, Award } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useDarkMode } from '@/lib/DarkModeContext';
@@ -12,6 +12,8 @@ export default function VartaLangLanding() {
   const [activeMatchDemo, setActiveMatchDemo] = useState(0);
   const [activeChatDemo, setActiveChatDemo] = useState(0);
   const [activeJobDemo, setActiveJobDemo] = useState(0);
+  const [activeRoleDemo, setActiveRoleDemo] = useState(0);
+  const [activeArticle, setActiveArticle] = useState(0);
     
   const languages = [
     'Hindi • हिंदी',
@@ -20,69 +22,62 @@ export default function VartaLangLanding() {
     'Kannada • ಕನ್ನಡ',
     'Malayalam • മലയാളം',
     'Bengali • বাংলা',
-    'Gujarati • ગુজરાતી',
+    'Gujarati • ગુજરાતી',
     'Punjabi • ਪੰਜਾਬੀ',
     'Marathi • मराठी',
-    'English'
+    'English',
+    'ISL • Indian Sign Language',
+    'Bharati Braille'
   ];
 
-  // Demo matches
   const matchDemos = [
     {
-      user: "User 1",
-      learns: "Tamil",
-      teaches: "Hindi",
-      location: "Mumbai",
-      compatibility: 95
-    },
-    {
-      user: "User 2",
-      learns: "English",
-      teaches: "Telugu",
-      location: "Hyderabad",
-      compatibility: 88
-    },
-    {
-      user: "User 3",
+      user: "Priya S.",
+      teaches: "Tamil",
       learns: "Hindi",
+      location: "Chennai"
+    },
+    {
+      user: "Rahul K.",
+      teaches: "Hindi",
+      learns: "Telugu",
+      location: "Hyderabad"
+    },
+    {
+      user: "Anjali M.",
       teaches: "Malayalam",
-      location: "Kochi",
-      compatibility: 92
+      learns: "English",
+      location: "Kochi"
     }
   ];
 
-  // Demo chat messages
   const chatDemos = [
     {
-      partner: "User 1",
-      language: "Learning Hindi",
+      partner: "Priya S.",
       messages: [
-        { from: "them", text: "नमस्ते! कैसे हो?", translation: "(Hello! How are you?)" },
-        { from: "you", text: "मैं ठीक हूँ! आप कैसे हैं?", translation: "(I'm fine! How are you?)" },
-        { from: "them", text: "Great progress! Your Hindi is improving! 👏" }
+        { from: "them", text: "नमस्ते! कैसे हो?" },
+        { from: "you", text: "मैं ठीक हूँ! आप कैसे हैं?" },
+        { from: "them", text: "बहुत अच्छा! चलो आज कुछ नया सीखते हैं।" }
       ]
     },
     {
-      partner: "User 2",
-      language: "Learning Tamil",
+      partner: "Rahul K.",
       messages: [
-        { from: "them", text: "வணக்கம்! எப்படி இருக்கீங்க?", translation: "(Hello! How are you?)" },
-        { from: "you", text: "நல்லாயிருக்கேன்!", translation: "(I'm fine!)" },
-        { from: "them", text: "Excellent! Your pronunciation is getting better!" }
+        { from: "them", text: "వణక్కం! ఎలా ఉన్నారు?" },
+        { from: "you", text: "నేను బాగున్నాను!" },
+        { from: "them", text: "Great! Let's practice some more phrases." }
       ]
     },
     {
-      partner: "User 3",
-      language: "Learning Bengali",
+      partner: "Anjali M.",
       messages: [
-        { from: "them", text: "আপনি কেমন আছেন?", translation: "(How are you?)" },
-        { from: "you", text: "আমি ভালো আছি!", translation: "(I am fine!)" },
-        { from: "them", text: "Perfect! Let's practice some new phrases today." }
+        { from: "them", text: "Hello! How was your day?" },
+        { from: "you", text: "It was good! Ready to practice?" },
+        { from: "them", text: "Yes! Let's work on vocabulary today." }
       ]
     }
   ];
 
-  // Demo jobs
   const jobDemos = [
     {
       title: "Hindi Content Writer",
@@ -113,7 +108,80 @@ export default function VartaLangLanding() {
     }
   ];
 
-  // Rotate demos
+  const targetRoleDemos = [
+    {
+      title: "Hindi Content Writer",
+      icon: FileText,
+      languages: ["Hindi", "English"],
+      salary: "₹25K - ₹50K/month",
+      demand: "High",
+      description: "Create engaging content in Hindi for digital platforms",
+      communicationSkills: ["Cultural sensitivity", "Tone adaptation", "Regional idioms"]
+    },
+    {
+      title: "Tamil Translator",
+      icon: Languages,
+      languages: ["Tamil", "English"],
+      salary: "₹30K - ₹60K/month",
+      demand: "Very High",
+      description: "Translate documents, websites, and content between Tamil & English",
+      communicationSkills: ["Context preservation", "Formal vs informal", "Technical terminology"]
+    },
+    {
+      title: "ISL Interpreter",
+      icon: Headphones,
+      languages: ["ISL", "Hindi/English"],
+      salary: "₹35K - ₹70K/month",
+      demand: "Shortage",
+      description: "Bridge communication for deaf and hard-of-hearing communities",
+      communicationSkills: ["Visual communication", "Emotional expression", "Real-time interpretation"]
+    },
+    {
+      title: "Telugu Customer Support",
+      icon: MessageCircle,
+      languages: ["Telugu", "English"],
+      salary: "₹20K - ₹40K/month",
+      demand: "High",
+      description: "Assist customers in their native language for better satisfaction",
+      communicationSkills: ["Empathy & patience", "Problem-solving", "Professional etiquette"]
+    }
+  ];
+
+  const careerArticles = [
+    {
+      title: "Breaking the English-Only Barrier in Tech Jobs",
+      description: "How regional language skills are opening doors in customer support, content creation, and product localization across India's tech sector.",
+      readTime: "5 min read",
+      category: "Career Insights",
+      icon: TrendingUp,
+      keyTakeaway: "74% of Indians don't speak English—companies need YOU to reach them"
+    },
+    {
+      title: "Cultural Communication: Why Tamil Matters in Chennai's BPO Sector",
+      description: "Understanding cultural context isn't just about words—it's about trust, tone, and building relationships that drive customer satisfaction.",
+      readTime: "4 min read",
+      category: "Cross-Cultural Skills",
+      icon: Globe,
+      keyTakeaway: "Native speakers achieve 40% higher customer satisfaction scores"
+    },
+    {
+      title: "ISL Interpreters: India's Most In-Demand Language Professionals",
+      description: "With only 250 certified ISL interpreters for 18 million deaf Indians, this career combines high demand with meaningful impact.",
+      readTime: "6 min read",
+      category: "Career Path",
+      icon: Award,
+      keyTakeaway: "Salary: ₹35K-₹70K/month | Critical shortage nationwide"
+    },
+    {
+      title: "From Fluent to Professional: Mastering Business Hindi",
+      description: "Speaking Hindi isn't enough—learn the formal registers, email etiquette, and presentation skills that employers pay for.",
+      readTime: "7 min read",
+      category: "Skill Development",
+      icon: Lightbulb,
+      keyTakeaway: "Bridge the gap from conversational to professional mastery"
+    }
+  ];
+
   useEffect(() => {
     const matchInterval = setInterval(() => {
       setActiveMatchDemo((prev) => (prev + 1) % matchDemos.length);
@@ -127,10 +195,20 @@ export default function VartaLangLanding() {
       setActiveJobDemo((prev) => (prev + 1) % jobDemos.length);
     }, 3500);
 
+    const roleInterval = setInterval(() => {
+      setActiveRoleDemo((prev) => (prev + 1) % targetRoleDemos.length);
+    }, 3200);
+
+    const articleInterval = setInterval(() => {
+      setActiveArticle((prev) => (prev + 1) % careerArticles.length);
+    }, 5000);
+
     return () => {
       clearInterval(matchInterval);
       clearInterval(chatInterval);
       clearInterval(jobInterval);
+      clearInterval(roleInterval);
+      clearInterval(articleInterval);
     };
   }, []);
 
@@ -139,114 +217,134 @@ export default function VartaLangLanding() {
       
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="pt-37 pb-8 px-4 relative overflow-hidden">
-        {/* Warm Background Glow */}
-        <div className={`absolute top-10 left-1/3 w-64 h-64 rounded-full blur-3xl ${
-          darkMode ? 'bg-orange-900/20' : 'bg-orange-200/40'
-        }`}></div>
-        <div className={`absolute bottom-0 right-1/3 w-56 h-56 rounded-full blur-3xl ${
-          darkMode ? 'bg-red-900/20' : 'bg-red-200/30'
+      {/* Hero Section - COMPACT */}
+      <section className="pt-30 pb-8 px-4 relative overflow-hidden">
+        <div className={`absolute top-10 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-30 ${
+          darkMode ? 'bg-orange-500' : 'bg-orange-200'
         }`}></div>
         
-        <div className="max-w-4xl mx-auto text-center relative z-10">
+        <div className="max-w-7xl mx-auto relative z-10">
           
-          {/* Strong Badge */}
-          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-4 border ${
-            darkMode 
-              ? 'bg-orange-900/20 border-orange-800/40 text-orange-300' 
-              : 'bg-orange-50 border-orange-200 text-orange-700'
-          }`}>
-            <Shield className="w-3 h-3" />
-            <span className="text-xs font-bold">A Nation-Building Movement</span>
+          {/* VartaLang Explanation */}
+          <div className="text-center mb-6">
+            <div className={`text-sm font-semibold ${darkMode ? 'text-orange-300/80' : 'text-orange-600'}`}>
+              <span className="font-black">Varta</span> (Communication) + <span className="font-black">Lang</span> (Language)
+            </div>
           </div>
 
-          {/* Power Headline */}
-          <h1 className={`text-3xl md:text-5xl font-black mb-4 leading-tight ${
-            darkMode ? 'text-orange-50' : 'text-gray-900'
-          }`}>
-            India's Languages
-            <br />
-            <span className={`${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-              Deserve Better!
-            </span>
-          </h1>
+          <div className="grid lg:grid-cols-[1.3fr_1fr] gap-10 items-center">
+            
+            {/* LEFT: Headline + CTA */}
+            <div>
+              <h1 className={`text-4xl lg:text-5xl font-black mb-4 leading-tight ${
+                darkMode ? 'text-orange-50' : 'text-gray-900'
+              }`}>
+                Learn Languages.
+                <br />
+                Build Communication Skills.
+                <br />
+                <span className={`${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                  Get Real Jobs.
+                </span>
+              </h1>
 
-          {/* Government Stats */}
-          <div className={`max-w-2xl mx-auto mb-5 p-4 rounded-xl border ${
-            darkMode 
-              ? 'bg-orange-900/10 border-orange-800/30' 
-              : 'bg-white border-orange-200 shadow-lg'
-          }`}>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className={`text-2xl md:text-3xl font-black mb-1 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                  22
+              <p className={`text-lg mb-6 leading-relaxed ${
+                darkMode ? 'text-orange-200/80' : 'text-gray-700'
+              }`}>
+                The complete pipeline connecting language learners with career opportunities—through practice partners, communication training, and job matching.
+              </p>
+
+              <div className="flex flex-wrap gap-3 mb-4">
+                <Link href="/auth/signup" className="group px-7 py-3.5 rounded-full font-bold text-base bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-xl transition-all hover:scale-105 inline-flex items-center gap-2">
+                  Get Started Free
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <Link href="/targets" className={`px-7 py-3.5 rounded-full font-semibold text-base border transition-all hover:scale-105 inline-flex items-center gap-2 ${
+                  darkMode 
+                    ? 'border-orange-700 text-orange-200 hover:bg-orange-900/20' 
+                    : 'border-orange-300 text-gray-700 hover:bg-orange-50'
+                }`}>
+                  Browse Career Paths
+                </Link>
+              </div>
+
+              <p className={`text-sm ${darkMode ? 'text-orange-300/60' : 'text-gray-500'}`}>
+                22+ Languages • ISL & Braille supported
+              </p>
+            </div>
+
+            {/* RIGHT: Stats */}
+            <div className={`p-6 rounded-2xl border ${
+              darkMode 
+                ? 'bg-orange-900/10 border-orange-800/30' 
+                : 'bg-white border-orange-200 shadow-xl'
+            }`}>
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="text-center">
+                  <div className={`text-3xl font-black mb-1 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                    22
+                  </div>
+                  <div className={`text-xs font-semibold ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                    Languages
+                  </div>
                 </div>
-                <div className={`text-xs font-semibold ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                  Official Languages
+                <div className="text-center">
+                  <div className={`text-3xl font-black mb-1 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                    74%
+                  </div>
+                  <div className={`text-xs font-semibold ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                    Non-English
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className={`text-3xl font-black mb-1 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                    3x
+                  </div>
+                  <div className={`text-xs font-semibold ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                    Jobs Growth
+                  </div>
                 </div>
               </div>
-              <div className="text-center">
-                <div className={`text-2xl md:text-3xl font-black mb-1 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                  121
-                </div>
-                <div className={`text-xs font-semibold ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                  Languages Spoken
-                </div>
-              </div>
-              <div className="text-center">
-                <div className={`text-2xl md:text-3xl font-black mb-1 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                  43%
-                </div>
-                <div className={`text-xs font-semibold ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                  Don't Speak Hindi
+
+              {/* Pipeline */}
+              <div className={`p-4 rounded-xl ${darkMode ? 'bg-orange-900/20' : 'bg-orange-50'}`}>
+                <div className="flex items-center justify-between text-xs font-bold">
+                  <div className="flex flex-col items-center">
+                    <Compass className={`w-5 h-5 mb-1 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                    <span className={darkMode ? 'text-orange-200' : 'text-gray-900'}>Discover</span>
+                  </div>
+                  <ArrowRight className={`w-4 h-4 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                  <div className="flex flex-col items-center">
+                    <Target className={`w-5 h-5 mb-1 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                    <span className={darkMode ? 'text-orange-200' : 'text-gray-900'}>Match</span>
+                  </div>
+                  <ArrowRight className={`w-4 h-4 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                  <div className="flex flex-col items-center">
+                    <MessageCircle className={`w-5 h-5 mb-1 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                    <span className={darkMode ? 'text-orange-200' : 'text-gray-900'}>Practice</span>
+                  </div>
+                  <ArrowRight className={`w-4 h-4 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                  <div className="flex flex-col items-center">
+                    <Briefcase className={`w-5 h-5 mb-1 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                    <span className={darkMode ? 'text-orange-200' : 'text-gray-900'}>Work</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Mission Statement */}
-          <p className={`text-base md:text-lg mb-6 max-w-2xl mx-auto leading-relaxed ${
-            darkMode ? 'text-orange-200/80' : 'text-gray-700'
-          }`}>
-            While English dominates digital India, <span className="font-bold">millions can't access opportunities</span> because they don't speak the "right" language. 
-            <span className={`font-bold ${darkMode ? 'text-orange-300' : 'text-orange-600'}`}> VartaLang is changing that.</span>
-          </p>
-
-          {/* CTA */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-4">
-            <Link href="/auth/signup" className="group px-6 py-3 rounded-full font-bold text-base bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-xl transition-all hover:scale-105 inline-flex items-center gap-2">
-              Start Connecting Now
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link href="/matches" className={`px-6 py-3 rounded-full font-semibold text-base border transition-all hover:scale-105 inline-flex items-center gap-2 ${
-              darkMode 
-                ? 'border-orange-800/50 text-orange-200 hover:bg-orange-900/20' 
-                : 'border-orange-200 text-gray-700 hover:bg-orange-50'
-            }`}>
-              See How It Works
-              <Target className="w-4 h-4" />
-            </Link>
-          </div>
-
-          {/* Trust Indicator */}
-          <p className={`text-xs ${darkMode ? 'text-orange-300/60' : 'text-gray-500'}`}>
-            Free to use • Join thousands of potential learners
-          </p>
         </div>
       </section>
 
-      {/* Languages Ticker - MOVED UP */}
-      <section className={`py-4 overflow-hidden border-y ${darkMode ? 'border-orange-900/30' : 'border-orange-100'}`}>
-        <div className="flex animate-scroll-desktop whitespace-nowrap">
-          {[...languages, ...languages, ...languages, ...languages].map((lang, i) => (
+      {/* Languages Ticker */}
+      <section className={`py-4 overflow-hidden border-y ${darkMode ? 'border-orange-900/30 bg-[#1a1410]' : 'border-orange-100 bg-white'}`}>
+        <div className="flex animate-scroll whitespace-nowrap">
+          {[...languages, ...languages, ...languages].map((lang, i) => (
             <div
               key={i}
-              className={`inline-flex items-center mx-2 px-3 py-1.5 rounded-full border text-xs font-medium transition-all hover:scale-105 ${
+              className={`inline-flex items-center mx-2 px-3 py-1.5 rounded-full border text-xs font-semibold ${
                 darkMode 
-                  ? 'bg-orange-900/20 border-orange-800/30 text-orange-200 hover:bg-orange-900/30' 
-                  : 'bg-white border-orange-100 text-gray-700 hover:bg-orange-50'
+                  ? 'bg-orange-900/20 border-orange-800/30 text-orange-200' 
+                  : 'bg-white border-orange-100 text-gray-700 shadow-sm'
               }`}
             >
               {lang}
@@ -255,20 +353,20 @@ export default function VartaLangLanding() {
         </div>
       </section>
 
-      {/* The Problem */}
+      {/* The Problem - SIMPLIFIED */}
       <section className="py-12 px-4">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <div className="text-center mb-8">
-            <h2 className={`text-2xl md:text-3xl font-black mb-2 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-              The Language Barrier Costs India
+            <h2 className={`text-2xl lg:text-3xl font-black mb-2 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+              The Opportunity Gap
             </h2>
             <p className={`text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-              Real numbers. Real impact.
+              Language shouldn't limit career access
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4 mb-8">
-            <div className={`p-5 rounded-xl border ${
+          <div className="grid md:grid-cols-2 gap-5 mb-8">
+            <div className={`p-6 rounded-xl border ${
               darkMode 
                 ? 'bg-red-900/10 border-red-800/30' 
                 : 'bg-red-50 border-red-200'
@@ -276,94 +374,376 @@ export default function VartaLangLanding() {
               <div className={`text-3xl font-black mb-2 ${darkMode ? 'text-red-400' : 'text-red-600'}`}>
                 74%
               </div>
-              <h3 className={`text-base font-bold mb-2 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-                Indians Don't Speak English
-              </h3>
-              <p className={`text-sm leading-relaxed ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                Yet most jobs and opportunities are only in English. 
-                <span className="font-semibold"> Millions are left behind.</span>
+              <p className={`text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                of Indians don't speak English, yet most jobs require it—leaving millions behind despite having valuable regional language skills.
               </p>
-              <div className={`mt-2 text-xs ${darkMode ? 'text-red-300/60' : 'text-red-700/60'}`}>
-                Source: Census of India 2011
-              </div>
             </div>
 
-            <div className={`p-5 rounded-xl border ${
+            <div className={`p-6 rounded-xl border ${
               darkMode 
                 ? 'bg-orange-900/10 border-orange-800/30' 
                 : 'bg-orange-50 border-orange-200'
             }`}>
               <div className={`text-3xl font-black mb-2 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                57%
+                3x Growth
               </div>
-              <h3 className={`text-base font-bold mb-2 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-                Don't Have Hindi as Mother Tongue
-              </h3>
-              <p className={`text-sm leading-relaxed ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                India is not monolingual. Regional languages need opportunities. 
-                <span className="font-semibold"> Language shouldn't limit potential.</span>
+              <p className={`text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                in regional language job postings since 2023. Companies finally need Hindi, Tamil, Telugu speakers—but can't find trained professionals.
               </p>
-              <div className={`mt-2 text-xs ${darkMode ? 'text-orange-300/60' : 'text-orange-700/60'}`}>
-                Source: Census of India 2011
-              </div>
             </div>
           </div>
 
-          <div className={`p-6 rounded-2xl border text-center ${
+          <div className={`p-6 rounded-xl border text-center ${
             darkMode 
-              ? 'bg-linear-to-br from-orange-900/20 to-red-900/20 border-orange-800/30' 
-              : 'bg-linear-to-br from-orange-50 to-red-50 border-orange-200'
+              ? 'bg-linear-to-r from-orange-900/20 to-blue-900/20 border-orange-800/30' 
+              : 'bg-linear-to-r from-orange-50 to-blue-50 border-orange-200'
           }`}>
-            <h3 className={`text-xl md:text-2xl font-black mb-3 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-              VartaLang's Mission
-            </h3>
-            <p className={`text-base leading-relaxed max-w-2xl mx-auto ${darkMode ? 'text-orange-200/90' : 'text-gray-700'}`}>
-              <span className="font-bold">Break the language barrier.</span> Enable Indians to learn languages, find practice partners, and access opportunities—
-              <span className={`font-bold ${darkMode ? 'text-orange-300' : 'text-orange-600'}`}> in their own languages.</span>
+            <p className={`text-base font-semibold ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
+              VartaLang bridges this gap—connecting learners with practice partners, communication training, and real job opportunities where their languages are assets, not barriers.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Feature 1: MATCHES */}
-      <section className="py-12 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            {/* Left: Content */}
-            <div>
-              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-4 border ${
-                darkMode 
-                  ? 'bg-green-900/20 border-green-800/40 text-green-300' 
-                  : 'bg-green-50 border-green-200 text-green-700'
-              }`}>
-                <CheckCircle className="w-3 h-3" />
-                <span className="text-xs font-bold">Live Now</span>
+      {/* Feature: CAREER PATHS + ARTICLES - CONSISTENT DESIGN */}
+      <section className={`py-12 px-4 ${darkMode ? 'bg-[#1f1612]' : 'bg-orange-50/30'}`}>
+        <div className="max-w-7xl mx-auto">
+          
+          <div className="text-center mb-10">
+            <h2 className={`text-3xl lg:text-4xl font-black mb-3 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+              Discover Language Career Paths
+            </h2>
+            <p className={`text-base max-w-2xl mx-auto ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+              Explore roles where language + communication skills = income opportunity
+            </p>
+          </div>
+
+          {/* THREE COLUMN CONSISTENT DESIGN */}
+          <div className="grid lg:grid-cols-3 gap-5">
+            
+            {/* Column 1: Career Role */}
+            <div className={`p-5 rounded-xl border ${
+              darkMode 
+                ? 'bg-orange-900/10 border-orange-800/30' 
+                : 'bg-white border-orange-200 shadow-lg'
+            }`}>
+              <div className={`text-xs font-bold mb-3 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                CAREER PATHS
               </div>
 
-              <h2 className={`text-2xl md:text-3xl font-black mb-4 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-                Find Your Perfect
-                <br />
-                <span className={`${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                  Language Partner
-                </span>
-              </h2>
+              <div className="flex items-start gap-3 mb-3">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                  darkMode ? 'bg-orange-500/20' : 'bg-orange-100'
+                }`}>
+                  {(() => {
+                    const Icon = targetRoleDemos[activeRoleDemo].icon;
+                    return <Icon className={`w-5 h-5 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />;
+                  })()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className={`font-bold text-base mb-1 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                    {targetRoleDemos[activeRoleDemo].title}
+                  </h4>
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {targetRoleDemos[activeRoleDemo].languages.map((lang, i) => (
+                      <span key={i} className={`text-xs px-2 py-0.5 rounded-full ${
+                        darkMode ? 'bg-orange-900/30 text-orange-300' : 'bg-orange-50 text-gray-700'
+                      }`}>
+                        {lang}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className={`px-2 py-0.5 rounded-full text-xs font-bold shrink-0 ${
+                  targetRoleDemos[activeRoleDemo].demand === 'Shortage' 
+                    ? darkMode ? 'bg-red-500/20 text-red-300' : 'bg-red-100 text-red-700'
+                    : targetRoleDemos[activeRoleDemo].demand === 'Very High'
+                    ? darkMode ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-100 text-orange-700'
+                    : darkMode ? 'bg-green-500/20 text-green-300' : 'bg-green-100 text-green-700'
+                }`}>
+                  {targetRoleDemos[activeRoleDemo].demand}
+                </div>
+              </div>
 
-              <p className={`text-base mb-5 leading-relaxed ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-                Our smart algorithm matches you with people who want to learn what you speak, 
-                and teach what you want to learn. <span className="font-bold">Mutual benefit. Real conversations.</span>
+              <p className={`text-sm mb-3 ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                {targetRoleDemos[activeRoleDemo].description}
               </p>
 
-              <div className="space-y-3 mb-5">
-                {[
-                  'Match based on languages, level & location',
-                  'Safe & verified community',
-                  'Unlimited practice partners'
-                ].map((feature, i) => (
-                  <div key={i} className="flex items-start gap-2">
-                    <div className={`p-0.5 rounded-full mt-0.5 ${darkMode ? 'bg-green-500/20' : 'bg-green-100'}`}>
-                      <CheckCircle className={`w-4 h-4 ${darkMode ? 'text-green-400' : 'text-green-600'}`} />
+              <div className={`p-3 rounded-lg mb-3 ${darkMode ? 'bg-orange-900/20' : 'bg-orange-50'}`}>
+                <div className={`text-xs font-semibold mb-1.5 flex items-center gap-1 ${darkMode ? 'text-orange-300' : 'text-orange-700'}`}>
+                  <MessageCircle className="w-3 h-3" />
+                  Communication Skills
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {targetRoleDemos[activeRoleDemo].communicationSkills.map((skill, i) => (
+                    <span key={i} className={`text-xs px-2 py-0.5 rounded ${
+                      darkMode ? 'bg-orange-900/40 text-orange-200' : 'bg-white text-gray-700'
+                    }`}>
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className={`text-center py-2 rounded-lg mb-3 ${darkMode ? 'bg-orange-900/30' : 'bg-white'}`}>
+                <div className={`text-lg font-black ${darkMode ? 'text-orange-300' : 'text-orange-600'}`}>
+                  {targetRoleDemos[activeRoleDemo].salary}
+                </div>
+              </div>
+
+              
+
+              <div className="flex gap-1.5 justify-center mt-3">
+                {targetRoleDemos.map((_, i) => (
+                  <div 
+                    key={i}
+                    className={`h-1 rounded-full transition-all ${
+                      i === activeRoleDemo 
+                        ? 'w-6 bg-orange-500' 
+                        : darkMode ? 'w-1 bg-orange-800/30' : 'w-1 bg-orange-300'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Column 2: Featured Article */}
+            <div className={`p-5 rounded-xl border ${
+              darkMode 
+                ? 'bg-blue-900/10 border-blue-800/30' 
+                : 'bg-white border-blue-200 shadow-lg'
+            }`}>
+              <div className={`text-xs font-bold mb-3 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                FEATURED INSIGHT
+              </div>
+
+              <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold mb-3 ${
+                darkMode ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
+              }`}>
+                {(() => {
+                  const Icon = careerArticles[activeArticle].icon;
+                  return <Icon className="w-3 h-3" />;
+                })()}
+                {careerArticles[activeArticle].category}
+              </div>
+
+              <h3 className={`text-lg font-black mb-3 leading-tight ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                {careerArticles[activeArticle].title}
+              </h3>
+
+              <p className={`text-sm leading-relaxed mb-4 ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                {careerArticles[activeArticle].description}
+              </p>
+
+              <div className={`p-3 rounded-lg mb-4 border-l-4 ${
+                darkMode 
+                  ? 'bg-orange-900/20 border-orange-500' 
+                  : 'bg-orange-50 border-orange-500'
+              }`}>
+                <div className={`text-xs font-semibold mb-1 ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
+                  Key Takeaway
+                </div>
+                <div className={`text-sm font-bold ${darkMode ? 'text-orange-200' : 'text-gray-900'}`}>
+                  {careerArticles[activeArticle].keyTakeaway}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between mb-3">
+                <span className={`text-xs flex items-center gap-1 ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
+                  <Clock className="w-3 h-3" />
+                  {careerArticles[activeArticle].readTime}
+                </span>
+              </div>
+
+              <button className={`w-full py-2.5 rounded-lg font-bold text-sm ${
+                darkMode 
+                  ? 'bg-blue-500 text-white hover:bg-blue-600' 
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              } transition-all`}>
+                Read Article
+              </button>
+
+              <div className="flex gap-1.5 justify-center mt-3">
+                {careerArticles.map((_, i) => (
+                  <div 
+                    key={i}
+                    className={`h-1 rounded-full transition-all ${
+                      i === activeArticle 
+                        ? 'w-6 bg-blue-500' 
+                        : darkMode ? 'w-1 bg-blue-800/30' : 'w-1 bg-blue-300'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Column 3: Quick Stats */}
+            <div className="space-y-4">
+              <div className={`p-5 rounded-xl border ${
+                darkMode 
+                  ? 'bg-orange-900/10 border-orange-800/30' 
+                  : 'bg-white border-orange-200 shadow-lg'
+              }`}>
+                <div className={`text-xs font-bold mb-4 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                  WHY IT MATTERS
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <div className={`text-2xl font-black ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                      40%
                     </div>
-                    <span className={`text-sm font-medium ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
+                    <div className={`text-xs ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                      Higher satisfaction with native language support
+                    </div>
+                  </div>
+                  <div>
+                    <div className={`text-2xl font-black ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                      250
+                    </div>
+                    <div className={`text-xs ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                      ISL interpreters for 18M deaf Indians
+                    </div>
+                  </div>
+                  <div>
+                    <div className={`text-2xl font-black ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                      3x
+                    </div>
+                    <div className={`text-xs ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                      More regional language jobs in 2024
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`p-5 rounded-xl border ${
+                darkMode 
+                  ? 'bg-blue-900/10 border-blue-800/30' 
+                  : 'bg-blue-50 border-blue-200'
+              }`}>
+                <div className={`text-xs font-bold mb-3 flex items-center gap-1 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                  <BookOpen className="w-3 h-3" />
+                  MORE INSIGHTS
+                </div>
+                <div className="space-y-1.5 mb-3">
+                  {['Breaking the English barrier', 'Cross-cultural skills', 'Language diversity', 'Practice techniques'].map((topic, i) => (
+                    <div key={i} className={`text-xs py-1.5 px-2 rounded ${
+                      darkMode ? 'bg-blue-900/20 text-blue-200' : 'bg-white text-gray-700'
+                    }`}>
+                      • {topic}
+                    </div>
+                  ))}
+                </div>
+                <Link 
+                  href="/articles"
+                  className={`block text-center py-2 rounded-lg font-bold text-sm ${
+                    darkMode 
+                      ? 'bg-blue-500 text-white hover:bg-blue-600' 
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  } transition-all`}
+                >
+                  All Articles
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center mt-8">
+            <Link 
+              href="/targets"
+              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full font-bold text-base bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-xl hover:scale-105 transition-all"
+            >
+              Explore All Career Paths
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Feature: MATCHES */}
+      <section className="py-12 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-10 items-center">
+            
+            <div className={`p-5 rounded-xl border ${
+              darkMode 
+                ? 'bg-orange-900/10 border-orange-800/30' 
+                : 'bg-white border-orange-200 shadow-xl'
+            }`}>
+              <div className={`text-xs font-bold mb-3 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                LIVE MATCHES
+              </div>
+
+              <div className="flex items-start gap-3 mb-3">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+                  darkMode ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-100 text-orange-600'
+                }`}>
+                  {matchDemos[activeMatchDemo].user.charAt(0)}
+                </div>
+                <div className="flex-1">
+                  <h4 className={`font-bold text-base mb-0.5 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                    {matchDemos[activeMatchDemo].user}
+                  </h4>
+                  <p className={`text-xs flex items-center gap-1 ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                    <MapPin className="w-3 h-3" />
+                    {matchDemos[activeMatchDemo].location}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div className={`p-3 rounded-lg ${darkMode ? 'bg-orange-900/20' : 'bg-orange-50'}`}>
+                  <div className={`text-xs font-semibold mb-0.5 ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
+                    Teaches
+                  </div>
+                  <div className={`text-sm font-bold ${darkMode ? 'text-orange-200' : 'text-gray-900'}`}>
+                    {matchDemos[activeMatchDemo].teaches}
+                  </div>
+                </div>
+                <div className={`p-3 rounded-lg ${darkMode ? 'bg-orange-900/20' : 'bg-orange-50'}`}>
+                  <div className={`text-xs font-semibold mb-0.5 ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
+                    Learns
+                  </div>
+                  <div className={`text-sm font-bold ${darkMode ? 'text-orange-200' : 'text-gray-900'}`}>
+                    {matchDemos[activeMatchDemo].learns}
+                  </div>
+                </div>
+              </div>
+
+             
+
+              <div className="flex gap-1.5 justify-center mt-3">
+                {matchDemos.map((_, i) => (
+                  <div 
+                    key={i}
+                    className={`h-1 rounded-full transition-all ${
+                      i === activeMatchDemo 
+                        ? 'w-6 bg-orange-500' 
+                        : darkMode ? 'w-1 bg-orange-800/30' : 'w-1 bg-orange-300'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h2 className={`text-2xl lg:text-3xl font-black mb-4 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                Find Language Exchange Partners
+              </h2>
+
+              <p className={`text-base mb-5 ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
+                Connect with people who teach what you want to learn, and learn what you teach. Mutual exchange, real practice.
+              </p>
+
+              <div className="grid sm:grid-cols-2 gap-3 mb-6">
+                {[
+                  'Match by language & location',
+                  'Verified community',
+                  'Unlimited partners',
+                  'Safe messaging'
+                ].map((feature, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <CheckCircle className={`w-4 h-4 shrink-0 ${darkMode ? 'text-green-400' : 'text-green-600'}`} />
+                    <span className={`text-sm ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
                       {feature}
                     </span>
                   </div>
@@ -372,119 +752,65 @@ export default function VartaLangLanding() {
 
               <Link 
                 href="/matches"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-base bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-xl hover:scale-105 transition-all"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full font-bold text-base bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-xl hover:scale-105 transition-all"
               >
-                Find Matches Now
+                Find Partners
                 <Target className="w-4 h-4" />
               </Link>
-            </div>
-
-            {/* Right: Demo Window */}
-            <div className={`relative p-4 rounded-2xl border ${
-              darkMode 
-                ? 'bg-orange-900/10 border-orange-800/30' 
-                : 'bg-white border-orange-200 shadow-xl'
-            }`}>
-              <div className={`absolute -top-3 left-4 px-3 py-1 rounded-full font-bold text-xs ${
-                darkMode 
-                  ? 'bg-orange-500 text-white' 
-                  : 'bg-orange-600 text-white'
-              }`}>
-                Live Preview
-              </div>
-
-              <div className={`p-4 rounded-xl border mb-3 ${
-                darkMode 
-                  ? 'bg-orange-900/20 border-orange-800/30' 
-                  : 'bg-orange-50 border-orange-200'
-              }`}>
-                <div className="flex items-start gap-3 mb-3">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                    darkMode ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-100 text-orange-600'
-                  }`}>
-                    {matchDemos[activeMatchDemo].user.charAt(matchDemos[activeMatchDemo].user.length - 1)}
-                  </div>
-                  <div className="flex-1">
-                    <h4 className={`font-bold mb-1 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-                      {matchDemos[activeMatchDemo].user}
-                    </h4>
-                    <p className={`text-xs ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                      <MapPin className="w-3 h-3 inline mr-1" />
-                      {matchDemos[activeMatchDemo].location}
-                    </p>
-                  </div>
-                  <div className={`px-2 py-1 rounded-full text-xs font-bold ${
-                    darkMode ? 'bg-green-500/20 text-green-300' : 'bg-green-100 text-green-700'
-                  }`}>
-                    {matchDemos[activeMatchDemo].compatibility}%
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  <div className={`p-2 rounded-lg ${darkMode ? 'bg-orange-900/30' : 'bg-white'}`}>
-                    <div className={`text-xs font-semibold mb-0.5 ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
-                      They Teach
-                    </div>
-                    <div className={`text-sm font-bold ${darkMode ? 'text-orange-200' : 'text-gray-900'}`}>
-                      {matchDemos[activeMatchDemo].teaches}
-                    </div>
-                  </div>
-                  <div className={`p-2 rounded-lg ${darkMode ? 'bg-orange-900/30' : 'bg-white'}`}>
-                    <div className={`text-xs font-semibold mb-0.5 ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
-                      They Learn
-                    </div>
-                    <div className={`text-sm font-bold ${darkMode ? 'text-orange-200' : 'text-gray-900'}`}>
-                      {matchDemos[activeMatchDemo].learns}
-                    </div>
-                  </div>
-                </div>
-
-                <button className={`w-full py-2 rounded-lg font-bold text-sm ${
-                  darkMode 
-                    ? 'bg-orange-500 text-white hover:bg-orange-600' 
-                    : 'bg-orange-600 text-white hover:bg-orange-700'
-                } transition-all`}>
-                  Connect Now
-                </button>
-              </div>
-
-              <div className="flex gap-1.5 justify-center">
-                {matchDemos.map((_, i) => (
-                  <div 
-                    key={i}
-                    className={`h-1 rounded-full transition-all ${
-                      i === activeMatchDemo 
-                        ? 'w-6 bg-orange-500' 
-                        : darkMode ? 'w-1 bg-orange-800/30' : 'w-1 bg-orange-200'
-                    }`}
-                  />
-                ))}
-              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Feature 2: CHATS */}
-      <section className={`py-12 px-4 ${darkMode ? 'bg-[#221812]' : 'bg-orange-50/50'}`}>
-        <div className="max-w-5xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            {/* Left: Demo Window */}
-            <div className={`relative p-4 rounded-2xl border ${
+      {/* Feature: CHATS */}
+      <section className={`py-12 px-4 ${darkMode ? 'bg-[#1f1612]' : 'bg-orange-50/30'}`}>
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-10 items-center">
+            
+            <div>
+              <h2 className={`text-2xl lg:text-3xl font-black mb-4 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                Practice Through Real Conversations
+              </h2>
+
+              <p className={`text-base mb-5 ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
+                No textbooks, no drills. Just real messaging with real people building real communication skills.
+              </p>
+
+              <div className="grid sm:grid-cols-2 gap-3 mb-6">
+                {[
+                  'Real-time messaging',
+                  'Your own pace',
+                  'Build confidence',
+                  'Private & secure'
+                ].map((feature, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <CheckCircle className={`w-4 h-4 shrink-0 ${darkMode ? 'text-green-400' : 'text-green-600'}`} />
+                    <span className={`text-sm ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
+                      {feature}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <Link 
+                href="/chats"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full font-bold text-base bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-xl hover:scale-105 transition-all"
+              >
+                Start Chatting
+                <MessageCircle className="w-4 h-4" />
+              </Link>
+            </div>
+
+            <div className={`p-5 rounded-xl border ${
               darkMode 
                 ? 'bg-orange-900/10 border-orange-800/30' 
                 : 'bg-white border-orange-200 shadow-xl'
             }`}>
-              <div className={`absolute -top-3 left-4 px-3 py-1 rounded-full font-bold text-xs ${
-                darkMode 
-                  ? 'bg-green-500 text-white' 
-                  : 'bg-green-600 text-white'
-              }`}>
-                Real Conversations
+              <div className={`text-xs font-bold mb-3 ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+                LIVE CHAT
               </div>
 
-              {/* Chat Header */}
-              <div className={`p-3 rounded-t-xl border-b ${
+              <div className={`p-3 rounded-t-lg border-b ${
                 darkMode 
                   ? 'bg-orange-900/20 border-orange-800/30' 
                   : 'bg-orange-50 border-orange-200'
@@ -493,29 +819,18 @@ export default function VartaLangLanding() {
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
                     darkMode ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-100 text-orange-600'
                   }`}>
-                    {chatDemos[activeChatDemo].partner.charAt(chatDemos[activeChatDemo].partner.length - 1)}
+                    {chatDemos[activeChatDemo].partner.charAt(0)}
                   </div>
-                  <div className="flex-1">
-                    <div className={`font-bold text-sm ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-                      {chatDemos[activeChatDemo].partner}
-                    </div>
-                    <div className={`text-xs ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
-                      ● Online
-                    </div>
-                  </div>
-                  <div className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                    darkMode ? 'bg-orange-900/30 text-orange-300' : 'bg-orange-100 text-orange-700'
-                  }`}>
-                    {chatDemos[activeChatDemo].language}
+                  <div className={`font-bold text-sm ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                    {chatDemos[activeChatDemo].partner}
                   </div>
                 </div>
               </div>
 
-              {/* Chat Messages */}
               <div className="p-3 space-y-2 min-h-50">
                 {chatDemos[activeChatDemo].messages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.from === 'you' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[80%] px-3 py-2 rounded-xl text-sm ${
+                    <div className={`max-w-[75%] px-3 py-2 rounded-lg text-sm ${
                       msg.from === 'you'
                         ? darkMode 
                           ? 'bg-orange-500 text-white' 
@@ -524,19 +839,13 @@ export default function VartaLangLanding() {
                           ? 'bg-orange-900/30 text-orange-100'
                           : 'bg-gray-100 text-gray-900'
                     }`}>
-                      <div className="font-medium mb-0.5">{msg.text}</div>
-                      {msg.translation && (
-                        <div className={`text-xs opacity-70 italic`}>
-                          {msg.translation}
-                        </div>
-                      )}
+                      {msg.text}
                     </div>
                   </div>
                 ))}
               </div>
 
-              {/* Chat Input */}
-              <div className={`p-2 rounded-b-xl border-t ${
+              <div className={`p-2 rounded-b-lg border-t ${
                 darkMode 
                   ? 'bg-orange-900/20 border-orange-800/30' 
                   : 'bg-orange-50 border-orange-200'
@@ -544,7 +853,7 @@ export default function VartaLangLanding() {
                 <div className="flex gap-2">
                   <input 
                     type="text" 
-                    placeholder="Type message..."
+                    placeholder="Type..."
                     disabled
                     className={`flex-1 px-3 py-1.5 rounded-lg text-sm ${
                       darkMode 
@@ -567,205 +876,75 @@ export default function VartaLangLanding() {
                     className={`h-1 rounded-full transition-all ${
                       i === activeChatDemo 
                         ? 'w-6 bg-orange-500' 
-                        : darkMode ? 'w-1 bg-orange-800/30' : 'w-1 bg-orange-200'
+                        : darkMode ? 'w-1 bg-orange-800/30' : 'w-1 bg-orange-300'
                     }`}
                   />
                 ))}
               </div>
             </div>
-
-            {/* Right: Content */}
-            <div>
-              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-4 border ${
-                darkMode 
-                  ? 'bg-green-900/20 border-green-800/40 text-green-300' 
-                  : 'bg-green-50 border-green-200 text-green-700'
-              }`}>
-                <CheckCircle className="w-3 h-3" />
-                <span className="text-xs font-bold">Live Now</span>
-              </div>
-
-              <h2 className={`text-2xl md:text-3xl font-black mb-4 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-                Practice Through
-                <br />
-                <span className={`${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                  Real Conversations
-                </span>
-              </h2>
-
-              <p className={`text-base mb-5 leading-relaxed ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-                No textbooks. No boring drills. Just real conversations with real people. 
-                <span className="font-bold"> Learn by doing. Learn by talking.</span>
-              </p>
-
-              <div className="space-y-3 mb-5">
-                {[
-                  'Chat in your target language',
-                  'Get instant feedback from native speakers',
-                  'Build confidence through practice',
-                  'Safe & moderated platform'
-                ].map((feature, i) => (
-                  <div key={i} className="flex items-start gap-2">
-                    <div className={`p-0.5 rounded-full mt-0.5 ${darkMode ? 'bg-green-500/20' : 'bg-green-100'}`}>
-                      <CheckCircle className={`w-4 h-4 ${darkMode ? 'text-green-400' : 'text-green-600'}`} />
-                    </div>
-                    <span className={`text-sm font-medium ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
-                      {feature}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <Link 
-                href="/chats"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-base bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-xl hover:scale-105 transition-all"
-              >
-                Start Chatting
-                <MessageCircle className="w-4 h-4" />
-              </Link>
-            </div>
           </div>
         </div>
       </section>
 
-      {/* Feature 3: JOBS */}
+      {/* Feature: JOBS */}
       <section className="py-12 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            {/* Left: Content */}
-            <div>
-              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-4 border ${
-                darkMode 
-                  ? 'bg-green-900/20 border-green-800/40 text-green-300' 
-                  : 'bg-green-50 border-green-200 text-green-700'
-              }`}>
-                <CheckCircle className="w-3 h-3" />
-                <span className="text-xs font-bold">Live Now</span>
-              </div>
-
-              <h2 className={`text-2xl md:text-3xl font-black mb-4 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-                Turn Language Skills
-                <br />
-                <span className={`${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                  Into Income
-                </span>
-              </h2>
-
-              <p className={`text-base mb-5 leading-relaxed ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-                Your mother tongue is valuable. Browse jobs where Tamil, Telugu, Bengali, or any Indian language 
-                is the primary requirement. <span className="font-bold">Language = Opportunity.</span>
-              </p>
-
-              <div className="space-y-3 mb-5">
-                {[
-                  'Translation & content writing',
-                  'Customer support in regional languages',
-                  'Teaching & tutoring positions',
-                  'Free job posting for 7 days'
-                ].map((feature, i) => (
-                  <div key={i} className="flex items-start gap-2">
-                    <div className={`p-0.5 rounded-full mt-0.5 ${darkMode ? 'bg-green-500/20' : 'bg-green-100'}`}>
-                      <CheckCircle className={`w-4 h-4 ${darkMode ? 'text-green-400' : 'text-green-600'}`} />
-                    </div>
-                    <span className={`text-sm font-medium ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
-                      {feature}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex gap-2">
-                <Link 
-                  href="/jobs"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-base bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-xl hover:scale-105 transition-all"
-                >
-                  Browse Jobs
-                  <Briefcase className="w-4 h-4" />
-                </Link>
-                <Link 
-                  href="/jobs?post=true"
-                  className={`inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-base border hover:scale-105 transition-all ${
-                    darkMode 
-                      ? 'border-orange-800/50 text-orange-200 hover:bg-orange-900/20' 
-                      : 'border-orange-200 text-gray-700 hover:bg-orange-50'
-                  }`}
-                >
-                  Post Job
-                </Link>
-              </div>
-            </div>
-
-            {/* Right: Demo Window */}
-            <div className={`relative p-4 rounded-2xl border ${
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-10 items-center">
+            
+            <div className={`p-5 rounded-xl border ${
               darkMode 
                 ? 'bg-orange-900/10 border-orange-800/30' 
                 : 'bg-white border-orange-200 shadow-xl'
             }`}>
-              <div className={`absolute -top-3 left-4 px-3 py-1 rounded-full font-bold text-xs ${
-                darkMode 
-                  ? 'bg-orange-500 text-white' 
-                  : 'bg-orange-600 text-white'
-              }`}>
-                Live Jobs
+              <div className={`text-xs font-bold mb-3 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                LIVE JOBS
               </div>
 
-              <div className={`p-4 rounded-xl border ${
-                darkMode 
-                  ? 'bg-orange-900/20 border-orange-800/30' 
-                  : 'bg-orange-50 border-orange-200'
-              }`}>
-                <div className="flex items-start gap-2 mb-3">
-                  <div className={`p-2 rounded-lg ${darkMode ? 'bg-orange-500/20' : 'bg-orange-100'}`}>
-                    <Briefcase className={`w-5 h-5 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className={`font-bold mb-1 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-                      {jobDemos[activeJobDemo].title}
-                    </h4>
-                    <p className={`text-xs ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                      {jobDemos[activeJobDemo].company}
-                    </p>
-                  </div>
+              <div className="flex items-start gap-3 mb-3">
+                <div className={`p-2 rounded-lg ${darkMode ? 'bg-orange-500/20' : 'bg-orange-100'}`}>
+                  <Briefcase className={`w-5 h-5 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
                 </div>
-
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                  <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                    darkMode ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-100 text-orange-700'
-                  }`}>
-                    <Languages className="w-3 h-3 inline mr-0.5" />
-                    {jobDemos[activeJobDemo].language}
-                  </span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    darkMode ? 'bg-orange-900/30 text-orange-300' : 'bg-white text-gray-700'
-                  }`}>
-                    <MapPin className="w-3 h-3 inline mr-0.5" />
-                    {jobDemos[activeJobDemo].location}
-                  </span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    darkMode ? 'bg-orange-900/30 text-orange-300' : 'bg-white text-gray-700'
-                  }`}>
-                    {jobDemos[activeJobDemo].type}
-                  </span>
+                <div className="flex-1">
+                  <h4 className={`font-bold text-base mb-0.5 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                    {jobDemos[activeJobDemo].title}
+                  </h4>
+                  <p className={`text-xs ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                    {jobDemos[activeJobDemo].company}
+                  </p>
                 </div>
-
-                <div className={`p-3 rounded-lg mb-3 ${darkMode ? 'bg-orange-900/30' : 'bg-white'}`}>
-                  <div className={`text-lg font-black mb-0.5 ${darkMode ? 'text-orange-300' : 'text-orange-600'}`}>
-                    {jobDemos[activeJobDemo].salary}
-                  </div>
-                  <div className={`text-xs ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                    <Eye className="w-3 h-3 inline mr-0.5" />
-                    {jobDemos[activeJobDemo].views} views
-                  </div>
-                </div>
-
-                <button className={`w-full py-2 rounded-lg font-bold text-sm ${
-                  darkMode 
-                    ? 'bg-orange-500 text-white hover:bg-orange-600' 
-                    : 'bg-orange-600 text-white hover:bg-orange-700'
-                } transition-all`}>
-                  View Details & Apply
-                </button>
               </div>
+
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                  darkMode ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-100 text-orange-700'
+                }`}>
+                  <Languages className="w-3 h-3 inline mr-0.5" />
+                  {jobDemos[activeJobDemo].language}
+                </span>
+                <span className={`px-2 py-1 rounded-full text-xs ${
+                  darkMode ? 'bg-orange-900/30 text-orange-300' : 'bg-white text-gray-700'
+                }`}>
+                  <MapPin className="w-3 h-3 inline mr-0.5" />
+                  {jobDemos[activeJobDemo].location}
+                </span>
+                <span className={`px-2 py-1 rounded-full text-xs ${
+                  darkMode ? 'bg-orange-900/30 text-orange-300' : 'bg-white text-gray-700'
+                }`}>
+                  {jobDemos[activeJobDemo].type}
+                </span>
+              </div>
+
+              <div className={`text-center py-2 rounded-lg mb-3 ${darkMode ? 'bg-orange-900/30' : 'bg-white'}`}>
+                <div className={`text-lg font-black ${darkMode ? 'text-orange-300' : 'text-orange-600'}`}>
+                  {jobDemos[activeJobDemo].salary}
+                </div>
+                <div className={`text-xs ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                  <Eye className="w-3 h-3 inline mr-0.5" />
+                  {jobDemos[activeJobDemo].views} views
+                </div>
+              </div>
+
+             
 
               <div className="flex gap-1.5 justify-center mt-3">
                 {jobDemos.map((_, i) => (
@@ -774,157 +953,92 @@ export default function VartaLangLanding() {
                     className={`h-1 rounded-full transition-all ${
                       i === activeJobDemo 
                         ? 'w-6 bg-orange-500' 
-                        : darkMode ? 'w-1 bg-orange-800/30' : 'w-1 bg-orange-200'
+                        : darkMode ? 'w-1 bg-orange-800/30' : 'w-1 bg-orange-300'
                     }`}
                   />
                 ))}
+              </div>
+            </div>
+
+            <div>
+              <h2 className={`text-2xl lg:text-3xl font-black mb-4 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                Turn Language Skills Into Income
+              </h2>
+
+              <p className={`text-base mb-5 ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
+                Browse jobs where your regional languages are the requirement, not a limitation. Your mother tongue has value here, unlocking new economic opportunities across India's diverse markets.
+              </p>
+
+              <div className="grid sm:grid-cols-2 gap-3 mb-6">
+                {[
+                  'Translation & content',
+                  'Customer support',
+                  'Teaching roles',
+                  'Free 7-day posting'
+                ].map((feature, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <CheckCircle className={`w-4 h-4 shrink-0 ${darkMode ? 'text-green-400' : 'text-green-600'}`} />
+                    <span className={`text-sm ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
+                      {feature}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-3 flex-wrap">
+                <Link 
+                  href="/jobs"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full font-bold text-base bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-xl hover:scale-105 transition-all"
+                >
+                  Browse Jobs
+                  <Briefcase className="w-4 h-4" />
+                </Link>
+                <Link 
+                  href="/jobs?post=true"
+                  className={`inline-flex items-center gap-2 px-7 py-3.5 rounded-full font-semibold text-base border hover:scale-105 transition-all ${
+                    darkMode 
+                      ? 'border-orange-700 text-orange-200 hover:bg-orange-900/20' 
+                      : 'border-orange-300 text-gray-700 hover:bg-orange-50'
+                  }`}>
+                  Post a Job
+                </Link>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* LMS Coming Soon */}
-      <section className={`py-12 px-4 ${darkMode ? 'bg-[#221812]' : 'bg-orange-50/50'}`}>
-        <div className="max-w-3xl mx-auto text-center">
-          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-4 border ${
-            darkMode 
-              ? 'bg-blue-900/20 border-blue-800/40 text-blue-300' 
-              : 'bg-blue-50 border-blue-200 text-blue-700'
-          }`}>
-            <Sparkles className="w-3 h-3" />
-            <span className="text-xs font-bold">Under Development</span>
-          </div>
-
-          <h2 className={`text-2xl md:text-3xl font-black mb-3 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-            Complete Learning Platform
-            <br />
-            <span className={`${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-              Coming Soon
-            </span>
-          </h2>
-
-          <p className={`text-base mb-6 leading-relaxed max-w-xl mx-auto ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-            We're building a comprehensive LMS with structured courses, video lessons, quizzes, and certifications. 
-            <span className="font-bold"> Language learning through literature and culture.</span>
-          </p>
-
-          <div className={`p-6 rounded-2xl border ${
-            darkMode 
-              ? 'bg-orange-900/10 border-orange-800/30' 
-              : 'bg-white border-orange-200 shadow-lg'
-          }`}>
-            <div className="grid grid-cols-3 gap-4 mb-5">
-              {[
-                { icon: GraduationCap, text: 'Structured Courses' },
-                { icon: Award, text: 'Certifications' },
-                { icon: Users, text: 'Expert Teachers' }
-              ].map((item, i) => (
-                <div key={i} className="text-center">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-2 ${
-                    darkMode ? 'bg-blue-500/20' : 'bg-blue-100'
-                  }`}>
-                    <item.icon className={`w-6 h-6 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-                  </div>
-                  <div className={`text-xs font-bold ${darkMode ? 'text-orange-200' : 'text-gray-900'}`}>
-                    {item.text}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <p className={`text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-              While we build the LMS, you can still <span className="font-bold">find practice partners, chat, and explore job opportunities</span> on VartaLang today.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Impact Statement */}
-      <section className="py-12 px-4">
-        <div className="max-w-3xl mx-auto">
-          <div className={`p-8 rounded-2xl border text-center ${
-            darkMode 
-              ? 'bg-linear-to-br from-orange-900/20 to-red-900/20 border-orange-800/30' 
-              : 'bg-linear-to-br from-orange-50 to-red-50 border-orange-200 shadow-lg'
-          }`}>
-            <div className={`inline-flex items-center justify-center w-12 h-12 rounded-full mb-4 ${
-              darkMode ? 'bg-orange-500/20' : 'bg-orange-100'
-            }`}>
-              <Shield className={`w-6 h-6 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
-            </div>
-
-            <h3 className={`text-2xl md:text-3xl font-black mb-4 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-              This Is Nation Building
-            </h3>
-
-            <p className={`text-base leading-relaxed mb-4 ${darkMode ? 'text-orange-200/90' : 'text-gray-700'}`}>
-              When a Tamil speaker can learn Hindi to access a job in Delhi, 
-              when a Bengali speaker can teach their language to someone in Mumbai, 
-              when language is no longer a barrier to opportunity—
-              <span className={`font-bold ${darkMode ? 'text-orange-300' : 'text-orange-600'}`}> that's when India truly progresses.</span>
-            </p>
-
-            <div className={`p-4 rounded-xl ${
-              darkMode ? 'bg-orange-900/30' : 'bg-white'
-            }`}>
-              <p className={`text-base font-bold italic ${darkMode ? 'text-orange-300' : 'text-orange-800'}`}>
-                "भारत की भाषाएँ, भारत की ताकत" 
-                <br />
-                <span className="text-sm font-medium">
-                  India's Languages, India's Strength
-                </span>
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Final CTA */}
-      <section className={`py-16 px-4 relative overflow-hidden ${
-        darkMode ? 'bg-[#1a1410]' : 'bg-[#FFF4EC]'
-      }`}>
-        <div className={`absolute inset-0 ${
-          darkMode
-            ? 'bg-linear-to-br from-orange-900/30 via-red-900/20 to-transparent'
-            : 'bg-linear-to-br from-orange-100 via-red-50 to-transparent'
-        }`}></div>
-
-        <div className="max-w-3xl mx-auto text-center relative z-10">
-          <h2 className={`text-3xl md:text-4xl font-black mb-4 leading-tight ${
+      <section className={`py-16 px-4 ${darkMode ? 'bg-[#1f1612]' : 'bg-orange-50/30'}`}>
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className={`text-3xl lg:text-4xl font-black mb-4 ${
             darkMode ? 'text-orange-50' : 'text-gray-900'
           }`}>
-            Start Today.
-            <br />
-            <span className={`${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-              It's Completely Free.
-            </span>
+            Ready to Get Started?
           </h2>
 
-          <p className={`text-base mb-6 max-w-xl mx-auto ${
+          <p className={`text-base mb-8 max-w-2xl mx-auto ${
             darkMode ? 'text-orange-200/80' : 'text-gray-600'
           }`}>
-            Join thousands of Indians breaking language barriers. 
-            No credit card. No hidden fees. Just real connections and real opportunities.
+            Join thousands using VartaLang to turn language skills into career opportunities. Free forever.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
-            <Link href="/auth/signup" className="inline-flex items-center gap-2 px-8 py-4 rounded-full font-black text-lg bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-2xl hover:scale-110 transition-all">
-              Join VartaLang Free
-              <ArrowRight className="w-5 h-5" />
-            </Link>
-          </div>
+          <Link href="/auth/signup" className="inline-flex items-center gap-2 px-10 py-4 rounded-full font-black text-lg bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-2xl hover:scale-110 transition-all">
+            Join Free Now
+            <ArrowRight className="w-5 h-5" />
+          </Link>
 
-          <div className="grid grid-cols-3 gap-4 max-w-xl mx-auto">
+          <div className="grid grid-cols-4 gap-4 max-w-2xl mx-auto mt-10">
             {[
-              { icon: Target, text: 'Find Matches' },
-              { icon: MessageCircle, text: 'Start Chatting' },
-              { icon: Briefcase, text: 'Explore Jobs' }
+              { icon: Compass, text: 'Discover' },
+              { icon: Target, text: 'Match' },
+              { icon: MessageCircle, text: 'Practice' },
+              { icon: Briefcase, text: 'Work' }
             ].map((item, i) => (
-              <div key={i} className={`p-3 rounded-lg ${
-                darkMode ? 'bg-orange-900/20' : 'bg-white/70'
+              <div key={i} className={`p-4 rounded-lg ${
+                darkMode ? 'bg-orange-900/20' : 'bg-white shadow'
               }`}>
-                <item.icon className={`w-6 h-6 mx-auto mb-1.5 ${
+                <item.icon className={`w-6 h-6 mx-auto mb-2 ${
                   darkMode ? 'text-orange-400' : 'text-orange-600'
                 }`} />
                 <div className={`text-xs font-bold ${
@@ -941,12 +1055,12 @@ export default function VartaLangLanding() {
       <Footer />
 
       <style jsx>{`
-        @keyframes scroll-desktop {
+        @keyframes scroll {
           0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
+          100% { transform: translateX(-33.333%); }
         }
-        .animate-scroll-desktop {
-          animation: scroll-desktop 40s linear infinite;
+        .animate-scroll {
+          animation: scroll 30s linear infinite;
         }
       `}</style>
     </div>
