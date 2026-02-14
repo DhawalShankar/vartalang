@@ -79,7 +79,7 @@ export default function Navbar() {
               {isLoggedIn ? (
                 <>
                   {[
-                    { name: "Learn and Practice", href: "/learn" },
+                    { name: "Target Roles", href: "/targets" },
                     { name: "Matches", href: "/matches" },
                     { name: "Chats", href: "/chats" },
                     { name: "Jobs", href: "/jobs" },
@@ -217,7 +217,7 @@ export default function Navbar() {
               {isLoggedIn ? (
                 <>
                   <Link
-                    href="/learn"
+                    href="/targets"
                     onClick={() => setMobileMenuOpen(false)}
                     className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
                       darkMode
@@ -225,7 +225,7 @@ export default function Navbar() {
                         : "text-gray-700 hover:bg-orange-50"
                     }`}
                   >
-                    Learn and Practice
+                    Target Roles
                   </Link>
                   <Link
                     href="/matches"
