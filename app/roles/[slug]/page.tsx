@@ -132,7 +132,7 @@ export default function RoleDetailPage() {
               {error || 'The role you\'re looking for doesn\'t exist or has been removed.'}
             </p>
             <Link
-              href="/target-roles"
+              href="/targets"
               className="inline-flex items-center gap-2 px-8 py-3 rounded-full font-semibold
               bg-linear-to-r from-orange-500 to-red-600 text-white
               hover:shadow-xl hover:scale-105 transition-all"
@@ -167,7 +167,7 @@ export default function RoleDetailPage() {
         <div className="max-w-6xl mx-auto relative z-10">
           {/* Back Button */}
           <Link
-            href="/target-roles"
+            href="/targets"
             className={`inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full font-medium transition-all ${
               darkMode 
                 ? 'text-orange-300 hover:bg-orange-900/20' 
@@ -534,7 +534,7 @@ export default function RoleDetailPage() {
             </Link>
 
             <Link
-              href="/target-roles"
+              href="/targets"
               className={`inline-flex items-center justify-center gap-2 px-10 py-4 rounded-full font-semibold text-base border-2 transition-all hover:scale-105 ${
                 darkMode 
                   ? 'border-orange-400 text-orange-300 hover:bg-orange-900/20' 
