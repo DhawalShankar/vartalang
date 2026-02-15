@@ -4,7 +4,8 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   User, Edit, Save, X, Camera, MapPin, Languages, 
-  GraduationCap, Award, BookOpen, Star, ArrowLeft, MessageCircle
+  GraduationCap, Award, BookOpen, Star, ArrowLeft, MessageCircle,
+  UserPlus, Clock, Check, UserCheck
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -34,6 +35,12 @@ interface UserProfile {
   createdAt: string;
 }
 
+interface MatchStatus {
+  status: 'none' | 'pending_sent' | 'pending_received' | 'accepted';
+  matchId?: string;
+  chatId?: string;
+}
+
 export default function DynamicProfilePage() {
   const params = useParams();
   const router = useRouter();
@@ -43,6 +50,8 @@ export default function DynamicProfilePage() {
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [matchStatus, setMatchStatus] = useState<MatchStatus>({ status: 'none' });
+  const [actionLoading, setActionLoading] = useState(false);
   
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -53,49 +62,229 @@ export default function DynamicProfilePage() {
       return;
     }
 
-    // Check if viewing own profile
     setIsOwnProfile(userId === myUserId);
 
-    // Fetch profile
-    fetch(`${API_URL}/auth/user/${userId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch profile");
-        return res.json();
+    // Fetch profile AND match status together
+    Promise.all([
+      fetch(`${API_URL}/auth/user/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+      fetch(`${API_URL}/matches/status/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
       })
-      .then((data) => {
-        setProfile(data.user);
+    ])
+      .then(async ([profileRes, matchRes]) => {
+        if (!profileRes.ok) throw new Error("Failed to fetch profile");
+        
+        const profileData = await profileRes.json();
+        setProfile(profileData.user);
+        
+        if (matchRes.ok) {
+          const matchData = await matchRes.json();
+          console.log("Match status:", matchData);
+          setMatchStatus({
+            status: matchData.status,
+            matchId: matchData.matchId,
+            chatId: matchData.chatId,
+          });
+        }
+        
         setLoading(false);
       })
       .catch((error) => {
-        console.error("Profile fetch error:", error);
+        console.error("Fetch error:", error);
         setLoading(false);
       });
   }, [userId, router]);
 
-  const handleSendMessage = async () => {
-    // Logic to create/find chat and navigate
+  const handleSendMatchRequest = async () => {
     const token = localStorage.getItem("token");
+    if (!token || actionLoading) return;
+    
+    setActionLoading(true);
     
     try {
-      const res = await fetch(`${API_URL}/chats/start`, {
+      const res = await fetch(`${API_URL}/matches/send`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ otherUserId: userId }),
+        body: JSON.stringify({ receiverId: userId }),
       });
 
       const data = await res.json();
-      router.push(`/chats?chat=${data.chatId}`);
+
+      if (res.ok) {
+        setMatchStatus({ 
+          status: 'pending_sent',
+          matchId: data.matchId 
+        });
+        alert("Match request sent! ✅");
+      } else {
+        alert(data.message || data.error || "Failed to send request");
+      }
     } catch (error) {
-      console.error("Start chat error:", error);
-      alert("Failed to start chat");
+      console.error("Match request error:", error);
+      alert("Failed to send match request");
+    } finally {
+      setActionLoading(false);
     }
+  };
+
+  const handleMatchAction = async (action: 'accept' | 'reject') => {
+    const token = localStorage.getItem("token");
+    if (!token || !matchStatus.matchId || actionLoading) return;
+    
+    setActionLoading(true);
+    
+    try {
+      const url = `${API_URL}/matches/${matchStatus.matchId}/${action}`;
+      console.log("Calling:", url);
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.message || `Failed to ${action} match`);
+      }
+
+      const data = await response.json();
+      console.log("Action response:", data);
+
+      if (action === 'accept') {
+        // Extract chatId safely
+        const chatId = typeof data.chatId === 'string' 
+          ? data.chatId 
+          : data.chatId?._id || data.chat?._id;
+
+        setMatchStatus({ 
+          status: 'accepted',
+          matchId: matchStatus.matchId,
+          chatId: chatId
+        });
+
+        alert("Match accepted! 🎉");
+        
+        // Redirect to chat if chatId available
+        if (chatId) {
+          setTimeout(() => {
+            router.push(`/chats?chat=${chatId}`);
+          }, 1000);
+        }
+      } else {
+        // Reject
+        setMatchStatus({ status: 'none' });
+        alert("Match request rejected");
+      }
+
+    } catch (error) {
+      console.error(`${action} error:`, error);
+      alert(error instanceof Error ? error.message : `Failed to ${action} match`);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleSendMessage = () => {
+    if (matchStatus.chatId) {
+      router.push(`/chats?chat=${matchStatus.chatId}`);
+    } else {
+      alert("Chat not available yet");
+    }
+  };
+
+  // Render action button based on match status
+  const renderActionButton = () => {
+    const { status } = matchStatus;
+
+    // ✅ ACCEPTED - Show Message Button
+    if (status === 'accepted') {
+      return (
+        <button
+          onClick={handleSendMessage}
+          className="px-6 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all flex items-center gap-2 mt-4 sm:mt-0"
+        >
+          <MessageCircle className="w-4 h-4" />
+          Send Message
+        </button>
+      );
+    }
+
+    // ⏳ PENDING SENT - Request Sent (disabled)
+    if (status === 'pending_sent') {
+      return (
+        <button
+          disabled
+          className={`px-6 py-3 rounded-xl font-semibold flex items-center gap-2 mt-4 sm:mt-0 cursor-not-allowed ${
+            darkMode
+              ? 'bg-orange-900/30 text-orange-400 border border-orange-800/30'
+              : 'bg-gray-100 text-gray-500 border border-gray-300'
+          }`}
+        >
+          <Clock className="w-4 h-4" />
+          Request Sent
+        </button>
+      );
+    }
+
+    // 📨 PENDING RECEIVED - Show Accept/Reject buttons
+    if (status === 'pending_received') {
+      return (
+        <div className="flex gap-2 mt-4 sm:mt-0">
+          <button
+            onClick={() => handleMatchAction('accept')}
+            disabled={actionLoading}
+            className="flex-1 px-6 py-3 rounded-xl bg-linear-to-r from-green-500 to-green-600 text-white font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {actionLoading ? "..." : (
+              <>
+                <Check className="w-4 h-4" />
+                Accept
+              </>
+            )}
+          </button>
+          <button
+            onClick={() => handleMatchAction('reject')}
+            disabled={actionLoading}
+            className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 ${
+              darkMode 
+                ? "bg-red-900/30 text-red-300 hover:bg-red-900/50 border border-red-800/30" 
+                : "bg-red-100 text-red-700 hover:bg-red-200 border border-red-200"
+            }`}
+          >
+            {actionLoading ? "..." : (
+              <>
+                <X className="w-4 h-4" />
+                Reject
+              </>
+            )}
+          </button>
+        </div>
+      );
+    }
+
+    // ➕ NONE - Send Match Request
+    return (
+      <button
+        onClick={handleSendMatchRequest}
+        disabled={actionLoading}
+        className="px-6 py-3 rounded-xl bg-linear-to-r from-blue-500 to-blue-600 text-white font-semibold hover:shadow-lg transition-all flex items-center gap-2 mt-4 sm:mt-0 disabled:opacity-50"
+      >
+        {actionLoading ? "Sending..." : (
+          <>
+            <UserPlus className="w-4 h-4" />
+            Send Match Request
+          </>
+        )}
+      </button>
+    );
   };
 
   if (loading) {
@@ -125,7 +314,6 @@ export default function DynamicProfilePage() {
     );
   }
 
-  // If it's own profile, redirect to /profile
   if (isOwnProfile) {
     router.push('/profile');
     return null;
@@ -163,7 +351,7 @@ export default function DynamicProfilePage() {
             }`}></div>
 
             <div className="px-6 pb-6">
-              {/* Profile Photo & Message Button */}
+              {/* Profile Photo & Action Button */}
               <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between -mt-16 mb-6">
                 <div className={`w-32 h-32 rounded-2xl border-4 overflow-hidden ${
                   darkMode 
@@ -179,17 +367,11 @@ export default function DynamicProfilePage() {
                   )}
                 </div>
 
-                {/* Message Button */}
-                <button
-                  onClick={handleSendMessage}
-                  className="px-6 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all flex items-center gap-2 mt-4 sm:mt-0"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  Send Message
-                </button>
+                {/* 🎯 CONDITIONAL ACTION BUTTON */}
+                {renderActionButton()}
               </div>
 
-              {/* Name & Bio (Read-only) */}
+              {/* Name & Bio */}
               <div className="mb-6">
                 <h1 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
                   {profile.name}
