@@ -158,7 +158,7 @@ export default function DynamicProfilePage() {
               />
             </div>
 
-            <div className="px-6 pb-6 z-50">
+            <div className="px-6 pb-6 z-10">
               {/* Profile Photo & Member Badge */}
               <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between -mt-16 mb-6">
                 <div className={`w-32 h-32 rounded-2xl border-4 overflow-hidden ${
