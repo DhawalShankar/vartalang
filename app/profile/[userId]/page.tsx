@@ -35,7 +35,6 @@ interface UserProfile {
 }
 
 // User ID se unique cover image select karo
-// User ID se unique cover image select karo
 const getCoverImage = (userId: string) => {
   const coverPatterns = [
     'photo-phIFdC6lA4E', // Snow mountain under stars
@@ -150,23 +149,18 @@ export default function DynamicProfilePage() {
               ? 'bg-orange-900/10 border border-orange-800/30' 
               : 'bg-white border border-orange-100 shadow-xl'
           }`}>
-            {/* Unique Unsplash Cover per User */}
+            {/* Clean Unsplash Cover - No Gradient Overlay */}
             <div className="relative h-32 overflow-hidden">
               <img 
                 src={getCoverImage(profile._id)} 
                 alt="Cover"
-                className="w-full h-full object-cover opacity-30"
+                className="w-full h-full object-cover"
               />
-              <div className={`absolute inset-0 ${
-                darkMode 
-                  ? 'bg-linear-to-r from-orange-900/60 to-red-900/60' 
-                  : 'bg-linear-to-r from-orange-500/40 to-red-500/40'
-              }`}></div>
             </div>
 
-            <div className="px-6 pb-6 z-50">
+            <div className="px-6 pb-6">
               {/* Profile Photo & Member Badge */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between -mt-16 mb-6 ">
+              <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between -mt-16 mb-6">
                 <div className={`w-32 h-32 rounded-2xl border-4 overflow-hidden ${
                   darkMode 
                     ? 'border-[#1a1410] bg-orange-900/30' 
