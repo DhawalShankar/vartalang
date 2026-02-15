@@ -35,13 +35,14 @@ interface UserProfile {
 }
 
 // User ID se unique cover image select karo
+// User ID se unique cover image select karo
 const getCoverImage = (userId: string) => {
   const coverPatterns = [
-    'photo-1557682250-33bd709cbe85', // Orange abstract
-    'photo-1579546929518-9e396f3cc809', // Purple gradient  
-    'photo-1558618666-fcd25c85cd64', // Red abstract
-    'photo-1557682224-5b8590cd9ec5', // Blue pattern
-    'photo-1557682268-e3955ed5d83f', // Green waves
+    'photo-phIFdC6lA4E', // Snow mountain under stars
+    'photo-NRQV-hBF10M', // Body of water surrounded by trees
+    'photo-zAjdgNXsMeg', // Brown house near water
+    'photo-KonWFWUaAuk', // Tree on water near mountains
+    'photo-t7YycgAoVSw', // Hot air balloon contest
   ];
   
   // User ID se consistent hash banao
@@ -163,9 +164,9 @@ export default function DynamicProfilePage() {
               }`}></div>
             </div>
 
-            <div className="px-6 pb-6">
+            <div className="px-6 pb-6 z-50">
               {/* Profile Photo & Member Badge */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between -mt-16 mb-6 z-50">
+              <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between -mt-16 mb-6 ">
                 <div className={`w-32 h-32 rounded-2xl border-4 overflow-hidden ${
                   darkMode 
                     ? 'border-[#1a1410] bg-orange-900/30' 
