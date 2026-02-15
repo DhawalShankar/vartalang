@@ -34,26 +34,21 @@ interface UserProfile {
   createdAt: string;
 }
 
-// Country to flag emoji mapping
-const getCountryFlag = (country: string): string => {
-  const flagMap: { [key: string]: string } = {
-    'India': '🇮🇳',
-    'United States': '🇺🇸',
-    'United Kingdom': '🇬🇧',
-    'Canada': '🇨🇦',
-    'Australia': '🇦🇺',
-    'Germany': '🇩🇪',
-    'France': '🇫🇷',
-    'Spain': '🇪🇸',
-    'Italy': '🇮🇹',
-    'Japan': '🇯🇵',
-    'China': '🇨🇳',
-    'Brazil': '🇧🇷',
-    'Mexico': '🇲🇽',
-    'Russia': '🇷🇺',
-    'South Korea': '🇰🇷',
-  };
-  return flagMap[country] || '🌍';
+// User ID se unique cover image select karo
+const getCoverImage = (userId: string) => {
+  const coverPatterns = [
+    'photo-1557682250-33bd709cbe85', // Orange abstract
+    'photo-1579546929518-9e396f3cc809', // Purple gradient  
+    'photo-1558618666-fcd25c85cd64', // Red abstract
+    'photo-1557682224-5b8590cd9ec5', // Blue pattern
+    'photo-1557682268-e3955ed5d83f', // Green waves
+  ];
+  
+  // User ID se consistent hash banao
+  const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const index = hash % coverPatterns.length;
+  
+  return `https://images.unsplash.com/${coverPatterns[index]}?w=1200&h=150&fit=crop`;
 };
 
 export default function DynamicProfilePage() {
@@ -154,23 +149,23 @@ export default function DynamicProfilePage() {
               ? 'bg-orange-900/10 border border-orange-800/30' 
               : 'bg-white border border-orange-100 shadow-xl'
           }`}>
-           {/* Unsplash Cover */}
+            {/* Unique Unsplash Cover per User */}
             <div className="relative h-32 overflow-hidden">
-            <img 
-                src="https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=1200&h=150&fit=crop" 
+              <img 
+                src={getCoverImage(profile._id)} 
                 alt="Cover"
                 className="w-full h-full object-cover opacity-30"
-            />
-            <div className={`absolute inset-0 ${
+              />
+              <div className={`absolute inset-0 ${
                 darkMode 
-                ? 'bg-linear-to-r from-orange-900/60 to-red-900/60' 
-                : 'bg-linear-to-r from-orange-500/40 to-red-500/40'
-            }`}></div>
+                  ? 'bg-linear-to-r from-orange-900/60 to-red-900/60' 
+                  : 'bg-linear-to-r from-orange-500/40 to-red-500/40'
+              }`}></div>
             </div>
 
             <div className="px-6 pb-6">
               {/* Profile Photo & Member Badge */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between -mt-16 mb-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between -mt-16 mb-6 z-50">
                 <div className={`w-32 h-32 rounded-2xl border-4 overflow-hidden ${
                   darkMode 
                     ? 'border-[#1a1410] bg-orange-900/30' 
@@ -230,8 +225,7 @@ export default function DynamicProfilePage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className={`text-sm ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>Country</span>
-                  <span className={`font-semibold flex items-center gap-2 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-                    <span className="text-2xl">{getCountryFlag(profile.country)}</span>
+                  <span className={`font-semibold ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
                     {profile.country}
                   </span>
                 </div>
