@@ -150,7 +150,7 @@ export default function DynamicProfilePage() {
               : 'bg-white border border-orange-100 shadow-xl'
           }`}>
             {/* Clean Unsplash Cover - No Gradient Overlay */}
-            <div className="relative h-32 overflow-hidden">
+            <div className="relative h-32 overflow-hidden z-50">
               <img 
                 src={getCoverImage(profile._id)} 
                 alt="Cover"
