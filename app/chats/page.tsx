@@ -14,7 +14,8 @@ import {
   Ban,
   Shield,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  User as UserIcon
 } from "lucide-react";
 import { useDarkMode } from '@/lib/DarkModeContext';
 import { createChatSocket, destroyChatSocket } from '@/lib/socketClient';
@@ -28,6 +29,7 @@ interface User {
   email: string;
   languagesKnow: Array<{ language: string; fluency: string }>;
   primaryLanguageToLearn: string;
+  profilePhoto?: string;
 }
 
 interface Message {
@@ -102,11 +104,10 @@ function ChatsContent() {
   }, []);
 
   useEffect(() => {
-  // Check if user has already accepted the pledge
-  const pledgeAccepted = localStorage.getItem("pledgeAccepted");
-  if (pledgeAccepted === "true") {
-    setHasPledged(true);
-  }
+    const pledgeAccepted = localStorage.getItem("pledgeAccepted");
+    if (pledgeAccepted === "true") {
+      setHasPledged(true);
+    }
   }, []);
 
   const fetchChats = useCallback(async () => {
@@ -137,25 +138,21 @@ function ChatsContent() {
     }
   }, [router]);
 
-  // ✅ FIX: useCallback with stable reference
   const handleReceiveMessage = useCallback((data: any) => {
     console.log("📨 Received message:", data);
     const { chatId, message } = data;
 
-    // Skip own messages
     if (message.sender === currentUserId) {
       console.log("⏭️ Skipping own message");
       return;
     }
 
-    // ✅ Add message to current chat if it's open
     setCurrentChatDetail(prev => {
       if (!prev || prev.id !== chatId) {
         console.log("⏭️ Message not for current chat");
         return prev;
       }
 
-      // Duplicate check
       if (prev.messages.some(m => m._id === message._id)) {
         console.log("⏭️ Duplicate message, skipping");
         return prev;
@@ -163,7 +160,6 @@ function ChatsContent() {
 
       console.log("✅ Adding message to current chat");
       
-      // ✅ Mark as read immediately if chat is open
       if (selectedChat === chatId && socketRef.current) {
         setTimeout(() => {
           const token = localStorage.getItem("token");
@@ -175,7 +171,7 @@ function ChatsContent() {
           }).then(res => {
             if (res.ok) {
               socketRef.current?.emit("mark_read", { chatId });
-              fetchChats(); // Update sidebar to remove unread count
+              fetchChats();
             }
           }).catch(err => console.error("Mark as read error:", err));
         }, 500);
@@ -187,7 +183,6 @@ function ChatsContent() {
       };
     });
 
-    // Only fetch chats if message is not for current open chat
     if (selectedChat !== chatId) {
       fetchChats();
     }
@@ -221,7 +216,6 @@ function ChatsContent() {
     if (selectedChat) fetchChatMessages(selectedChat);
   }, [selectedChat, fetchChats]);
 
-  // ✅ Socket setup
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -259,7 +253,6 @@ function ChatsContent() {
     };
   }, [handleReceiveMessage, handleMessagesRead, handleUserBlocked, handleUserUnblocked]);
 
-  // ✅ Chat room join/leave
   useEffect(() => {
     if (!selectedChat || !socketRef.current || !isConnected) return;
 
@@ -274,7 +267,6 @@ function ChatsContent() {
     };
   }, [selectedChat, isConnected]);
 
-  // ✅ Mark messages as read when chat is open
   useEffect(() => {
     if (!selectedChat || !isConnected) return;
 
@@ -291,11 +283,9 @@ function ChatsContent() {
 
         if (res.ok) {
           console.log(`✅ Marked messages as read for chat ${selectedChat}`);
-          // Emit socket event to notify the sender
           if (socketRef.current) {
             socketRef.current.emit("mark_read", { chatId: selectedChat });
           }
-          // Refresh chat list to update unread count
           fetchChats();
         }
       } catch (error) {
@@ -303,7 +293,6 @@ function ChatsContent() {
       }
     };
 
-    // Small delay to ensure messages are loaded
     const timer = setTimeout(markAsRead, 500);
     return () => clearTimeout(timer);
   }, [selectedChat, isConnected, fetchChats]);
@@ -320,31 +309,29 @@ function ChatsContent() {
     fetchChats();
   }, [fetchChats]);
 
-  // ✅ NEW CODE WITH PLEDGE CHECK
-useEffect(() => {
-  const openChatFromUrl = async () => {
-    if (!chatParam) return;
+  useEffect(() => {
+    const openChatFromUrl = async () => {
+      if (!chatParam) return;
+      
+      console.log(`🎯 Opening chat from URL: ${chatParam}`);
+      
+      if (!hasPledged) {
+        console.log("⚠️ User hasn't pledged yet, showing modal");
+        setShowPledgeModal(true);
+        sessionStorage.setItem("pendingChatId", chatParam);
+        return;
+      }
+      
+      await fetchChats();
+      setSelectedChat(chatParam);
+      await fetchChatMessages(chatParam);
+    };
     
-    console.log(`🎯 Opening chat from URL: ${chatParam}`);
-    
-    // ✅ CHECK PLEDGE FIRST!
-    if (!hasPledged) {
-      console.log("⚠️ User hasn't pledged yet, showing modal");
-      setShowPledgeModal(true);
-      sessionStorage.setItem("pendingChatId", chatParam);
-      return;
+    if (chatParam && !loading) {
+      openChatFromUrl();
     }
-    
-    // If pledged, proceed normally
-    await fetchChats();
-    setSelectedChat(chatParam);
-    await fetchChatMessages(chatParam);
-  };
-  
-  if (chatParam && !loading) {
-    openChatFromUrl();
-  }
-  }, [chatParam, loading, hasPledged, fetchChats]); // ✅ Add hasPledged to dependencies
+  }, [chatParam, loading, hasPledged, fetchChats]);
+
   const deleteNotificationsForChat = async (chatId: string) => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -403,7 +390,6 @@ useEffect(() => {
       read: false
     };
 
-    // ✅ Optimistic update
     setCurrentChatDetail(prev => {
       if (!prev) return prev;
       return {
@@ -434,7 +420,6 @@ useEffect(() => {
       
       console.log("✅ Message sent successfully:", data.messageData);
       
-      // ✅ Replace temp message with real one
       setCurrentChatDetail(prev => {
         if (!prev) return prev;
         return {
@@ -455,7 +440,6 @@ useEffect(() => {
     } catch (error) {
       console.error("Send message error:", error);
       
-      // ✅ Remove temp message on error
       setCurrentChatDetail(prev => {
         if (!prev) return prev;
         return {
@@ -471,44 +455,46 @@ useEffect(() => {
     }
   };
 
- const handleChatClick = (chatId: string) => {
-  // Check if user has pledged before opening chat
-  if (!hasPledged) {
-    setShowPledgeModal(true);
-    // Store the chatId to open after pledge is accepted
-    sessionStorage.setItem("pendingChatId", chatId);
-    return;
-  }
-  
-  setSelectedChat(chatId);
-  router.push(`/chats?chat=${chatId}`, { scroll: false });
-  fetchChatMessages(chatId);
+  const handleChatClick = (chatId: string) => {
+    if (!hasPledged) {
+      setShowPledgeModal(true);
+      sessionStorage.setItem("pendingChatId", chatId);
+      return;
+    }
+    
+    setSelectedChat(chatId);
+    router.push(`/chats?chat=${chatId}`, { scroll: false });
+    fetchChatMessages(chatId);
   };
-  const handlePledgeAccept = () => {
-  // Store pledge acceptance in localStorage
-  localStorage.setItem("pledgeAccepted", "true");
-  setHasPledged(true);
-  setShowPledgeModal(false);
-  
-  // Open the pending chat if there is one
-      const pendingChatId = sessionStorage.getItem("pendingChatId");
-      if (pendingChatId) {
-        setSelectedChat(pendingChatId);
-        router.push(`/chats?chat=${pendingChatId}`, { scroll: false });
-        fetchChatMessages(pendingChatId);
-        sessionStorage.removeItem("pendingChatId");
-      }
-    };
 
-    const handlePledgeClose = () => {
-      setShowPledgeModal(false);
+  const handlePledgeAccept = () => {
+    localStorage.setItem("pledgeAccepted", "true");
+    setHasPledged(true);
+    setShowPledgeModal(false);
+    
+    const pendingChatId = sessionStorage.getItem("pendingChatId");
+    if (pendingChatId) {
+      setSelectedChat(pendingChatId);
+      router.push(`/chats?chat=${pendingChatId}`, { scroll: false });
+      fetchChatMessages(pendingChatId);
       sessionStorage.removeItem("pendingChatId");
-    };
+    }
+  };
+
+  const handlePledgeClose = () => {
+    setShowPledgeModal(false);
+    sessionStorage.removeItem("pendingChatId");
+  };
 
   const handleBack = () => {
     setSelectedChat(null);
     setCurrentChatDetail(null);
     router.push('/chats', { scroll: false });
+  };
+
+  // NEW: Navigate to user profile
+  const handleViewProfile = (userId: string) => {
+    router.push(`/profile/${userId}`);
   };
 
   const handleBlockUser = async () => {
@@ -650,8 +636,6 @@ useEffect(() => {
     chat.user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  
-
   if (loading) {
     return (
       <div className={`pt-20 min-h-screen ${darkMode ? "bg-[#1a1410]" : "bg-[#FFF9F5]"}`}>
@@ -670,7 +654,6 @@ useEffect(() => {
     <div className={`pt-20 min-h-screen ${darkMode ? "bg-[#1a1410]" : "bg-[#FFF9F5]"}`}>
       <Navbar />
       
-      {/* ✅ Connection Status Indicator */}
       <div className="fixed bottom-4 right-4 z-50">
         <div 
           className={`px-3 py-1.5 rounded-full text-xs font-medium shadow-lg transition-all cursor-help ${
@@ -694,7 +677,7 @@ useEffect(() => {
         <div className="grid md:grid-cols-3 gap-4 h-[calc(100vh-120px)]">
           
           {/* Chat List Sidebar */}
-          <div className={`${selectedChat ? 'hidden' : 'block'} md:block  rounded-3xl overflow-hidden ${darkMode ? "bg-orange-900/10 border border-orange-800/30" : "bg-white border border-orange-200 shadow-lg"}`}>
+          <div className={`${selectedChat ? 'hidden' : 'block'} md:block rounded-3xl overflow-hidden ${darkMode ? "bg-orange-900/10 border border-orange-800/30" : "bg-white border border-orange-200 shadow-lg"}`}>
             
             <div className={`p-4 border-b ${darkMode ? 'border-orange-800/30' : 'border-orange-200'}`}>
               <h2 className={`text-xl font-bold mb-3 ${darkMode ? "text-orange-50" : "text-orange-950"}`}>
@@ -739,51 +722,59 @@ useEffect(() => {
                           : "hover:bg-orange-50 border-orange-200"
                     }`}
                   >
-                    {/* Chat List Item - Around line 700 */}
-<div className="flex items-start gap-3">
-  <div className="relative">
-    <div className="w-12 h-12 rounded-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-semibold">
-      {getInitials(chat.user.name)}
-    </div>
-  </div>
-  <div className="flex-1 text-left min-w-0">
-    <div className="flex items-center justify-between mb-1">
-      <h3 className={`font-semibold truncate ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
-        {chat.user.name}
-      </h3>
-      <span className={`text-xs ${darkMode ? "text-orange-300/70" : "text-orange-600/70"}`}>
-        {formatTimestamp(chat.timestamp)}
-      </span>
-    </div>
-    
-    <p className={`text-sm truncate ${darkMode ? "text-orange-200/70" : "text-orange-700/70"}`}>
-      {chat.lastMessage || 'No messages yet'}
-    </p>
-    
-    {/* ✅ NEW LAYOUT - Badges in separate row with proper spacing */}
-    <div className="flex flex-wrap items-center gap-2 mt-2">
-      <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${
-        darkMode ? "bg-orange-800/30 text-orange-300" : "bg-orange-200 text-orange-800"
-      }`}>
-        Teaches: {chat.user.languagesKnow[0]?.language || 'N/A'}
-      </span>
-      
-      {chat.isBlocked && (
-        <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${
-          darkMode ? "bg-red-900/30 text-red-400" : "bg-red-100 text-red-700"
-        }`}>
-          Blocked
-        </span>
-      )}
-    </div>
-  </div>
-  
-  {chat.unread > 0 && selectedChat !== chat.id && (
-    <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center shrink-0">
-      <span className="text-xs text-white font-semibold">{chat.unread}</span>
-    </div>
-  )}
-</div>
+                    <div className="flex items-start gap-3">
+                      <div className="relative">
+                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-orange-500/30">
+                          {chat.user.profilePhoto ? (
+                            <img 
+                              src={chat.user.profilePhoto} 
+                              alt={chat.user.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-semibold">
+                              {getInitials(chat.user.name)}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex-1 text-left min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <h3 className={`font-semibold truncate ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
+                            {chat.user.name}
+                          </h3>
+                          <span className={`text-xs ${darkMode ? "text-orange-300/70" : "text-orange-600/70"}`}>
+                            {formatTimestamp(chat.timestamp)}
+                          </span>
+                        </div>
+                        
+                        <p className={`text-sm truncate ${darkMode ? "text-orange-200/70" : "text-orange-700/70"}`}>
+                          {chat.lastMessage || 'No messages yet'}
+                        </p>
+                        
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                          <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${
+                            darkMode ? "bg-orange-800/30 text-orange-300" : "bg-orange-200 text-orange-800"
+                          }`}>
+                            Teaches: {chat.user.languagesKnow[0]?.language || 'N/A'}
+                          </span>
+                          
+                          {chat.isBlocked && (
+                            <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${
+                              darkMode ? "bg-red-900/30 text-red-400" : "bg-red-100 text-red-700"
+                            }`}>
+                              Blocked
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {chat.unread > 0 && selectedChat !== chat.id && (
+                        <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center shrink-0">
+                          <span className="text-xs text-white font-semibold">{chat.unread}</span>
+                        </div>
+                      )}
+                    </div>
                   </button>
                 ))
               )}
@@ -795,32 +786,55 @@ useEffect(() => {
             
             {currentChatDetail ? (
               <>
-                {/* Chat Header */}
-                <div className={`sticky top-0 z-10 p-4 border-b flex items-center justify-between ${darkMode ? "bg-orange-900/10 border-orange-800/30 backdrop-blur-sm" : "bg-white border-orange-200 backdrop-blur-sm"}`}>
+                {/* Chat Header - CLICKABLE */}
+                <button
+                  onClick={() => handleViewProfile(currentChatDetail.user._id)}
+                  className={`sticky top-0 z-10 p-4 border-b flex items-center justify-between transition-all ${
+                    darkMode 
+                      ? "bg-orange-900/10 border-orange-800/30 backdrop-blur-sm hover:bg-orange-900/20" 
+                      : "bg-white border-orange-200 backdrop-blur-sm hover:bg-orange-50"
+                  }`}
+                >
                   <div className="flex items-center gap-3">
                     <button
-                      onClick={handleBack}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleBack();
+                      }}
                       className={`md:hidden p-2 rounded-lg transition-all ${darkMode ? "hover:bg-orange-900/30 text-orange-300" : "hover:bg-orange-100 text-orange-600"}`}
                     >
                       <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div className="relative">
-                      <div className="w-10 h-10 rounded-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-semibold">
-                        {getInitials(currentChatDetail.user.name)}
+                      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-orange-500/30">
+                        {currentChatDetail.user.profilePhoto ? (
+                          <img 
+                            src={currentChatDetail.user.profilePhoto} 
+                            alt={currentChatDetail.user.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-semibold">
+                            {getInitials(currentChatDetail.user.name)}
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <div>
+                    <div className="text-left">
                       <h3 className={`font-semibold ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
                         {currentChatDetail.user.name}
                       </h3>
                       <p className={`text-xs ${darkMode ? "text-orange-300/70" : "text-orange-600/70"}`}>
-                        Teaches: {currentChatDetail.user.languagesKnow[0]?.language || 'N/A'}
+                        Click to view profile
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 relative">
                     <button 
-                      onClick={() => setShowMenu(!showMenu)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowMenu(!showMenu);
+                      }}
                       className={`p-2 rounded-lg transition-all ${darkMode ? "hover:bg-orange-900/30 text-orange-300" : "hover:bg-orange-100 text-orange-600"}`}
                     >
                       <MoreVertical className="w-5 h-5" />
@@ -877,7 +891,7 @@ useEffect(() => {
                       </div>
                     )}
                   </div>
-                </div>
+                </button>
 
                 {currentChatDetail.isBlocked && (
                   <div className={`p-3 text-center border-b ${
@@ -1049,7 +1063,7 @@ useEffect(() => {
           </div>
         </div>
       )}
-      {/* Pledge Modal */}
+
       <PledgeModal 
         isOpen={showPledgeModal}
         onAccept={handlePledgeAccept}
