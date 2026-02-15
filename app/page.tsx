@@ -405,11 +405,11 @@ export default function VartaLangLanding() {
         </div>
       </section>
 
-      {/* Feature: CAREER PATHS + ARTICLES - CONSISTENT DESIGN */}
+      {/* Feature: CAREER PATHS + ARTICLES - FILLED DESIGN */}
       <section className={`py-12 px-4 ${darkMode ? 'bg-[#1f1612]' : 'bg-orange-50/30'}`}>
         <div className="max-w-7xl mx-auto">
           
-          <div className="text-center mb-10">
+          <div className="text-center mb-8">
             <h2 className={`text-3xl lg:text-4xl font-black mb-3 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
               Discover Language Career Paths
             </h2>
@@ -418,242 +418,210 @@ export default function VartaLangLanding() {
             </p>
           </div>
 
-          {/* THREE COLUMN CONSISTENT DESIGN */}
-          <div className="grid lg:grid-cols-3 gap-5">
+          {/* THREE COLUMN FILLED DESIGN - EQUAL HEIGHT */}
+          <div className="grid lg:grid-cols-3 gap-6 items-stretch">
             
-            {/* Column 1: Career Role */}
-            <div className={`p-5 rounded-xl border ${
+            {/* Column 1: Career Role - FILLED */}
+            <div className={`p-6 rounded-xl border flex flex-col justify-between ${
               darkMode 
                 ? 'bg-orange-900/10 border-orange-800/30' 
                 : 'bg-white border-orange-200 shadow-lg'
             }`}>
-              <div className={`text-xs font-bold mb-3 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                CAREER PATHS
-              </div>
-
-              <div className="flex items-start gap-3 mb-3">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-                  darkMode ? 'bg-orange-500/20' : 'bg-orange-100'
-                }`}>
-                  {(() => {
-                    const Icon = targetRoleDemos[activeRoleDemo].icon;
-                    return <Icon className={`w-5 h-5 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />;
-                  })()}
+              <div>
+                <div className={`text-xs font-bold mb-4 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                  CAREER PATHS
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className={`font-bold text-base mb-1 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-                    {targetRoleDemos[activeRoleDemo].title}
-                  </h4>
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {targetRoleDemos[activeRoleDemo].languages.map((lang, i) => (
-                      <span key={i} className={`text-xs px-2 py-0.5 rounded-full ${
-                        darkMode ? 'bg-orange-900/30 text-orange-300' : 'bg-orange-50 text-gray-700'
+
+                <div className="flex items-start gap-3 mb-4">
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${
+                    darkMode ? 'bg-orange-500/20' : 'bg-orange-100'
+                  }`}>
+                    {(() => {
+                      const Icon = targetRoleDemos[activeRoleDemo].icon;
+                      return <Icon className={`w-6 h-6 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />;
+                    })()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className={`font-bold text-lg mb-2 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                      {targetRoleDemos[activeRoleDemo].title}
+                    </h4>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {targetRoleDemos[activeRoleDemo].languages.map((lang, i) => (
+                        <span key={i} className={`text-sm px-2.5 py-1 rounded-full ${
+                          darkMode ? 'bg-orange-900/30 text-orange-300' : 'bg-orange-50 text-gray-700'
+                        }`}>
+                          {lang}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className={`px-3 py-1 rounded-full text-sm font-bold shrink-0 ${
+                    targetRoleDemos[activeRoleDemo].demand === 'Shortage' 
+                      ? darkMode ? 'bg-red-500/20 text-red-300' : 'bg-red-100 text-red-700'
+                      : targetRoleDemos[activeRoleDemo].demand === 'Very High'
+                      ? darkMode ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-100 text-orange-700'
+                      : darkMode ? 'bg-green-500/20 text-green-300' : 'bg-green-100 text-green-700'
+                  }`}>
+                    {targetRoleDemos[activeRoleDemo].demand}
+                  </div>
+                </div>
+
+                <p className={`text-base mb-5 leading-relaxed ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                  {targetRoleDemos[activeRoleDemo].description}
+                </p>
+
+                <div className={`p-4 rounded-lg mb-5 ${darkMode ? 'bg-orange-900/20' : 'bg-orange-50'}`}>
+                  <div className={`text-sm font-semibold mb-3 flex items-center gap-2 ${darkMode ? 'text-orange-300' : 'text-orange-700'}`}>
+                    <MessageCircle className="w-4 h-4" />
+                    Communication Skills Required
+                  </div>
+                  <div className="space-y-2">
+                    {targetRoleDemos[activeRoleDemo].communicationSkills.map((skill, i) => (
+                      <div key={i} className={`text-sm px-3 py-2 rounded-lg ${
+                        darkMode ? 'bg-orange-900/40 text-orange-200' : 'bg-white text-gray-700'
                       }`}>
-                        {lang}
-                      </span>
+                        • {skill}
+                      </div>
                     ))}
                   </div>
                 </div>
-                <div className={`px-2 py-0.5 rounded-full text-xs font-bold shrink-0 ${
-                  targetRoleDemos[activeRoleDemo].demand === 'Shortage' 
-                    ? darkMode ? 'bg-red-500/20 text-red-300' : 'bg-red-100 text-red-700'
-                    : targetRoleDemos[activeRoleDemo].demand === 'Very High'
-                    ? darkMode ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-100 text-orange-700'
-                    : darkMode ? 'bg-green-500/20 text-green-300' : 'bg-green-100 text-green-700'
-                }`}>
-                  {targetRoleDemos[activeRoleDemo].demand}
-                </div>
               </div>
 
-              <p className={`text-sm mb-3 ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                {targetRoleDemos[activeRoleDemo].description}
-              </p>
-
-              <div className={`p-3 rounded-lg mb-3 ${darkMode ? 'bg-orange-900/20' : 'bg-orange-50'}`}>
-                <div className={`text-xs font-semibold mb-1.5 flex items-center gap-1 ${darkMode ? 'text-orange-300' : 'text-orange-700'}`}>
-                  <MessageCircle className="w-3 h-3" />
-                  Communication Skills
+              <div>
+                <div className={`text-center py-4 rounded-xl border mb-4 ${
+                  darkMode ? 'bg-orange-900/30 border-orange-800/30' : 'bg-white border-orange-200'
+                }`}>
+                  <div className={`text-sm font-semibold mb-1 ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
+                    Salary Range
+                  </div>
+                  <div className={`text-2xl font-black ${darkMode ? 'text-orange-300' : 'text-orange-600'}`}>
+                    {targetRoleDemos[activeRoleDemo].salary}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-1">
-                  {targetRoleDemos[activeRoleDemo].communicationSkills.map((skill, i) => (
-                    <span key={i} className={`text-xs px-2 py-0.5 rounded ${
-                      darkMode ? 'bg-orange-900/40 text-orange-200' : 'bg-white text-gray-700'
-                    }`}>
-                      {skill}
-                    </span>
+
+                <div className="flex gap-2 justify-center">
+                  {targetRoleDemos.map((_, i) => (
+                    <div 
+                      key={i}
+                      className={`h-1.5 rounded-full transition-all ${
+                        i === activeRoleDemo 
+                          ? 'w-8 bg-orange-500' 
+                          : darkMode ? 'w-1.5 bg-orange-800/30' : 'w-1.5 bg-orange-300'
+                      }`}
+                    />
                   ))}
                 </div>
               </div>
-
-              <div className={`text-center py-2 rounded-lg mb-3 ${darkMode ? 'bg-orange-900/30' : 'bg-white'}`}>
-                <div className={`text-lg font-black ${darkMode ? 'text-orange-300' : 'text-orange-600'}`}>
-                  {targetRoleDemos[activeRoleDemo].salary}
-                </div>
-              </div>
-
-              
-
-              <div className="flex gap-1.5 justify-center mt-3">
-                {targetRoleDemos.map((_, i) => (
-                  <div 
-                    key={i}
-                    className={`h-1 rounded-full transition-all ${
-                      i === activeRoleDemo 
-                        ? 'w-6 bg-orange-500' 
-                        : darkMode ? 'w-1 bg-orange-800/30' : 'w-1 bg-orange-300'
-                    }`}
-                  />
-                ))}
-              </div>
             </div>
 
-            {/* Column 2: Featured Article */}
-            <div className={`p-5 rounded-xl border ${
+            {/* Column 2: Featured Article - FILLED */}
+            <div className={`p-6 rounded-xl border flex flex-col justify-between ${
               darkMode 
                 ? 'bg-blue-900/10 border-blue-800/30' 
                 : 'bg-white border-blue-200 shadow-lg'
             }`}>
-              <div className={`text-xs font-bold mb-3 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-                FEATURED INSIGHT
-              </div>
-
-              <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold mb-3 ${
-                darkMode ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
-              }`}>
-                {(() => {
-                  const Icon = careerArticles[activeArticle].icon;
-                  return <Icon className="w-3 h-3" />;
-                })()}
-                {careerArticles[activeArticle].category}
-              </div>
-
-              <h3 className={`text-lg font-black mb-3 leading-tight ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-                {careerArticles[activeArticle].title}
-              </h3>
-
-              <p className={`text-sm leading-relaxed mb-4 ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                {careerArticles[activeArticle].description}
-              </p>
-
-              <div className={`p-3 rounded-lg mb-4 border-l-4 ${
-                darkMode 
-                  ? 'bg-orange-900/20 border-orange-500' 
-                  : 'bg-orange-50 border-orange-500'
-              }`}>
-                <div className={`text-xs font-semibold mb-1 ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
-                  Key Takeaway
+              <div>
+                <div className={`text-xs font-bold mb-4 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                  FEATURED INSIGHT
                 </div>
-                <div className={`text-sm font-bold ${darkMode ? 'text-orange-200' : 'text-gray-900'}`}>
-                  {careerArticles[activeArticle].keyTakeaway}
+
+                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold mb-4 ${
+                  darkMode ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
+                }`}>
+                  {(() => {
+                    const Icon = careerArticles[activeArticle].icon;
+                    return <Icon className="w-4 h-4" />;
+                  })()}
+                  {careerArticles[activeArticle].category}
+                </div>
+
+                <h3 className={`text-xl font-black mb-4 leading-tight ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                  {careerArticles[activeArticle].title}
+                </h3>
+
+                <p className={`text-base leading-relaxed mb-5 ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                  {careerArticles[activeArticle].description}
+                </p>
+
+                <div className={`p-4 rounded-xl border-l-4 mb-5 ${
+                  darkMode 
+                    ? 'bg-orange-900/20 border-orange-500' 
+                    : 'bg-orange-50 border-orange-500'
+                }`}>
+                  <div className={`text-sm font-semibold mb-2 ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
+                    💡 Key Takeaway
+                  </div>
+                  <div className={`text-base font-bold leading-snug ${darkMode ? 'text-orange-200' : 'text-gray-900'}`}>
+                    {careerArticles[activeArticle].keyTakeaway}
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between mb-3">
-                <span className={`text-xs flex items-center gap-1 ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
-                  <Clock className="w-3 h-3" />
-                  {careerArticles[activeArticle].readTime}
-                </span>
-              </div>
+              <div>
+                
 
-              <button className={`w-full py-2.5 rounded-lg font-bold text-sm ${
-                darkMode 
-                  ? 'bg-blue-500 text-white hover:bg-blue-600' 
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              } transition-all`}>
-                Read Article
-              </button>
-
-              <div className="flex gap-1.5 justify-center mt-3">
-                {careerArticles.map((_, i) => (
-                  <div 
-                    key={i}
-                    className={`h-1 rounded-full transition-all ${
-                      i === activeArticle 
-                        ? 'w-6 bg-blue-500' 
-                        : darkMode ? 'w-1 bg-blue-800/30' : 'w-1 bg-blue-300'
-                    }`}
-                  />
-                ))}
+                <div className="flex gap-2 justify-center">
+                  {careerArticles.map((_, i) => (
+                    <div 
+                      key={i}
+                      className={`h-1.5 rounded-full transition-all ${
+                        i === activeArticle 
+                          ? 'w-8 bg-blue-500' 
+                          : darkMode ? 'w-1.5 bg-blue-800/30' : 'w-1.5 bg-blue-300'
+                      }`}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Column 3: Quick Stats */}
-            <div className="space-y-4">
-              <div className={`p-5 rounded-xl border ${
-                darkMode 
-                  ? 'bg-orange-900/10 border-orange-800/30' 
-                  : 'bg-white border-orange-200 shadow-lg'
-              }`}>
-                <div className={`text-xs font-bold mb-4 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                  WHY IT MATTERS
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <div className={`text-2xl font-black ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                      40%
-                    </div>
-                    <div className={`text-xs ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                      Higher satisfaction with native language support
-                    </div>
-                  </div>
-                  <div>
-                    <div className={`text-2xl font-black ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                      250
-                    </div>
-                    <div className={`text-xs ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                      ISL interpreters for 18M deaf Indians
-                    </div>
-                  </div>
-                  <div>
-                    <div className={`text-2xl font-black ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                      3x
-                    </div>
-                    <div className={`text-xs ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                      More regional language jobs in 2024
-                    </div>
-                  </div>
-                </div>
+            {/* Column 3: Stats Only - ONE BIG CARD */}
+            <div className={`p-6 rounded-xl border ${
+              darkMode 
+                ? 'bg-orange-900/10 border-orange-800/30' 
+                : 'bg-white border-orange-200 shadow-lg'
+            }`}>
+              <div className={`text-xs font-bold mb-6 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                WHY IT MATTERS
               </div>
-
-              <div className={`p-5 rounded-xl border ${
-                darkMode 
-                  ? 'bg-blue-900/10 border-blue-800/30' 
-                  : 'bg-blue-50 border-blue-200'
-              }`}>
-                <div className={`text-xs font-bold mb-3 flex items-center gap-1 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-                  <BookOpen className="w-3 h-3" />
-                  MORE INSIGHTS
+              <div className="space-y-6">
+                <div>
+                  <div className={`text-5xl font-black mb-3 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                    40%
+                  </div>
+                  <div className={`text-base leading-snug ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                    Higher customer satisfaction when support is provided in native language
+                  </div>
                 </div>
-                <div className="space-y-1.5 mb-3">
-                  {['Breaking the English barrier', 'Cross-cultural skills', 'Language diversity', 'Practice techniques'].map((topic, i) => (
-                    <div key={i} className={`text-xs py-1.5 px-2 rounded ${
-                      darkMode ? 'bg-blue-900/20 text-blue-200' : 'bg-white text-gray-700'
-                    }`}>
-                      • {topic}
-                    </div>
-                  ))}
+                <div className={`h-px ${darkMode ? 'bg-orange-800/30' : 'bg-orange-200'}`}></div>
+                <div>
+                  <div className={`text-5xl font-black mb-3 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                    250
+                  </div>
+                  <div className={`text-base leading-snug ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                    Certified ISL interpreters serving 18 million deaf Indians—critical shortage
+                  </div>
                 </div>
-                <Link 
-                  href="/articles"
-                  className={`block text-center py-2 rounded-lg font-bold text-sm ${
-                    darkMode 
-                      ? 'bg-blue-500 text-white hover:bg-blue-600' 
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                  } transition-all`}
-                >
-                  All Articles
-                </Link>
+                <div className={`h-px ${darkMode ? 'bg-orange-800/30' : 'bg-orange-200'}`}></div>
+                <div>
+                  <div className={`text-5xl font-black mb-3 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                    3x
+                  </div>
+                  <div className={`text-base leading-snug ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+                    Growth in regional language job postings since 2023—demand is exploding
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="text-center mt-8">
+          <div className="text-center mt-10">
             <Link 
               href="/targets"
-              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full font-bold text-base bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-xl hover:scale-105 transition-all"
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-full font-bold text-lg bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-xl hover:scale-105 transition-all"
             >
               Explore All Career Paths
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
         </div>
@@ -708,8 +676,6 @@ export default function VartaLangLanding() {
                   </div>
                 </div>
               </div>
-
-             
 
               <div className="flex gap-1.5 justify-center mt-3">
                 {matchDemos.map((_, i) => (
@@ -934,17 +900,11 @@ export default function VartaLangLanding() {
                 </span>
               </div>
 
-              <div className={`text-center py-2 rounded-lg mb-3 ${darkMode ? 'bg-orange-900/30' : 'bg-white'}`}>
+              <div className={`text-center py-2 rounded-lg ${darkMode ? 'bg-orange-900/30' : 'bg-white'}`}>
                 <div className={`text-lg font-black ${darkMode ? 'text-orange-300' : 'text-orange-600'}`}>
                   {jobDemos[activeJobDemo].salary}
                 </div>
-                <div className={`text-xs ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                  <Eye className="w-3 h-3 inline mr-0.5" />
-                  {jobDemos[activeJobDemo].views} views
-                </div>
               </div>
-
-             
 
               <div className="flex gap-1.5 justify-center mt-3">
                 {jobDemos.map((_, i) => (
