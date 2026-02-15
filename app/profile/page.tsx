@@ -131,6 +131,7 @@ export default function ProfilePage() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("userId");
     setIsLoggedIn(false);
     window.location.href = "/auth/login";
   };
@@ -307,8 +308,8 @@ export default function ProfilePage() {
                       onChange={(e) => setEditedProfile({ ...editedProfile, bio: e.target.value })}
                       className={`w-full px-4 py-3 rounded-xl border outline-none resize-none ${
                         darkMode 
-                          ? 'bg-orange-900/20 border-orange-800/30 text-orange-50' 
-                          : 'bg-orange-50 border-orange-200 text-gray-900'
+                          ? 'bg-orange-900/20 border-orange-800/30 text-orange-50 placeholder:text-orange-400/50' 
+                          : 'bg-orange-50 border-orange-200 text-gray-900 placeholder:text-gray-400'
                       }`}
                       placeholder="Tell others about yourself..."
                     />
@@ -404,8 +405,8 @@ export default function ProfilePage() {
                       onChange={(e) => setEditedProfile({ ...editedProfile, city: e.target.value })}
                       className={`w-full px-4 py-3 rounded-xl border outline-none ${
                         darkMode 
-                          ? 'bg-orange-900/20 border-orange-800/30 text-orange-50' 
-                          : 'bg-orange-50 border-orange-200 text-gray-900'
+                          ? 'bg-orange-900/20 border-orange-800/30 text-orange-50 placeholder:text-orange-400/50' 
+                          : 'bg-orange-50 border-orange-200 text-gray-900 placeholder:text-gray-400'
                       }`}
                       placeholder="Your city"
                     />

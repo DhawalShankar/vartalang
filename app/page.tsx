@@ -556,10 +556,8 @@ export default function VartaLangLanding() {
                   </div>
                 </div>
               </div>
-
               <div>
                 
-
                 <div className="flex gap-2 justify-center">
                   {careerArticles.map((_, i) => (
                     <div 
