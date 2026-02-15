@@ -3,9 +3,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
-  User, Edit, Save, X, Camera, MapPin, Languages, 
-  GraduationCap, Award, BookOpen, Star, ArrowLeft, MessageCircle,
-  UserPlus, Clock, Check, UserCheck
+  User, MapPin, Languages, 
+  GraduationCap, Award, BookOpen, Star, ArrowLeft, Calendar
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -35,12 +34,6 @@ interface UserProfile {
   createdAt: string;
 }
 
-interface MatchStatus {
-  status: 'none' | 'pending_sent' | 'pending_received' | 'accepted';
-  matchId?: string;
-  chatId?: string;
-}
-
 export default function DynamicProfilePage() {
   const params = useParams();
   const router = useRouter();
@@ -50,8 +43,6 @@ export default function DynamicProfilePage() {
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [matchStatus, setMatchStatus] = useState<MatchStatus>({ status: 'none' });
-  const [actionLoading, setActionLoading] = useState(false);
   
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -64,31 +55,14 @@ export default function DynamicProfilePage() {
 
     setIsOwnProfile(userId === myUserId);
 
-    // Fetch profile AND match status together
-    Promise.all([
-      fetch(`${API_URL}/auth/user/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }),
-      fetch(`${API_URL}/matches/status/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-    ])
-      .then(async ([profileRes, matchRes]) => {
+    fetch(`${API_URL}/auth/user/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async (profileRes) => {
         if (!profileRes.ok) throw new Error("Failed to fetch profile");
         
         const profileData = await profileRes.json();
         setProfile(profileData.user);
-        
-        if (matchRes.ok) {
-          const matchData = await matchRes.json();
-          console.log("Match status:", matchData);
-          setMatchStatus({
-            status: matchData.status,
-            matchId: matchData.matchId,
-            chatId: matchData.chatId,
-          });
-        }
-        
         setLoading(false);
       })
       .catch((error) => {
@@ -97,194 +71,9 @@ export default function DynamicProfilePage() {
       });
   }, [userId, router]);
 
-  const handleSendMatchRequest = async () => {
-    const token = localStorage.getItem("token");
-    if (!token || actionLoading) return;
-    
-    setActionLoading(true);
-    
-    try {
-      const res = await fetch(`${API_URL}/matches/send`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ receiverId: userId }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setMatchStatus({ 
-          status: 'pending_sent',
-          matchId: data.matchId 
-        });
-        alert("Match request sent! ✅");
-      } else {
-        alert(data.message || data.error || "Failed to send request");
-      }
-    } catch (error) {
-      console.error("Match request error:", error);
-      alert("Failed to send match request");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleMatchAction = async (action: 'accept' | 'reject') => {
-    const token = localStorage.getItem("token");
-    if (!token || !matchStatus.matchId || actionLoading) return;
-    
-    setActionLoading(true);
-    
-    try {
-      const url = `${API_URL}/matches/${matchStatus.matchId}/${action}`;
-      console.log("Calling:", url);
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || errorData.message || `Failed to ${action} match`);
-      }
-
-      const data = await response.json();
-      console.log("Action response:", data);
-
-      if (action === 'accept') {
-        // Extract chatId safely
-        const chatId = typeof data.chatId === 'string' 
-          ? data.chatId 
-          : data.chatId?._id || data.chat?._id;
-
-        setMatchStatus({ 
-          status: 'accepted',
-          matchId: matchStatus.matchId,
-          chatId: chatId
-        });
-
-        alert("Match accepted! 🎉");
-        
-        // Redirect to chat if chatId available
-        if (chatId) {
-          setTimeout(() => {
-            router.push(`/chats?chat=${chatId}`);
-          }, 1000);
-        }
-      } else {
-        // Reject
-        setMatchStatus({ status: 'none' });
-        alert("Match request rejected");
-      }
-
-    } catch (error) {
-      console.error(`${action} error:`, error);
-      alert(error instanceof Error ? error.message : `Failed to ${action} match`);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleSendMessage = () => {
-    if (matchStatus.chatId) {
-      router.push(`/chats?chat=${matchStatus.chatId}`);
-    } else {
-      alert("Chat not available yet");
-    }
-  };
-
-  // Render action button based on match status
-  const renderActionButton = () => {
-    const { status } = matchStatus;
-
-    // ✅ ACCEPTED - Show Message Button
-    if (status === 'accepted') {
-      return (
-        <button
-          onClick={handleSendMessage}
-          className="px-6 py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all flex items-center gap-2 mt-4 sm:mt-0"
-        >
-          <MessageCircle className="w-4 h-4" />
-          Send Message
-        </button>
-      );
-    }
-
-    // ⏳ PENDING SENT - Request Sent (disabled)
-    if (status === 'pending_sent') {
-      return (
-        <button
-          disabled
-          className={`px-6 py-3 rounded-xl font-semibold flex items-center gap-2 mt-4 sm:mt-0 cursor-not-allowed ${
-            darkMode
-              ? 'bg-orange-900/30 text-orange-400 border border-orange-800/30'
-              : 'bg-gray-100 text-gray-500 border border-gray-300'
-          }`}
-        >
-          <Clock className="w-4 h-4" />
-          Request Sent
-        </button>
-      );
-    }
-
-    // 📨 PENDING RECEIVED - Show Accept/Reject buttons
-    if (status === 'pending_received') {
-      return (
-        <div className="flex gap-2 mt-4 sm:mt-0">
-          <button
-            onClick={() => handleMatchAction('accept')}
-            disabled={actionLoading}
-            className="flex-1 px-6 py-3 rounded-xl bg-linear-to-r from-green-500 to-green-600 text-white font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            {actionLoading ? "..." : (
-              <>
-                <Check className="w-4 h-4" />
-                Accept
-              </>
-            )}
-          </button>
-          <button
-            onClick={() => handleMatchAction('reject')}
-            disabled={actionLoading}
-            className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 ${
-              darkMode 
-                ? "bg-red-900/30 text-red-300 hover:bg-red-900/50 border border-red-800/30" 
-                : "bg-red-100 text-red-700 hover:bg-red-200 border border-red-200"
-            }`}
-          >
-            {actionLoading ? "..." : (
-              <>
-                <X className="w-4 h-4" />
-                Reject
-              </>
-            )}
-          </button>
-        </div>
-      );
-    }
-
-    // ➕ NONE - Send Match Request
-    return (
-      <button
-        onClick={handleSendMatchRequest}
-        disabled={actionLoading}
-        className="px-6 py-3 rounded-xl bg-linear-to-r from-blue-500 to-blue-600 text-white font-semibold hover:shadow-lg transition-all flex items-center gap-2 mt-4 sm:mt-0 disabled:opacity-50"
-      >
-        {actionLoading ? "Sending..." : (
-          <>
-            <UserPlus className="w-4 h-4" />
-            Send Match Request
-          </>
-        )}
-      </button>
-    );
+  const getMemberSince = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   };
 
   if (loading) {
@@ -320,7 +109,7 @@ export default function DynamicProfilePage() {
   }
 
   return (
-    <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'bg-[#1a1410]' : 'bg-[#FFF9F5]'}`}>
+    <div className={`min-h-screen ${darkMode ? 'bg-[#1a1410]' : 'bg-[#FFF9F5]'}`}>
       <Navbar />
 
       <div className="py-24 px-4">
@@ -343,45 +132,85 @@ export default function DynamicProfilePage() {
               ? 'bg-orange-900/10 border border-orange-800/30' 
               : 'bg-white border border-orange-100 shadow-xl'
           }`}>
-            {/* Cover */}
-            <div className={`h-32 ${
-              darkMode 
-                ? 'bg-linear-to-r from-orange-900/40 to-red-900/40' 
-                : 'bg-linear-to-r from-orange-100 to-red-100'
-            }`}></div>
+            {/* Beautiful Pattern Cover */}
+            <div className="relative h-48 overflow-hidden">
+              {/* Base gradient */}
+              <div className={`absolute inset-0 ${
+                darkMode 
+                  ? 'bg-linear-to-br from-orange-900/50 via-red-800/40 to-orange-800/50' 
+                  : 'bg-linear-to-br from-orange-200 via-red-100 to-orange-100'
+              }`}></div>
+              
+              {/* Geometric pattern overlay */}
+              <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <circle cx="20" cy="20" r="1.5" fill="currentColor" className={darkMode ? 'text-orange-400' : 'text-orange-600'} />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#grid)" />
+              </svg>
 
-            <div className="px-6 pb-6">
-              {/* Profile Photo & Action Button */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between -mt-16 mb-6">
-                <div className={`w-32 h-32 rounded-2xl border-4 overflow-hidden ${
+              {/* Decorative shapes */}
+              <div className={`absolute top-10 right-20 w-32 h-32 rounded-full ${
+                darkMode ? 'bg-orange-500/10' : 'bg-white/30'
+              }`}></div>
+              <div className={`absolute -bottom-10 left-10 w-40 h-40 rounded-full ${
+                darkMode ? 'bg-red-500/10' : 'bg-white/40'
+              }`}></div>
+            </div>
+
+            <div className="px-6 pb-8">
+              {/* Centered Profile Photo */}
+              <div className="flex flex-col items-center -mt-20 mb-6">
+                <div className={`w-36 h-36 rounded-full border-4 overflow-hidden ${
                   darkMode 
                     ? 'border-[#1a1410] bg-orange-900/30' 
                     : 'border-white bg-orange-50'
-                }`}>
+                } shadow-2xl`}>
                   {profile.profilePhoto ? (
                     <img src={profile.profilePhoto} alt={profile.name} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <User className={`w-16 h-16 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                    <div className={`w-full h-full flex items-center justify-center ${
+                      darkMode ? 'bg-linear-to-br from-orange-900/40 to-red-900/40' : 'bg-linear-to-br from-orange-100 to-red-100'
+                    }`}>
+                      <User className={`w-20 h-20 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
                     </div>
                   )}
                 </div>
 
-                {/* 🎯 CONDITIONAL ACTION BUTTON */}
-                {renderActionButton()}
+                {/* Member Since Badge */}
+                <div className={`mt-4 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold ${
+                  darkMode 
+                    ? 'bg-orange-900/30 text-orange-300 border border-orange-800/30' 
+                    : 'bg-orange-50 text-orange-700 border border-orange-200'
+                }`}>
+                  <Calendar className="w-4 h-4" />
+                  Member since {getMemberSince(profile.createdAt)}
+                </div>
               </div>
 
               {/* Name & Bio */}
-              <div className="mb-6">
-                <h1 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+              <div className="mb-6 text-center space-y-3">
+                <h1 className={`text-4xl font-bold ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
                   {profile.name}
                 </h1>
-                <p className={`text-sm mb-3 ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
+                
+                <p className={`text-sm ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
                   {profile.email}
                 </p>
-                <p className={`text-base leading-relaxed ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-                  {profile.bio || <span className={`italic ${darkMode ? 'text-orange-300/50' : 'text-gray-400'}`}>No bio added yet</span>}
-                </p>
+                
+                <div className={`max-w-2xl mx-auto p-4 rounded-xl ${
+                  darkMode ? 'bg-orange-900/20' : 'bg-orange-50/50'
+                }`}>
+                  <p className={`text-base leading-relaxed ${darkMode ? 'text-orange-200/90' : 'text-gray-700'}`}>
+                    {profile.bio || (
+                      <span className={`italic ${darkMode ? 'text-orange-300/50' : 'text-gray-400'}`}>
+                        No bio added yet
+                      </span>
+                    )}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -395,28 +224,38 @@ export default function DynamicProfilePage() {
                 ? 'bg-orange-900/10 border border-orange-800/30' 
                 : 'bg-white border border-orange-100 shadow-lg'
             }`}>
-              <h3 className={`text-xl font-bold mb-4 flex items-center gap-2 ${
-                darkMode ? 'text-orange-50' : 'text-gray-900'
-              }`}>
-                <MapPin className="w-5 h-5" />
-                Location
-              </h3>
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`p-2 rounded-xl ${
+                  darkMode ? 'bg-orange-900/30' : 'bg-orange-100'
+                }`}>
+                  <MapPin className={`w-5 h-5 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                </div>
+                <h3 className={`text-xl font-bold ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                  Location
+                </h3>
+              </div>
               
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className={`text-sm ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>Country</span>
+              <div className="space-y-3">
+                <div className={`flex items-center justify-between p-3 rounded-lg ${
+                  darkMode ? 'bg-orange-900/20' : 'bg-orange-50/50'
+                }`}>
+                  <span className={`text-sm font-medium ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>Country</span>
                   <span className={`font-semibold ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
                     {profile.country}
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className={`text-sm ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>State</span>
+                <div className={`flex items-center justify-between p-3 rounded-lg ${
+                  darkMode ? 'bg-orange-900/20' : 'bg-orange-50/50'
+                }`}>
+                  <span className={`text-sm font-medium ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>State</span>
                   <span className={`font-semibold ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
                     {profile.state}
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className={`text-sm ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>City</span>
+                <div className={`flex items-center justify-between p-3 rounded-lg ${
+                  darkMode ? 'bg-orange-900/20' : 'bg-orange-50/50'
+                }`}>
+                  <span className={`text-sm font-medium ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>City</span>
                   <span className={`font-semibold ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
                     {profile.city || <span className={`italic ${darkMode ? 'text-orange-300/50' : 'text-gray-400'}`}>Not specified</span>}
                   </span>
@@ -430,38 +269,50 @@ export default function DynamicProfilePage() {
                 ? 'bg-orange-900/10 border border-orange-800/30' 
                 : 'bg-white border border-orange-100 shadow-lg'
             }`}>
-              <h3 className={`text-xl font-bold mb-4 flex items-center gap-2 ${
-                darkMode ? 'text-orange-50' : 'text-gray-900'
-              }`}>
-                <Award className="w-5 h-5" />
-                Primary Role
-              </h3>
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`p-2 rounded-xl ${
+                  darkMode ? 'bg-orange-900/30' : 'bg-orange-100'
+                }`}>
+                  <Award className={`w-5 h-5 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                </div>
+                <h3 className={`text-xl font-bold ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                  Primary Role
+                </h3>
+              </div>
               
-              <div className={`p-4 rounded-xl ${
-                darkMode ? 'bg-orange-900/20' : 'bg-orange-50'
+              <div className={`p-5 rounded-xl ${
+                darkMode ? 'bg-linear-to-br from-orange-900/30 to-red-900/20' : 'bg-linear-to-br from-orange-50 to-red-50'
               }`}>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   {profile.primaryRole === 'learner' ? (
                     <>
-                      <GraduationCap className={`w-8 h-8 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                      <div className={`p-3 rounded-xl ${
+                        darkMode ? 'bg-orange-500/20' : 'bg-orange-200'
+                      }`}>
+                        <GraduationCap className={`w-8 h-8 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                      </div>
                       <div>
-                        <div className={`font-bold ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                        <div className={`font-bold text-lg ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
                           Primary Learner
                         </div>
                         <div className={`text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                          Here to learn
+                          Here to learn new languages
                         </div>
                       </div>
                     </>
                   ) : (
                     <>
-                      <BookOpen className={`w-8 h-8 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                      <div className={`p-3 rounded-xl ${
+                        darkMode ? 'bg-orange-500/20' : 'bg-orange-200'
+                      }`}>
+                        <BookOpen className={`w-8 h-8 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                      </div>
                       <div>
-                        <div className={`font-bold ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                        <div className={`font-bold text-lg ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
                           Primary Teacher
                         </div>
                         <div className={`text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                          Here to teach
+                          Here to teach languages
                         </div>
                       </div>
                     </>
@@ -477,31 +328,41 @@ export default function DynamicProfilePage() {
               ? 'bg-orange-900/10 border border-orange-800/30' 
               : 'bg-white border border-orange-100 shadow-lg'
           }`}>
-            <h3 className={`text-xl font-bold mb-6 flex items-center gap-2 ${
-              darkMode ? 'text-orange-50' : 'text-gray-900'
-            }`}>
-              <Languages className="w-5 h-5" />
-              Languages
-            </h3>
+            <div className="flex items-center gap-3 mb-6">
+              <div className={`p-2 rounded-xl ${
+                darkMode ? 'bg-orange-900/30' : 'bg-orange-100'
+              }`}>
+                <Languages className={`w-5 h-5 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+              </div>
+              <h3 className={`text-xl font-bold ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                Languages
+              </h3>
+            </div>
 
             {/* Learning */}
             <div className="mb-6">
-              <h4 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                Currently Learning
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                <span className={`px-4 py-2 rounded-full border ${
+              <div className="flex items-center gap-2 mb-3">
+                <div className={`w-1 h-6 rounded-full ${
+                  darkMode ? 'bg-orange-500' : 'bg-orange-600'
+                }`}></div>
+                <h4 className={`text-sm font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
+                  Currently Learning
+                </h4>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <span className={`px-5 py-2.5 rounded-full border-2 font-semibold ${
                   darkMode 
-                    ? 'bg-orange-500/20 border-orange-600/30 text-orange-200' 
-                    : 'bg-orange-50 border-orange-200 text-orange-700'
+                    ? 'bg-orange-500/20 border-orange-500/40 text-orange-200' 
+                    : 'bg-orange-100 border-orange-300 text-orange-700'
                 }`}>
-                  {profile.primaryLanguageToLearn} (Primary)
+                  {profile.primaryLanguageToLearn} 
+                  <span className="ml-2 text-xs opacity-75">(Primary)</span>
                 </span>
                 {profile.secondaryLanguageToLearn && (
-                  <span className={`px-4 py-2 rounded-full border ${
+                  <span className={`px-5 py-2.5 rounded-full border-2 font-semibold ${
                     darkMode 
                       ? 'bg-orange-900/20 border-orange-800/30 text-orange-300' 
-                      : 'bg-orange-50/50 border-orange-100 text-gray-700'
+                      : 'bg-orange-50 border-orange-200 text-gray-700'
                   }`}>
                     {profile.secondaryLanguageToLearn}
                   </span>
@@ -511,21 +372,27 @@ export default function DynamicProfilePage() {
 
             {/* Known Languages */}
             <div>
-              <h4 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                Languages Can Teach
-              </h4>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex items-center gap-2 mb-3">
+                <div className={`w-1 h-6 rounded-full ${
+                  darkMode ? 'bg-green-500' : 'bg-green-600'
+                }`}></div>
+                <h4 className={`text-sm font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
+                  Languages Can Teach
+                </h4>
+              </div>
+              <div className="flex flex-wrap gap-3">
                 {profile.languagesKnow.map((lang, i) => (
                   <span
                     key={i}
-                    className={`px-4 py-2 rounded-full border flex items-center gap-2 ${
+                    className={`px-5 py-2.5 rounded-full border-2 flex items-center gap-2 font-semibold ${
                       darkMode 
-                        ? 'bg-green-900/20 border-green-800/30 text-green-300' 
-                        : 'bg-green-50 border-green-200 text-green-700'
+                        ? 'bg-green-900/20 border-green-700/30 text-green-300' 
+                        : 'bg-green-50 border-green-300 text-green-700'
                     }`}
                   >
-                    <Star className="w-3 h-3 fill-current" />
-                    {lang.language} • {lang.fluency}
+                    <Star className="w-4 h-4 fill-current" />
+                    {lang.language}
+                    <span className="ml-1 text-xs opacity-75">• {lang.fluency}</span>
                   </span>
                 ))}
               </div>
