@@ -41,7 +41,7 @@ const getCoverImage = (userId: string) => {
     '1433838552652-f9a46b332c40', // Nature/Forest
     '1451337516015-6b6e9a44a8a3', // Earth from space
     '1498429089284-41f8cf3ffd39', // Mountain landscape
-    '1469474968028-56623f02e42e', // Forest path
+    '1523712999610-f77fbcfc3843', // Forest path
     '1498550744921-75f79806b8a7', // Green hills
   ];
   
