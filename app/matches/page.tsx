@@ -8,7 +8,8 @@ import {
   MapPin,
   X,
   Heart,
-  Loader2
+  Loader2,
+  Eye
 } from "lucide-react";
 import { useDarkMode } from '@/lib/DarkModeContext';
 
@@ -27,6 +28,7 @@ interface Match {
   languagesKnow: Array<{ language: string; fluency: string }>;
   primaryRole: 'learner' | 'teacher';
   matchType?: 'primary' | 'secondary';
+  profilePhoto?: string;
 }
 
 export default function MatchesPage() {
@@ -84,7 +86,6 @@ export default function MatchesPage() {
         }),
       });
 
-      // Remove from list
       setMatches(matches.filter(m => m._id !== matchId));
       setProcessingId(null);
     } catch (error) {
@@ -93,56 +94,56 @@ export default function MatchesPage() {
     }
   };
 
- const handleSendRequest = async (match: Match) => {
-  setProcessingId(match._id);
-  const token = localStorage.getItem("token");
+  const handleSendRequest = async (match: Match) => {
+    setProcessingId(match._id);
+    const token = localStorage.getItem("token");
 
-  try {
-    const res = await fetch(`${API_URL}/matches/swipe`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        targetUserId: match._id,
-        action: 'like',
-      }),
-    });
+    try {
+      const res = await fetch(`${API_URL}/matches/swipe`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          targetUserId: match._id,
+          action: 'like',
+        }),
+      });
 
-    const data = await res.json();
-    console.log("Response:", data);
+      const data = await res.json();
 
-    // Check if mutual match
-    if (data.matched && data.chatId) {
-      setSuccessMessage(`🎉 It's a match with ${match.name}!`);
+      if (data.matched && data.chatId) {
+        setSuccessMessage(`🎉 It's a match with ${match.name}!`);
+        setTimeout(() => {
+          router.push(`/chats?chat=${data.chatId}`);
+        }, 1500);
+        return;
+      }
+
+      setSuccessMessage("Match request sent!");
+      setProcessingId(null);
+      
       setTimeout(() => {
-        router.push(`/chats?chat=${data.chatId}`);
-      }, 1500);
-      return;
+        setMatches(matches.filter(m => m._id !== match._id));
+        setTimeout(() => {
+          setSuccessMessage(null);
+        }, 1500);
+      }, 1000);
+
+    } catch (error) {
+      console.error("Send request error:", error);
+      setErrorMessage("Failed to send request");
+      setProcessingId(null);
+      
+      setTimeout(() => {
+        setErrorMessage(null);
+      }, 2000);
     }
+  };
 
-    // Success - request sent
-    setSuccessMessage("Match request sent!");
-    setProcessingId(null); // Pehle processing band karo
-    
-    // Thoda delay do message dikhne ke liye, phir match remove karo
-    setTimeout(() => {
-      setMatches(matches.filter(m => m._id !== match._id));
-      setTimeout(() => {
-        setSuccessMessage(null);
-      }, 1500); // Message thoda aur time dikhe
-    }, 1000); // 1 second message dikhe
-
-  } catch (error) {
-    console.error("Send request error:", error);
-    setErrorMessage("Failed to send request");
-    setProcessingId(null);
-    
-    setTimeout(() => {
-      setErrorMessage(null);
-    }, 2000);
-  }
+  const handleViewProfile = (userId: string) => {
+    router.push(`/profile/${userId}`);
   };
 
   const getInitials = (name: string) => {
@@ -198,7 +199,6 @@ export default function MatchesPage() {
     <div className={`min-h-screen ${darkMode ? "bg-[#1a1410]" : "bg-[#FFF9F5]"}`}>
       <Navbar />
       
-      {/* Toast Messages */}
       {errorMessage && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-lg bg-red-500 text-white shadow-lg animate-slide-down">
           {errorMessage}
@@ -213,7 +213,6 @@ export default function MatchesPage() {
       
       <div className="max-w-6xl mx-auto px-4 pt-24 pb-12">
         
-        {/* Header */}
         <div className="text-center mb-8">
           <h1 className={`text-3xl font-bold mb-3 ${darkMode ? "text-orange-50" : "text-orange-950"}`}>
             Find Your Language Partner
@@ -223,7 +222,6 @@ export default function MatchesPage() {
           </p>
         </div>
 
-        {/* Matches Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {matches.map((match) => (
             <div
@@ -234,7 +232,6 @@ export default function MatchesPage() {
                   : "bg-white border border-orange-200 hover:border-orange-300 shadow-sm hover:shadow-md"
               }`}
             >
-              {/* Match Type Badge */}
               {match.matchType && (
                 <div className="mb-4">
                   <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
@@ -251,10 +248,19 @@ export default function MatchesPage() {
                 </div>
               )}
 
-              {/* Profile */}
               <div className="text-center mb-4">
-                <div className="w-16 h-16 rounded-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-bold text-xl mx-auto mb-3">
-                  {getInitials(match.name)}
+                <div className="w-16 h-16 rounded-full overflow-hidden mx-auto mb-3 border-2 border-orange-500/30">
+                  {match.profilePhoto ? (
+                    <img 
+                      src={match.profilePhoto} 
+                      alt={match.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-linear-to-br from-orange-500 to-red-700 flex items-center justify-center text-white font-bold text-xl">
+                      {getInitials(match.name)}
+                    </div>
+                  )}
                 </div>
                 <h3 className={`text-lg font-bold mb-1 ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
                   {match.name}
@@ -265,14 +271,12 @@ export default function MatchesPage() {
                 </div>
               </div>
 
-              {/* Bio */}
               {match.bio && (
-                <p className={`text-sm mb-4 line-clamp-2 ${darkMode ? "text-orange-200/70" : "text-gray-600"}`}>
+                <p className={`text-sm mb-4 line-clamp-2 min-h-10 ${darkMode ? "text-orange-200/70" : "text-gray-600"}`}>
                   {match.bio}
                 </p>
               )}
 
-              {/* Languages */}
               <div className="space-y-3 mb-4">
                 <div>
                   <p className={`text-xs font-semibold mb-2 ${darkMode ? "text-orange-300" : "text-orange-700"}`}>
@@ -321,6 +325,19 @@ export default function MatchesPage() {
                   </div>
                 </div>
               </div>
+
+              {/* View Profile Button */}
+              <button
+                onClick={() => handleViewProfile(match._id)}
+                className={`w-full mb-3 py-2.5 rounded-lg flex items-center justify-center gap-2 transition-all border ${
+                  darkMode 
+                    ? "bg-orange-900/20 text-orange-300 border-orange-800/30 hover:bg-orange-900/30" 
+                    : "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
+                }`}
+              >
+                <Eye className="w-4 h-4" />
+                <span className="text-sm font-medium">View Full Profile</span>
+              </button>
 
               {/* Action Buttons */}
               <div className="flex gap-2">
