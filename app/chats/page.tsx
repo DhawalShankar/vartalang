@@ -789,7 +789,7 @@ function ChatsContent() {
                 {/* Chat Header - CLICKABLE */}
                 <button
                   onClick={() => handleViewProfile(currentChatDetail.user._id)}
-                  className={`sticky top-0 z-10 p-4 border-b flex items-center justify-between transition-all ${
+                  className={`sticky top-0 z-10 p-4 border-b w-full flex items-center justify-between transition-all ${
                     darkMode 
                       ? "bg-orange-900/10 border-orange-800/30 backdrop-blur-sm hover:bg-orange-900/20" 
                       : "bg-white border-orange-200 backdrop-blur-sm hover:bg-orange-50"
