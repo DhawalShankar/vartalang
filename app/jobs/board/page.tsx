@@ -651,12 +651,7 @@ export default function VartaLangJobsBoard() {
                         <div className="text-2xl font-bold flex items-center gap-1">
                           {formatSalary(job)}
                         </div>
-                        <div className={`text-xs mt-1 flex items-center gap-1 ${
-                          darkMode ? 'text-orange-200/70' : 'text-gray-500'
-                        }`}>
-                          <Eye className="w-3 h-3" />
-                          {job.views} views
-                        </div>
+                       
                       </div>
                     )}
 

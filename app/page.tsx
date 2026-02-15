@@ -335,8 +335,8 @@ export default function VartaLangLanding() {
         </div>
       </section>
 
-      {/* Languages Ticker */}
-      <section className={`py-4 overflow-hidden border-y ${darkMode ? 'border-orange-900/30 bg-[#1a1410]' : 'border-orange-100 bg-white'}`}>
+      {/* Languages Ticker - HIDDEN ON MOBILE */}
+      <section className={`hidden md:block py-4 overflow-hidden border-y ${darkMode ? 'border-orange-900/30 bg-[#1a1410]' : 'border-orange-100 bg-white'}`}>
         <div className="flex animate-scroll whitespace-nowrap">
           {[...languages, ...languages, ...languages].map((lang, i) => (
             <div
