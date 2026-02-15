@@ -36,18 +36,18 @@ interface UserProfile {
 
 // User ID se unique cover image select karo
 const getCoverImage = (userId: string) => {
+  // ✅ Working Unsplash photo IDs (from your URLs)
   const coverPatterns = [
-    'phIFdC6lA4E', // Snow mountain under stars
-    'NRQV-hBF10M', // Body of water surrounded by trees
-    'zAjdgNXsMeg', // Brown house near water
-    'KonWFWUaAuk', // Tree on water near mountains
-    't7YycgAoVSw', // Hot air balloon contest
+    '1433838552652-f9a46b332c40', // Nature/Forest
+    '1451337516015-6b6e9a44a8a3', // Earth from space
+    '1498429089284-41f8cf3ffd39', // Mountain landscape
+    '1469474968028-56623f02e42e', // Forest path
+    '1498550744921-75f79806b8a7', // Green hills
   ];
   
   const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const index = hash % coverPatterns.length;
   
-  // ✅ Correct URL format
   return `https://images.unsplash.com/photo-${coverPatterns[index]}?w=1200&h=150&fit=crop&q=80&auto=format`;
 };
 
