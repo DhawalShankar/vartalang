@@ -37,18 +37,18 @@ interface UserProfile {
 // User ID se unique cover image select karo
 const getCoverImage = (userId: string) => {
   const coverPatterns = [
-    'photo-phIFdC6lA4E', // Snow mountain under stars
-    'photo-NRQV-hBF10M', // Body of water surrounded by trees
-    'photo-zAjdgNXsMeg', // Brown house near water
-    'photo-KonWFWUaAuk', // Tree on water near mountains
-    'photo-t7YycgAoVSw', // Hot air balloon contest
+    'phIFdC6lA4E', // Snow mountain under stars
+    'NRQV-hBF10M', // Body of water surrounded by trees
+    'zAjdgNXsMeg', // Brown house near water
+    'KonWFWUaAuk', // Tree on water near mountains
+    't7YycgAoVSw', // Hot air balloon contest
   ];
   
-  // User ID se consistent hash banao
   const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const index = hash % coverPatterns.length;
   
-  return `https://images.unsplash.com/${coverPatterns[index]}?w=1200&h=150&fit=crop`;
+  // ✅ Correct URL format
+  return `https://images.unsplash.com/photo-${coverPatterns[index]}?w=1200&h=150&fit=crop&q=80&auto=format`;
 };
 
 export default function DynamicProfilePage() {
