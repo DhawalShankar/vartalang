@@ -846,7 +846,10 @@ function ChatsContent() {
                       }`}>
                         {currentChatDetail.isBlocked ? (
                           <button
-                            onClick={handleUnblockUser}
+                            onClick={(e) => {
+                              e.stopPropagation();  // ✅ Add this
+                              handleUnblockUser();
+                            }}
                             className={`w-full px-4 py-3 text-left flex items-center gap-2 rounded-t-xl transition-all ${
                               darkMode ? "hover:bg-orange-900/50 text-green-400" : "hover:bg-green-50 text-green-700"
                             }`}
@@ -856,12 +859,15 @@ function ChatsContent() {
                           </button>
                         ) : (
                           <>
-                            <button
-                              onClick={handleBlockUser}
-                              className={`w-full px-4 py-3 text-left flex items-center gap-2 rounded-t-xl transition-all ${
-                                darkMode ? "hover:bg-orange-900/50 text-orange-300" : "hover:bg-orange-50 text-orange-700"
-                              }`}
-                            >
+                             <button
+                                onClick={(e) => {
+                                  e.stopPropagation();  // ✅ Add this
+                                  handleBlockUser();
+                                }}
+                                className={`w-full px-4 py-3 text-left flex items-center gap-2 rounded-t-xl transition-all ${
+                                  darkMode ? "hover:bg-orange-900/50 text-orange-300" : "hover:bg-orange-50 text-orange-700"
+                                }`}
+                              >
                               <Ban className="w-4 h-4" />
                               <span className="text-sm font-medium">Block User</span>
                             </button>
