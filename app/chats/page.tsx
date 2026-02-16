@@ -492,7 +492,6 @@ function ChatsContent() {
     router.push('/chats', { scroll: false });
   };
 
-  // NEW: Navigate to user profile
   const handleViewProfile = (userId: string) => {
     router.push(`/profile/${userId}`);
   };
@@ -847,7 +846,7 @@ function ChatsContent() {
                         {currentChatDetail.isBlocked ? (
                           <button
                             onClick={(e) => {
-                              e.stopPropagation();  // ✅ Add this
+                              e.stopPropagation();
                               handleUnblockUser();
                             }}
                             className={`w-full px-4 py-3 text-left flex items-center gap-2 rounded-t-xl transition-all ${
@@ -859,20 +858,21 @@ function ChatsContent() {
                           </button>
                         ) : (
                           <>
-                             <button
-                                onClick={(e) => {
-                                  e.stopPropagation();  // ✅ Add this
-                                  handleBlockUser();
-                                }}
-                                className={`w-full px-4 py-3 text-left flex items-center gap-2 rounded-t-xl transition-all ${
-                                  darkMode ? "hover:bg-orange-900/50 text-orange-300" : "hover:bg-orange-50 text-orange-700"
-                                }`}
-                              >
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleBlockUser();
+                              }}
+                              className={`w-full px-4 py-3 text-left flex items-center gap-2 rounded-t-xl transition-all ${
+                                darkMode ? "hover:bg-orange-900/50 text-orange-300" : "hover:bg-orange-50 text-orange-700"
+                              }`}
+                            >
                               <Ban className="w-4 h-4" />
                               <span className="text-sm font-medium">Block User</span>
                             </button>
                             <button
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setShowReportDialog(true);
                                 setShowMenu(false);
                               }}
@@ -886,7 +886,10 @@ function ChatsContent() {
                           </>
                         )}
                         <button
-                          onClick={handleDeleteChat}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteChat();
+                          }}
                           className={`w-full px-4 py-3 text-left flex items-center gap-2 rounded-b-xl transition-all border-t ${
                             darkMode ? "hover:bg-orange-900/50 text-red-400 border-orange-800/30" : "hover:bg-red-50 text-red-700 border-orange-200"
                           }`}
@@ -1023,10 +1026,20 @@ function ChatsContent() {
 
       {/* Report Dialog */}
       {showReportDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className={`rounded-2xl p-6 max-w-md w-full ${
-            darkMode ? "bg-orange-900/95 border border-orange-800/30" : "bg-white border border-orange-200"
-          }`}>
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowReportDialog(false);
+            setReportReason("");
+          }}
+        >
+          <div 
+            className={`rounded-2xl p-6 max-w-md w-full ${
+              darkMode ? "bg-orange-900/95 border border-orange-800/30" : "bg-white border border-orange-200"
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className={`text-xl font-bold mb-4 ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
               Report User
             </h3>
