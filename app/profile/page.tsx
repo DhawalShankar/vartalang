@@ -45,7 +45,21 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [editedProfile, setEditedProfile] = useState<UserProfile | null>(null);
-
+  // ✅ Add this function at the top (after imports, before component)
+  const getCoverImage = (userId: string) => {
+      const coverPatterns = [
+        '1433838552652-f9a46b332c40', // Nature/Forest
+        '1451337516015-6b6e9a44a8a3', // Earth from space
+        '1498429089284-41f8cf3ffd39', // Mountain landscape
+        '1523712999610-f77fbcfc3843', // Forest path
+        '1498550744921-75f79806b8a7', // Green hills
+      ];
+      
+      const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      const index = hash % coverPatterns.length;
+      
+    return `https://images.unsplash.com/photo-${coverPatterns[index]}?w=1200&h=150&fit=crop&q=80&auto=format`;
+  };
   const languages = [
     "Hindi", "English", "Tamil", "Telugu", "Kannada", "Malayalam", "Maithili",
     "Bengali", "Gujarati", "Punjabi", "Marathi", "Odia", "Assamese",
@@ -193,12 +207,15 @@ export default function ProfilePage() {
               ? 'bg-orange-900/10 border border-orange-800/30' 
               : 'bg-white border border-orange-100 shadow-xl'
           }`}>
-            {/* Cover */}
-            <div className={`h-32 ${
-              darkMode 
-                ? 'bg-linear-to-r from-orange-900/40 to-red-900/40' 
-                : 'bg-linear-to-r from-orange-100 to-red-100'
-            }`}></div>
+              {/* Cover */}
+              {/* ✅ NAYA - Add this */}
+              <div className="relative h-32 overflow-hidden">
+                <img 
+                  src={getCoverImage(profile._id)} 
+                  alt="Cover"
+                  className="w-full h-full object-cover"
+                />
+              </div>
 
             <div className="px-6 pb-6">
               {/* Profile Photo & Actions */}
