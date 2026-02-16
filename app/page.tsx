@@ -244,7 +244,7 @@ export default function VartaLangLanding() {
                 Build Communication Skills.
                 <br />
                 <span className={`${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                  Get Real Jobs.
+                  Discover Real Jobs 
                 </span>
               </h1>
 
@@ -920,7 +920,7 @@ export default function VartaLangLanding() {
 
             <div>
               <h2 className={`text-2xl lg:text-3xl font-black mb-4 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-                Turn Language Skills Into Income
+                Monetize Your Language Skills
               </h2>
 
               <p className={`text-base mb-5 ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>

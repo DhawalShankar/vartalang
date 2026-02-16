@@ -79,9 +79,9 @@ export default function Navbar() {
               {isLoggedIn ? (
                 <>
                   {[
-                    { name: "Target Roles", href: "/targets" },
                     { name: "Matches", href: "/matches" },
                     { name: "Chats", href: "/chats" },
+                    { name: "Target Roles", href: "/targets" },
                     { name: "Jobs", href: "/jobs" },
                     { name: "About", href: "/about" },
                   ].map((item) => (
@@ -213,20 +213,6 @@ export default function Navbar() {
                 : "bg-white/90 border-orange-100"
             }`}
           >
-            <div className="flex flex-col gap-2">
-              {isLoggedIn ? (
-                <>
-                  <Link
-                    href="/targets"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
-                      darkMode
-                        ? "text-orange-200 hover:bg-orange-900/40"
-                        : "text-gray-700 hover:bg-orange-50"
-                    }`}
-                  >
-                    Target Roles
-                  </Link>
                   <Link
                     href="/matches"
                     onClick={() => setMobileMenuOpen(false)}
@@ -248,6 +234,20 @@ export default function Navbar() {
                     }`}
                   >
                     Chats
+                  </Link>
+                  <div className="flex flex-col gap-2">
+              {isLoggedIn ? (
+                <>
+                  <Link
+                    href="/targets"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
+                      darkMode
+                        ? "text-orange-200 hover:bg-orange-900/40"
+                        : "text-gray-700 hover:bg-orange-50"
+                    }`}
+                  >
+                    Target Roles
                   </Link>
                   <Link
                     href="/jobs"
