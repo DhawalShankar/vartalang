@@ -1040,7 +1040,8 @@ function ChatsContent() {
             />
             <div className="flex gap-3">
               <button
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   setShowReportDialog(false);
                   setReportReason("");
                 }}
@@ -1053,7 +1054,10 @@ function ChatsContent() {
                 Cancel
               </button>
               <button
-                onClick={handleReportUser}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleReportUser();
+                }}
                 disabled={!reportReason.trim()}
                 className="flex-1 py-2 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
