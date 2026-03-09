@@ -248,7 +248,9 @@ export default function AdminPortal() {
     const days = Math.ceil((new Date(expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
     return days;
   };
-
+  const isActuallyExpired = (job: Job) => {
+  return new Date(job.expiryDate) < new Date();
+  };
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -449,12 +451,12 @@ export default function AdminPortal() {
                         </td>
                         <td className="px-6 py-4">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            job.status === 'active'
-                              ? darkMode ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-700'
-                              : darkMode ? 'bg-red-900/30 text-red-300' : 'bg-red-100 text-red-700'
-                          }`}>
-                            {job.status}
-                          </span>
+                          !isActuallyExpired(job)
+                            ? darkMode ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-700'
+                            : darkMode ? 'bg-red-900/30 text-red-300' : 'bg-red-100 text-red-700'
+                        }`}>
+                          {isActuallyExpired(job) ? 'expired' : 'active'}
+                        </span>
                         </td>
                         <td className={`px-6 py-4 text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-700'}`}>
                           {getDaysRemaining(job.expiryDate)} days

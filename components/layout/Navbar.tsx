@@ -204,130 +204,114 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* MOBILE DROPDOWN MENU */}
-        {mobileMenuOpen && (
-          <div
-            className={`mt-3 rounded-2xl border backdrop-blur-xl p-4 ${
-              darkMode
-                ? "bg-[#2a1f1a]/90 border-orange-900/30"
-                : "bg-white/90 border-orange-100"
+      
+       {/* MOBILE DROPDOWN MENU */}
+    {mobileMenuOpen && (
+      <div
+        className={`mt-3 rounded-2xl border backdrop-blur-xl p-4 ${
+          darkMode
+            ? "bg-[#2a1f1a]/90 border-orange-900/30"
+            : "bg-white/90 border-orange-100"
+        }`}
+      >
+    <div className="flex flex-col gap-2">
+      {isLoggedIn ? (
+        <>
+          <Link
+            href="/matches"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
+              darkMode ? "text-orange-200 hover:bg-orange-900/40" : "text-gray-700 hover:bg-orange-50"
             }`}
           >
-                  <Link
-                    href="/matches"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
-                      darkMode
-                        ? "text-orange-200 hover:bg-orange-900/40"
-                        : "text-gray-700 hover:bg-orange-50"
-                    }`}
-                  >
-                    Matches
-                  </Link>
-                  <Link
-                    href="/chats"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
-                      darkMode
-                        ? "text-orange-200 hover:bg-orange-900/40"
-                        : "text-gray-700 hover:bg-orange-50"
-                    }`}
-                  >
-                    Chats
-                  </Link>
-                  <div className="flex flex-col gap-2">
-              {isLoggedIn ? (
-                <>
-                  <Link
-                    href="/targets"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
-                      darkMode
-                        ? "text-orange-200 hover:bg-orange-900/40"
-                        : "text-gray-700 hover:bg-orange-50"
-                    }`}
-                  >
-                    Target Roles
-                  </Link>
-                  <Link
-                    href="/jobs"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
-                      darkMode
-                        ? "text-orange-200 hover:bg-orange-900/40"
-                        : "text-gray-700 hover:bg-orange-50"
-                    }`}
-                  >
-                    Jobs
-                  </Link>
-                  <Link
-                    href="/about"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
-                      darkMode
-                        ? "text-orange-200 hover:bg-orange-900/40"
-                        : "text-gray-700 hover:bg-orange-50"
-                    }`}
-                  >
-                    About
-                  </Link>
+            Matches
+          </Link>
+          <Link
+            href="/chats"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
+              darkMode ? "text-orange-200 hover:bg-orange-900/40" : "text-gray-700 hover:bg-orange-50"
+            }`}
+          >
+            Chats
+          </Link>
+          <Link
+            href="/targets"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
+              darkMode ? "text-orange-200 hover:bg-orange-900/40" : "text-gray-700 hover:bg-orange-50"
+            }`}
+          >
+            Target Roles
+          </Link>
+          <Link
+            href="/jobs"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
+              darkMode ? "text-orange-200 hover:bg-orange-900/40" : "text-gray-700 hover:bg-orange-50"
+            }`}
+          >
+            Jobs
+          </Link>
+          <Link
+            href="/about"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
+              darkMode ? "text-orange-200 hover:bg-orange-900/40" : "text-gray-700 hover:bg-orange-50"
+            }`}
+          >
+            About
+          </Link>
 
-                  {/* ✅ Conditionally show Teachers link in mobile - Only for teachers */}
-                  {userRole === 'teacher' && (
-                    <Link
-                      href="/teachers"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all flex items-center justify-center gap-2 ${
-                        darkMode
-                          ? "text-orange-200 hover:bg-orange-900/40"
-                          : "text-gray-700 hover:bg-orange-50"
-                      }`}
-                    >
-                      <GraduationCap className="w-4 h-4" />
-                      Teachers
-                    </Link>
-                  )}
+          {userRole === 'teacher' && (
+            <Link
+              href="/teachers"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all flex items-center justify-center gap-2 ${
+                darkMode ? "text-orange-200 hover:bg-orange-900/40" : "text-gray-700 hover:bg-orange-50"
+              }`}
+            >
+              <GraduationCap className="w-4 h-4" />
+              Teachers
+            </Link>
+          )}
 
-                  <div className="h-px bg-linear-to-r from-transparent via-orange-500/30 to-transparent my-2"></div>
-                  
-                  <Link
-                    href="/profile"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all flex items-center justify-center gap-2 ${
-                      darkMode
-                        ? "text-orange-200 hover:bg-orange-900/40"
-                        : "text-gray-700 hover:bg-orange-50"
-                    }`}
-                  >
-                    <User className="w-4 h-4" />
-                    Profile
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link
-                    href="/auth/login"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
-                      darkMode
-                        ? "text-orange-200 hover:bg-orange-900/40"
-                        : "text-gray-700 hover:bg-orange-50"
-                    }`}
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    href="/auth/signup"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="px-4 py-2.5 rounded-lg text-sm font-semibold text-center bg-linear-to-r from-orange-500 to-red-600 text-white"
-                  >
-                    Join Now
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        )}
+          <div className="h-px bg-linear-to-r from-transparent via-orange-500/30 to-transparent my-2"></div>
+
+          <Link
+            href="/profile"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all flex items-center justify-center gap-2 ${
+              darkMode ? "text-orange-200 hover:bg-orange-900/40" : "text-gray-700 hover:bg-orange-50"
+            }`}
+          >
+            <User className="w-4 h-4" />
+            Profile
+          </Link>
+        </>
+      ) : (
+        <>
+          <Link
+            href="/auth/login"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
+              darkMode ? "text-orange-200 hover:bg-orange-900/40" : "text-gray-700 hover:bg-orange-50"
+            }`}
+          >
+            Sign In
+          </Link>
+          <Link
+            href="/auth/signup"
+            onClick={() => setMobileMenuOpen(false)}
+            className="px-4 py-2.5 rounded-lg text-sm font-semibold text-center bg-linear-to-r from-orange-500 to-red-600 text-white"
+          >
+            Join Now
+          </Link>
+        </>
+      )}
+    </div>
+  </div>
+)}
       </div>
     </nav>
   );
