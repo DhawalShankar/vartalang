@@ -34,7 +34,6 @@ interface Job {
   expiryDate: string;
   status: 'active' | 'expired';
   views: number;
-  // ✅ NEW SALARY FIELDS
   salaryMin?: number;
   salaryMax?: number;
   salaryCurrency?: string;
@@ -60,7 +59,6 @@ interface JobFormData {
   responsibilities: string;
   requirements: string;
   contactEmail: string;
-  // ✅ NEW FIELDS
   salaryMin: string;
   salaryMax: string;
   salaryCurrency: string;
@@ -165,6 +163,15 @@ export default function VartaLangJobsBoard() {
       console.error("Error fetching jobs:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ✅ INCREMENT VIEWS - called when job modal opens
+  const incrementViews = async (jobId: string) => {
+    try {
+      await fetch(`${API_URL}/jobs/${jobId}/views`, { method: 'POST' });
+    } catch (error) {
+      console.error("Error incrementing views:", error);
     }
   };
 
@@ -554,7 +561,7 @@ export default function VartaLangJobsBoard() {
         </div>
       </section>
 
-      {/* Jobs List - NEW CARD DESIGN */}
+      {/* Jobs List */}
       <section className="py-8 px-4 pb-20">
         <div className="max-w-7xl mx-auto">
           {filteredJobs.length === 0 ? (
@@ -593,7 +600,10 @@ export default function VartaLangJobsBoard() {
                       ? 'bg-linear-to-br from-orange-950/40 to-orange-900/20 border-orange-800/30 hover:border-orange-700/50' 
                       : 'bg-white border-orange-100 hover:shadow-2xl'
                   }`}
-                  onClick={() => setSelectedJob(job)}
+                  onClick={() => {
+                    setSelectedJob(job);
+                    incrementViews(job._id); // ✅ card click pe view count
+                  }}
                 >
                   {/* Live Jobs Badge */}
                   <div className="absolute top-4 left-4 z-10">
@@ -651,7 +661,6 @@ export default function VartaLangJobsBoard() {
                         <div className="text-2xl font-bold flex items-center gap-1">
                           {formatSalary(job)}
                         </div>
-                       
                       </div>
                     )}
 
@@ -660,6 +669,7 @@ export default function VartaLangJobsBoard() {
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedJob(job);
+                        incrementViews(job._id); // ✅ button click pe view count
                       }}
                       className="w-full py-3 rounded-xl bg-linear-to-r from-orange-500 to-red-600 text-white text-sm font-bold hover:shadow-lg transition-all"
                     >
@@ -673,7 +683,7 @@ export default function VartaLangJobsBoard() {
         </div>
       </section>
 
-      {/* Job Details Modal - UPDATED */}
+      {/* Job Details Modal */}
       {selectedJob && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className={`max-w-3xl w-full max-h-[90vh] overflow-y-auto rounded-2xl border ${
@@ -885,7 +895,7 @@ export default function VartaLangJobsBoard() {
         </div>
       )}
 
-      {/* Post Job Modal - WITH SALARY FIELDS */}
+      {/* Post Job Modal */}
       {showPostModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className={`max-w-3xl w-full max-h-[90vh] rounded-2xl border overflow-hidden flex flex-col ${
@@ -1062,7 +1072,7 @@ export default function VartaLangJobsBoard() {
                   </div>
                 </div>
 
-                {/* ✅ SALARY FIELDS */}
+                {/* SALARY FIELDS */}
                 <div>
                   <label className={`block text-sm font-semibold mb-3 ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
                     Salary Range (Optional)
