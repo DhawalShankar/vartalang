@@ -449,15 +449,18 @@ export default function AdminPortal() {
                         <td className={`px-6 py-4 text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-700'}`}>
                           {job.language}
                         </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          !isActuallyExpired(job)
-                            ? darkMode ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-700'
-                            : darkMode ? 'bg-red-900/30 text-red-300' : 'bg-red-100 text-red-700'
-                        }`}>
-                          {isActuallyExpired(job) ? 'expired' : 'active'}
-                        </span>
-                        </td>
+                        <td className={`px-6 py-4 text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-700'}`}>
+                              {isActuallyExpired(job) ? (
+                                <div>
+                                  <span className={darkMode ? 'text-red-400' : 'text-red-600'}>Expired</span>
+                                  <p className={`text-xs mt-0.5 ${darkMode ? 'text-orange-300/50' : 'text-gray-400'}`}>
+                                    Auto-deletes in {Math.max(0, 30 - Math.abs(getDaysRemaining(job.expiryDate)))} days
+                                  </p>
+                                </div>
+                              ) : (
+                                `${getDaysRemaining(job.expiryDate)} days`
+                              )}
+                            </td>
                         <td className={`px-6 py-4 text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-700'}`}>
                           {getDaysRemaining(job.expiryDate)} days
                         </td>
