@@ -215,7 +215,7 @@ export default function SafetyGuidelinesModal({ isOpen, onClose }: SafetyGuideli
               <li><strong>Block the user</strong> - available in all chat windows</li>
               <li><strong>Report them</strong> - use the in-app report feature</li>
               <li><strong>Save evidence</strong> - take screenshots of concerning messages</li>
-              <li><strong>Contact us</strong> - email vartalang@gmail.com immediately</li>
+              <li><strong>Contact us</strong> - email cosmoindiaprakashan@gmail.com immediately</li>
               <li><strong>Contact authorities</strong> - for serious threats or illegal activity:
                 <ul className="list-disc list-inside ml-4 mt-1 space-y-1">
                   <li>Cyber Crime Helpline: 1930</li>

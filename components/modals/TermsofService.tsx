@@ -150,7 +150,7 @@ export default function TermsModal({ isOpen, onClose }: TermsModalProps) {
             13. Contact Us
           </h3>
           <p className={`text-sm mb-6 ${darkMode ? "text-orange-200/80" : "text-gray-700"}`}>
-            For questions about these terms, please contact us at vartalang@gmail.com or via WhatsApp at +91 7388270331.
+            For questions about these terms, please contact us at cosmoindiaprakashan@gmail.com or via WhatsApp at +91 7388270331.
           </p>
 
           <div className={`mt-8 p-4 rounded-xl ${

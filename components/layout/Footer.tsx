@@ -150,7 +150,7 @@ export default function Footer() {
           <div className={`py-6 mb-6 border-y ${darkMode ? "border-orange-900/30" : "border-orange-100"}`}>
             <div className="flex flex-wrap gap-6 justify-center md:justify-start">
               <a
-                href="mailto:vartalang@gmail.com"
+                href="mailto:cosmoindiaprakashan@gmail.com"
                 className={`flex items-center gap-2 text-sm transition-colors ${
                   darkMode
                     ? "text-orange-300/70 hover:text-orange-200"
@@ -158,7 +158,7 @@ export default function Footer() {
                 }`}
               >
                 <Mail className="w-4 h-4" />
-                vartalang@gmail.com
+                cosmoindiaprakashan@gmail.com
               </a>
               <div className={`flex items-center gap-2 text-sm ${
                 darkMode ? "text-orange-300/70" : "text-gray-600"

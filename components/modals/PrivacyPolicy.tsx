@@ -139,7 +139,7 @@ export default function PrivacyModal({ isOpen, onClose }: PrivacyModalProps) {
             <li><strong>Restriction:</strong> Request limited processing of your data</li>
           </ul>
           <p className={`text-sm mb-4 ${darkMode ? "text-orange-200/80" : "text-gray-700"}`}>
-            To exercise these rights, contact us at vartalang@gmail.com.
+            To exercise these rights, contact us at cosmoindiaprakashan@gmail.com.
           </p>
 
           <h3 className={`text-lg font-semibold mt-6 mb-3 ${darkMode ? "text-orange-100" : "text-orange-900"}`}>
@@ -177,7 +177,7 @@ export default function PrivacyModal({ isOpen, onClose }: PrivacyModalProps) {
             If you have questions or concerns about this Privacy Policy or our data practices, please contact us:
           </p>
           <ul className={`list-none space-y-1 mb-6 text-sm ${darkMode ? "text-orange-200/80" : "text-gray-700"}`}>
-            <li><strong>Email:</strong> vartalang@gmail.com</li>
+            <li><strong>Email:</strong> cosmoindiaprakashan@gmail.com</li>
             <li><strong>WhatsApp:</strong> +91 7388270331</li>
             <li><strong>Address:</strong> Kanpur, Uttar Pradesh, India</li>
           </ul>

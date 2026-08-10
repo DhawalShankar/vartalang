@@ -215,7 +215,7 @@ export default function CodeOfConductModal({ isOpen, onClose }: CodeOfConductMod
           <ul className={`list-decimal list-inside space-y-2 mb-4 text-sm ${darkMode ? "text-orange-200/80" : "text-gray-700"}`}>
             <li><strong>Use the in-app report feature</strong> - available in all chats and profiles</li>
             <li><strong>Block the user immediately</strong> if you feel unsafe</li>
-            <li><strong>Contact us directly</strong> at vartalang@gmail.com for serious concerns</li>
+            <li><strong>Contact us directly</strong> at cosmoindiaprakashan@gmail.com for serious concerns</li>
             <li><strong>Provide context</strong> - screenshots or specific details help us investigate</li>
           </ul>
 
