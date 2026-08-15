@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { 
   Briefcase, Globe, Mail, Users, Target, Shield,
@@ -20,6 +20,27 @@ interface JobStats {
   activeJobs: number;
   languages: number;
   companies: number;
+}
+
+// Renders the Razorpay hosted payment button.
+// Razorpay's script must execute as a live <script> tag inside the DOM,
+// so it's injected imperatively via useEffect rather than JSX/dangerouslySetInnerHTML.
+function RazorpayExtensionButton() {
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (!formRef.current) return;
+    // Avoid injecting the script twice if the component re-renders
+    if (formRef.current.querySelector('script')) return;
+
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/payment-button.js';
+    script.async = true;
+    script.setAttribute('data-payment_button_id', 'pl_TQ2sTUisyqCp7F');
+    formRef.current.appendChild(script);
+  }, []);
+
+  return <form ref={formRef} className="flex justify-center" />;
 }
 
 export default function VartaLangJobsHome() {
@@ -411,14 +432,20 @@ export default function VartaLangJobsHome() {
               }`}>
                 After Expiry
               </h3>
-              <p className={`text-base mb-3 ${
+              <p className={`text-base mb-1 ${
                 darkMode ? 'text-orange-200' : 'text-gray-700'
               }`}>
-                Optional paid extension
+                Optional 30-day extension
               </p>
-              <p className={`text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+              <p className={`text-3xl font-bold mb-3 ${
+                darkMode ? 'text-orange-300' : 'text-orange-700'
+              }`}>
+                ₹100
+              </p>
+              <p className={`text-sm mb-4 ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
                 No pay-per-application. No hidden fees.
               </p>
+              <RazorpayExtensionButton />
             </div>
           </div>
 
