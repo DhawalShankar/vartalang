@@ -6,40 +6,32 @@ import { Readable } from 'stream';
  * Deleting the challenge feature later = delete this file, its callers,
  * and the GOOGLE_* env vars below. Nothing else in the app touches Drive.
  *
- * Required env vars (.env.local):
- *   GOOGLE_SERVICE_ACCOUNT_EMAIL   - from the downloaded JSON key ("client_email")
- *   GOOGLE_SERVICE_ACCOUNT_KEY     - from the downloaded JSON key ("private_key")
- *   GOOGLE_DRIVE_FOLDER_ID         - the folder ID you shared with that service account
+ * Auth: OAuth (user account), NOT a service account — service accounts have
+ * no storage quota on regular Gmail (non-Workspace) My Drive, so uploads to
+ * personal Drive folders must go through the actual Gmail account via OAuth.
  *
- * Note: private keys contain literal "\n" line breaks. When you paste the key
- * into .env.local, keep it as a single-line string with \n escapes — the
- * .replace() below converts those back into real newlines at runtime.
+ * Required env vars (.env.local):
+ *   GOOGLE_OAUTH_CLIENT_ID       - from OAuth client (Desktop app type)
+ *   GOOGLE_OAUTH_CLIENT_SECRET   - from OAuth client
+ *   GOOGLE_REFRESH_TOKEN         - one-time generated via get-refresh-token.js
+ *   GOOGLE_DRIVE_FOLDER_ID       - the folder ID in the actual Gmail account
  */
 
 function getDriveClient() {
-  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const key = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+  const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
 
-  if (!email || !key) {
-    throw new Error('Missing GOOGLE_SERVICE_ACCOUNT_EMAIL or GOOGLE_SERVICE_ACCOUNT_KEY env vars');
+  if (!clientId || !clientSecret || !refreshToken) {
+    throw new Error('Missing GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET / GOOGLE_REFRESH_TOKEN env vars');
   }
 
-  const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: email,
-      private_key: key.replace(/\\n/g, '\n'),
-    },
-    scopes: ['https://www.googleapis.com/auth/drive'],
-  });
+  const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
+  oauth2Client.setCredentials({ refresh_token: refreshToken });
 
-  return google.drive({ version: 'v3', auth });
+  return google.drive({ version: 'v3', auth: oauth2Client });
 }
 
-/**
- * Checks whether this user has already submitted a recording for this
- * language, by looking for a filename that starts with "Language_UserID_".
- * This is our stand-in for a database row — the filename itself is the record.
- */
 export async function hasExistingSubmission(language: string, userId: string): Promise<boolean> {
   const drive = getDriveClient();
   const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
@@ -61,10 +53,6 @@ interface UploadParams {
   buffer: Buffer;
 }
 
-/**
- * Uploads one recording into the shared challenge folder.
- * Returns the new file's Drive ID.
- */
 export async function uploadToDrive({ filename, mimeType, buffer }: UploadParams): Promise<string> {
   const drive = getDriveClient();
   const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
