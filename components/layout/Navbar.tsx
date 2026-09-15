@@ -79,6 +79,7 @@ export default function Navbar() {
               {isLoggedIn ? (
                 <>
                   {[
+                    { name: "Challenge", href: "/challenge" },
                     { name: "Matches", href: "/matches" },
                     { name: "Chats", href: "/chats" },
                     { name: "Target Roles", href: "/targets" },
@@ -217,6 +218,15 @@ export default function Navbar() {
     <div className="flex flex-col gap-2">
       {isLoggedIn ? (
         <>
+          <Link
+            href="/challenge"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
+              darkMode ? "text-orange-200 hover:bg-orange-900/40" : "text-gray-700 hover:bg-orange-50"
+            }`}
+          >
+            Challenge
+          </Link>
           <Link
             href="/matches"
             onClick={() => setMobileMenuOpen(false)}
