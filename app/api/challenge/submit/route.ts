@@ -1,134 +1,99 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { listSubmissions } from '@/lib/challenge/drive';
+import { hasExistingSubmission, uploadToDrive } from '@/lib/challenge/drive';
 
 /*
- * GET /api/admin/challenge
+ * POST /api/challenge/submit
+ * Expects multipart/form-data: audio (file), language, scriptId,
+ * durationSec, consent, consentText — this matches what
+ * app/challenge/start/page.tsx already sends.
  *
- * Returns every Voice Challenge recording currently sitting in the Drive
- * folder, matched up with the submitting user's name and email.
- *
- * Auth follows the same pattern as /api/challenge/submit: this route has no
- * JWT secret, so it forwards the caller's token to the existing backend's
- * /admin/check endpoint and trusts that answer.
- *
- * ASSUMPTION: this also expects a bulk users endpoint on that same backend —
- * BACKEND_API_URL + '/admin/users' — returning something like
- * { users: [{ _id, name, email }, ...] } (or a bare array). If your backend
- * exposes users under a different path or shape, only getUserMap() below
- * needs to change; everything else stays the same.
+ * Auth lives on a separately hosted backend (the same one /auth/me on the
+ * profile page and the start page hit), so this route does NOT verify the
+ * JWT itself — it doesn't have the secret. Instead it forwards the token to
+ * that backend's /auth/me and trusts its answer. Set BACKEND_API_URL in
+ * .env.local to that backend's base URL (e.g. https://api.vartalang.in).
  */
 
+const MAX_SIZE_BYTES = 100 * 1024 * 1024; // 100MB, per the PRD
 const BACKEND_API_URL = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL;
 
-// Matches filenames written by /api/challenge/submit: Language_userId_timestamp.ext
-// userId is a 24-char Mongo ObjectId hex string.
-const FILENAME_RE = /^([A-Za-z]+)_([a-fA-F0-9]{24})_(\d+)\.(\w+)$/;
-
-interface ChallengeSubmission {
-  fileId: string;
-  fileName: string;
-  language: string;
-  userId: string;
-  userName: string;
-  userEmail: string;
-  submittedAt: string;
-  sizeBytes: number;
-  driveUrl: string;
-}
-
-async function checkAdmin(token: string): Promise<boolean> {
-  if (!BACKEND_API_URL) return false;
-  try {
-    const res = await fetch(`${BACKEND_API_URL}/admin/check`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) return false;
-    const data = await res.json();
-    return !!data.isAdmin;
-  } catch {
-    return false;
-  }
-}
-
-async function getUserMap(token: string): Promise<Map<string, { name: string; email: string }>> {
-  const map = new Map<string, { name: string; email: string }>();
-  if (!BACKEND_API_URL) return map;
-
-  try {
-    // Adjust this path/shape if your backend's user-listing endpoint differs.
-    const res = await fetch(`${BACKEND_API_URL}/admin/users`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) return map;
-
-    const data = await res.json();
-    const users = Array.isArray(data) ? data : data.users ?? [];
-
-    for (const u of users) {
-      const id = u._id || u.id;
-      if (id) {
-        map.set(id, { name: u.name || 'Unknown', email: u.email || 'N/A' });
-      }
-    }
-  } catch {
-    // Leave the map empty — submissions still show with a fallback label
-    // instead of failing the whole request.
-  }
-
-  return map;
-}
-
-export async function GET(req: NextRequest) {
+async function getUserId(req: NextRequest): Promise<string | null> {
   const authHeader = req.headers.get('authorization');
   const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!token || !BACKEND_API_URL) return null;
 
-  if (!token) {
+  try {
+    const res = await fetch(`${BACKEND_API_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    // Adjust this line if your /auth/me response shape differs
+    // (e.g. { user: { _id } } vs { id } directly).
+    return data?.user?._id || data?.user?.id || data?._id || data?.id || null;
+  } catch {
+    return null;
+  }
+}
+
+export async function POST(req: NextRequest) {
+  const userId = await getUserId(req);
+  if (!userId) {
     return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   }
 
-  const isAdmin = await checkAdmin(token);
-  if (!isAdmin) {
-    return NextResponse.json({ error: 'Admin only.' }, { status: 403 });
+  const formData = await req.formData();
+  const audio = formData.get('audio');
+  const language = formData.get('language');
+  const scriptId = formData.get('scriptId');
+  const consent = formData.get('consent');
+  const consentText = formData.get('consentText');
+
+  if (!(audio instanceof File) || typeof language !== 'string' || !language) {
+    return NextResponse.json({ error: 'Missing audio or language.' }, { status: 400 });
   }
 
+  if (consent !== 'true' || typeof consentText !== 'string' || !consentText) {
+    return NextResponse.json({ error: 'Consent is required before submitting.' }, { status: 400 });
+  }
+
+  if (audio.size > MAX_SIZE_BYTES) {
+    return NextResponse.json({ error: 'Recording is too large.' }, { status: 400 });
+  }
+
+  const alreadySubmitted = await hasExistingSubmission(language, userId);
+  if (alreadySubmitted) {
+    return NextResponse.json(
+      { error: `You've already submitted a ${language} recording.` },
+      { status: 409 }
+    );
+  }
+
+  const cleanLang = language.replace(/[^a-zA-Z]/g, '');
+  const ext = audio.type.includes('mp4') ? 'm4a' : 'webm';
+  const filename = `${cleanLang}_${userId}_${Date.now()}.${ext}`;
+
+  const arrayBuffer = await audio.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
   try {
-    const [files, userMap] = await Promise.all([listSubmissions(), getUserMap(token)]);
-
-    const submissions: ChallengeSubmission[] = [];
-
-    for (const file of files) {
-      const match = file.name.match(FILENAME_RE);
-      if (!match) continue; // ignore anything that doesn't fit our naming convention
-
-      const [, language, userId, timestampMs] = match;
-      const user = userMap.get(userId);
-
-      submissions.push({
-        fileId: file.id,
-        fileName: file.name,
-        language,
-        userId,
-        userName: user?.name ?? 'Unknown user',
-        userEmail: user?.email ?? 'N/A',
-        submittedAt: file.createdTime || new Date(Number(timestampMs)).toISOString(),
-        sizeBytes: Number(file.size) || 0,
-        driveUrl: `https://drive.google.com/file/d/${file.id}/view`,
-      });
-    }
-
-    const byLanguage: Record<string, number> = {};
-    for (const s of submissions) {
-      byLanguage[s.language] = (byLanguage[s.language] || 0) + 1;
-    }
-
-    return NextResponse.json({
-      success: true,
-      total: submissions.length,
-      byLanguage,
-      submissions,
+    const fileId = await uploadToDrive({
+      filename,
+      mimeType: audio.type || 'application/octet-stream',
+      buffer,
     });
+
+    // consentText and scriptId aren't stored anywhere yet since there's no
+    // database — they arrive here in case you want to log them or write
+    // them to a sidecar file/sheet later. For now the filename (language +
+    // userId + timestamp) is the only persisted record.
+    void scriptId;
+    void consentText;
+
+    return NextResponse.json({ success: true, fileId });
   } catch (err) {
-    console.error('Failed to list challenge submissions:', err);
-    return NextResponse.json({ error: 'Failed to load submissions.' }, { status: 500 });
+    console.error('Drive upload failed:', err);
+    return NextResponse.json({ error: 'Upload failed. Please try again.' }, { status: 500 });
   }
 }
