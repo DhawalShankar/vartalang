@@ -255,6 +255,11 @@ export default function ChallengeStartPage() {
         body: formData,
       });
 
+      if (res.status === 409) {
+        setError(`You've already submitted a recording for ${language}. Only one attempt per language is allowed.`);
+        return;
+      }
+
       if (!res.ok) throw new Error('Upload failed');
 
       setSubmitted(true);
