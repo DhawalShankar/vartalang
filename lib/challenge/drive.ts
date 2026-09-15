@@ -32,6 +32,11 @@ function getDriveClient() {
   return google.drive({ version: 'v3', auth: oauth2Client });
 }
 
+/**
+ * Checks whether this user has already submitted a recording for this
+ * language, by looking for a filename that starts with "Language_UserID_".
+ * This is our stand-in for a database row — the filename itself is the record.
+ */
 export async function hasExistingSubmission(language: string, userId: string): Promise<boolean> {
   const drive = getDriveClient();
   const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
@@ -53,6 +58,10 @@ interface UploadParams {
   buffer: Buffer;
 }
 
+/**
+ * Uploads one recording into the shared challenge folder.
+ * Returns the new file's Drive ID.
+ */
 export async function uploadToDrive({ filename, mimeType, buffer }: UploadParams): Promise<string> {
   const drive = getDriveClient();
   const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
@@ -74,4 +83,50 @@ export async function uploadToDrive({ filename, mimeType, buffer }: UploadParams
   }
 
   return res.data.id;
+}
+
+export interface DriveSubmissionFile {
+  id: string;
+  name: string;
+  createdTime: string;
+  size: string;
+}
+
+/**
+ * Lists every recording currently in the challenge folder, newest first.
+ * Paginates through Drive's results so it works past the 1000-file mark.
+ * Used by the admin challenge page — this file itself has no notion of
+ * "users" or "languages", it just hands back raw Drive file records.
+ */
+export async function listSubmissions(): Promise<DriveSubmissionFile[]> {
+  const drive = getDriveClient();
+  const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+
+  const files: DriveSubmissionFile[] = [];
+  let pageToken: string | undefined;
+
+  do {
+    const res = await drive.files.list({
+      q: `'${folderId}' in parents and trashed = false`,
+      fields: 'nextPageToken, files(id, name, createdTime, size)',
+      orderBy: 'createdTime desc',
+      pageSize: 1000,
+      pageToken,
+    });
+
+    for (const f of res.data.files ?? []) {
+      if (f.id && f.name) {
+        files.push({
+          id: f.id,
+          name: f.name,
+          createdTime: f.createdTime ?? '',
+          size: f.size ?? '0',
+        });
+      }
+    }
+
+    pageToken = res.data.nextPageToken ?? undefined;
+  } while (pageToken);
+
+  return files;
 }
