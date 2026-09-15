@@ -249,7 +249,7 @@ export default function ChallengeStartPage() {
     formData.append('consentText', CONSENT_TEXT);
 
     try {
-      const res = await fetch(`${API_URL}/challenge/submit`, {
+      const res = await fetch(`/api/challenge/submit`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
