@@ -9,6 +9,7 @@ import {
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useDarkMode } from '@/lib/DarkModeContext';
+import { LANGUAGES, CONSENT_TEXT, pickScript, ScriptVariant } from '@/lib/challenge/scripts';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
@@ -20,57 +21,6 @@ interface ChallengeUser {
   name: string;
   email: string;
 }
-
-interface ScriptVariant {
-  id: string;
-  text: string;
-}
-
-/*
- * One script per language for now. Add more entries to any array to get
- * randomised variants — the page already picks one at random per attempt.
- * Languages without their own script fall back to the English master script.
- */
-const SCRIPTS: Record<string, ScriptVariant[]> = {
-  English: [
-    {
-      id: 'en-v1',
-      text: `The morning market was full of colour — vendors calling out prices, the smell of fresh spices in the air, and children running between the stalls.
-
-Please note today's date is the fifteenth of September, two thousand twenty-six. Our contact number is nine, eight, seven, six, five, four, three, two, one, zero.
-
-Good morning! Thank you for calling — how may I help you today? I'd be happy to check that for you right away.
-
-I can't believe we won the match — this is the best day ever! On a calmer note, please take a seat, and I'll be with you shortly.
-
-Sixty slippery seashells stood silently on the sandy shore.`,
-    },
-  ],
-  Hindi: [
-    {
-      id: 'hi-v1',
-      text: `सुबह का बाज़ार रंगों से भरा हुआ था — दुकानदार दाम पुकार रहे थे, हवा में ताज़े मसालों की खुशबू थी, और बच्चे दुकानों के बीच दौड़ रहे थे।
-
-कृपया ध्यान दें, आज की तारीख़ है पंद्रह सितंबर, दो हज़ार छब्बीस। हमारा संपर्क नंबर है नौ, आठ, सात, छह, पाँच, चार, तीन, दो, एक, शून्य।
-
-नमस्ते! फ़ोन करने के लिए धन्यवाद — मैं आपकी किस तरह मदद कर सकता हूँ? मैं अभी आपके लिए यह देख लेता हूँ।
-
-यक़ीन नहीं हो रहा कि हम मैच जीत गए — आज का दिन सबसे शानदार है! अब शांति से, आप बैठिए, मैं थोड़ी देर में आपके पास आता हूँ।
-
-कच्चा पापड़, पक्का पापड़ — साठ सीपियाँ समंदर के किनारे शांत खड़ी थीं।`,
-    },
-  ],
-};
-
-const LANGUAGES = [
-  'Hindi', 'English', 'Assamese', 'Bengali', 'Bodo', 'Dogri', 'Gujarati',
-  'Kannada', 'Kashmiri', 'Konkani', 'Maithili', 'Malayalam', 'Manipuri (Meitei)',
-  'Marathi', 'Nepali', 'Odia', 'Punjabi', 'Sanskrit', 'Santali', 'Sindhi',
-  'Tamil', 'Telugu', 'Urdu',
-];
-
-const CONSENT_TEXT =
-  "I confirm I am 18 or older and that this recording is my own voice. I understand VartaLang will evaluate this recording for quality and language proficiency, and may allow verified companies to listen to it once, without revealing my name or contact details, so they can evaluate it for hiring purposes. If a company is interested after listening, VartaLang will contact me and I can choose whether or not to connect with them. This does not guarantee I will be hired. Recordings are processed using third-party AI transcription tools for quality scoring.";
 
 type Step = 'language' | 'script' | 'review';
 
@@ -146,11 +96,6 @@ export default function ChallengeStartPage() {
   }, [audioUrl]);
 
   /* ---------------- Flow ---------------- */
-  const pickScript = (lang: string) => {
-    const pool = SCRIPTS[lang] || SCRIPTS.English;
-    return pool[Math.floor(Math.random() * pool.length)];
-  };
-
   const handleLanguageContinue = () => {
     if (!language) return;
     setScript(pickScript(language));
@@ -411,9 +356,12 @@ export default function ChallengeStartPage() {
                   and don't worry if you don't reach the end.
                 </p>
 
-                <div className={`p-5 rounded-xl mb-5 whitespace-pre-line leading-relaxed ${
-                  darkMode ? 'bg-orange-900/20 text-orange-100' : 'bg-orange-50 text-gray-800'
-                }`}>
+                <div
+                  dir="auto"
+                  className={`p-5 rounded-xl mb-5 whitespace-pre-line leading-relaxed ${
+                    darkMode ? 'bg-orange-900/20 text-orange-100' : 'bg-orange-50 text-gray-800'
+                  }`}
+                >
                   {script.text}
                 </div>
 
