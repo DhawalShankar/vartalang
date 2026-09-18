@@ -45,7 +45,7 @@ export default function Footer() {
   ];
 
   const socials = [
-    { name: "Instagram", href: "https://instagram.com/vartalang", icon: Instagram },
+    { name: "Instagram", href: "https://instagram.com/cosmoindiaprakashan", icon: Instagram },
     { name: "Twitter", href: "https://x.com/vartalang", icon: Twitter },
     { name: "WhatsApp", href: "https://wa.me/7388270331", icon: MessageCircle },
   ];
