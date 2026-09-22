@@ -1119,45 +1119,31 @@ function ChatsContent() {
                               </div>
 
                               {/* translation shown alongside, never instead of, the original */}
-                              {hasTranslation && (
-                                <div className={`mt-1.5 pt-1.5 border-t flex items-start gap-1.5 ${
-                                  isMe 
-                                    ? "border-white/20" 
-                                    : darkMode ? "border-orange-700/30" : "border-orange-200"
-                                }`}>
-                                  <Languages className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${
-                                    isMe ? "text-white/70" : darkMode ? "text-orange-300/70" : "text-orange-600/70"
-                                  }`} />
-                                  <div className="flex-1">
-                                    {translationLabel && (
-                                      <p className={`text-[10px] uppercase tracking-wide mb-0.5 ${
-                                        isMe ? "text-white/60" : darkMode ? "text-orange-300/60" : "text-orange-600/60"
-                                      }`}>
-                                        Translated to {translationLabel}
-                                      </p>
-                                    )}
-                                    <div className="flex items-start gap-1.5">
-                                      <p className={`text-sm italic wrap-break-word flex-1 ${
+                                {hasTranslation && (
+                                  <div className={`mt-1.5 pt-1.5 border-t flex items-start gap-1.5 ${
+                                    isMe 
+                                      ? "border-white/20" 
+                                      : darkMode ? "border-orange-700/30" : "border-orange-200"
+                                  }`}>
+                                    <Languages className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${
+                                      isMe ? "text-white/70" : darkMode ? "text-orange-300/70" : "text-orange-600/70"
+                                    }`} />
+                                    <div className="flex-1">
+                                      {translationLabel && (
+                                        <p className={`text-[10px] uppercase tracking-wide mb-0.5 ${
+                                          isMe ? "text-white/60" : darkMode ? "text-orange-300/60" : "text-orange-600/60"
+                                        }`}>
+                                          Translated to {translationLabel}
+                                        </p>
+                                      )}
+                                      <p className={`text-sm italic wrap-break-word ${
                                         isMe ? "text-white/85" : darkMode ? "text-orange-100/85" : "text-orange-900/85"
                                       }`}>
                                         {msg.translatedText}
                                       </p>
-                                      {!isMe && (
-                                        <button
-                                          onClick={() => handlePronounce(currentChatDetail.id, msg._id, true)}
-                                          disabled={playingId !== null}
-                                          className={`shrink-0 p-1 rounded transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-                                            darkMode ? "hover:bg-orange-800/40 text-orange-300" : "hover:bg-orange-100 text-orange-700"
-                                          } ${isPlaying ? "animate-pulse" : ""}`}
-                                          title="Listen to translation"
-                                        >
-                                          <Volume2 className="w-3.5 h-3.5" />
-                                        </button>
-                                      )}
                                     </div>
                                   </div>
-                                </div>
-                              )}
+                                )}
                             </div>
                             
                             <div className="flex items-center gap-1 mt-1 px-2">
