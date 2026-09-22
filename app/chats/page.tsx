@@ -15,13 +15,49 @@ import {
   Shield,
   Trash2,
   AlertTriangle,
-  User as UserIcon
+  User as UserIcon,
+  Languages // ✅ icon for the translated-text caption + toggle button
 } from "lucide-react";
 import { useDarkMode } from '@/lib/DarkModeContext';
 import { createChatSocket, destroyChatSocket } from '@/lib/socketClient';
 import type { Socket } from "socket.io-client";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
+// ✅ display names for the BCP-47 codes the backend stores on
+// translatedLang, so the UI can show "Translated to Hindi" instead of
+// a raw code like "hi-IN". Kept in sync with src/utils/languageCodes.js
+// on the backend. Unrecognized codes just fall back to the raw code.
+const LANGUAGE_LABELS: Record<string, string> = {
+  "en-IN": "English",
+  "hi-IN": "Hindi",
+  "bn-IN": "Bengali",
+  "gu-IN": "Gujarati",
+  "kn-IN": "Kannada",
+  "ml-IN": "Malayalam",
+  "mr-IN": "Marathi",
+  "od-IN": "Odia",
+  "pa-IN": "Punjabi",
+  "ta-IN": "Tamil",
+  "te-IN": "Telugu",
+  "ur-IN": "Urdu",
+  "as-IN": "Assamese",
+  "sa-IN": "Sanskrit",
+  "ne-IN": "Nepali",
+  "kok-IN": "Konkani",
+  "mai-IN": "Maithili",
+  "brx-IN": "Bodo",
+  "doi-IN": "Dogri",
+  "ks-IN": "Kashmiri",
+  "mni-IN": "Manipuri",
+  "sat-IN": "Santali",
+  "sd-IN": "Sindhi"
+};
+
+const getLanguageLabel = (code?: string | null) => {
+  if (!code) return null;
+  return LANGUAGE_LABELS[code] || code;
+};
 
 interface User {
   _id: string;
@@ -36,6 +72,11 @@ interface Message {
   _id: string;
   sender: string;
   text: string;
+  // ✅ present only once translated (either via send-time background job
+  // or via view-time backfill on fetch). Always optional — every place
+  // that reads these must handle them being missing/null.
+  translatedText?: string | null;
+  translatedLang?: string | null;
   timestamp: string;
   read: boolean;
 }
@@ -77,6 +118,8 @@ function ChatsContent() {
   const [reportReason, setReportReason] = useState("");
   const [showPledgeModal, setShowPledgeModal] = useState(false);
   const [hasPledged, setHasPledged] = useState(false);
+  // ✅ NEW: local toggle state for the recipient's translation-on-view setting
+  const [translationEnabled, setTranslationEnabled] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const currentUserId = typeof window !== 'undefined' ? localStorage.getItem("userId") : null;
 
@@ -177,6 +220,8 @@ function ChatsContent() {
         }, 500);
       }
 
+      // ✅ message arrives untranslated (send-time translation was removed);
+      // "message_translated" patches it in shortly after, if applicable.
       return {
         ...prev,
         messages: [...prev.messages, message],
@@ -203,6 +248,24 @@ function ChatsContent() {
       };
     });
   }, [currentUserId]);
+
+  // ✅ NEW: backend's background/backfill translation lands here and patches
+  // the matching message in-place if the chat is currently open.
+  const handleMessageTranslated = useCallback((data: any) => {
+    console.log("🌐 Message translated:", data);
+    const { chatId, messageId, translatedText, translatedLang } = data;
+
+    setCurrentChatDetail(prev => {
+      if (!prev || prev.id !== chatId) return prev;
+
+      return {
+        ...prev,
+        messages: prev.messages.map(m =>
+          m._id === messageId ? { ...m, translatedText, translatedLang } : m
+        ),
+      };
+    });
+  }, []);
 
   const handleUserBlocked = useCallback(() => {
     console.log("🚫 User blocked event");
@@ -240,6 +303,7 @@ function ChatsContent() {
     socket.on("messages_read", handleMessagesRead);
     socket.on("user_blocked", handleUserBlocked);
     socket.on("user_unblocked", handleUserUnblocked);
+    socket.on("message_translated", handleMessageTranslated); // ✅ NEW
 
     return () => {
       console.log("🧹 Cleaning up socket...");
@@ -249,9 +313,10 @@ function ChatsContent() {
       socket.off("messages_read");
       socket.off("user_blocked");
       socket.off("user_unblocked");
+      socket.off("message_translated"); // ✅ NEW
       destroyChatSocket();
     };
-  }, [handleReceiveMessage, handleMessagesRead, handleUserBlocked, handleUserUnblocked]);
+  }, [handleReceiveMessage, handleMessagesRead, handleUserBlocked, handleUserUnblocked, handleMessageTranslated]);
 
   useEffect(() => {
     if (!selectedChat || !socketRef.current || !isConnected) return;
@@ -386,6 +451,10 @@ function ChatsContent() {
       _id: tempMessageId,
       sender: currentUserId || '',
       text: messageInput.trim(),
+      // ✅ translation is never computed at send time now — it's populated
+      // later via the "message_translated" socket event, if applicable.
+      translatedText: null,
+      translatedLang: null,
       timestamp: new Date().toISOString(),
       read: false
     };
@@ -429,6 +498,8 @@ function ChatsContent() {
               _id: data.messageData._id,
               sender: data.messageData.sender.toString(),
               text: data.messageData.text,
+              translatedText: data.messageData.translatedText ?? null,
+              translatedLang: data.messageData.translatedLang ?? null,
               timestamp: data.messageData.timestamp,
               read: data.messageData.read
             } : msg
@@ -494,6 +565,36 @@ function ChatsContent() {
 
   const handleViewProfile = (userId: string) => {
     router.push(`/profile/${userId}`);
+  };
+
+  // ✅ NEW: flips the recipient's translation-on-view setting on the backend,
+  // then refetches the open chat so any backfilled translations come back
+  // immediately.
+  const handleToggleTranslation = async () => {
+    const token = localStorage.getItem("token");
+    const next = !translationEnabled;
+
+    try {
+      const res = await fetch(`${API_URL}/chats/translation-settings`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ enabled: next }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update translation settings");
+
+      setTranslationEnabled(next);
+
+      if (selectedChat) {
+        await fetchChatMessages(selectedChat);
+      }
+    } catch (error) {
+      console.error("Toggle translation error:", error);
+      alert("Failed to update translation setting");
+    }
   };
 
   const handleBlockUser = async () => {
@@ -829,6 +930,22 @@ function ChatsContent() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 relative">
+                    {/* ✅ NEW: translation toggle */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleTranslation();
+                      }}
+                      className={`p-2 rounded-lg transition-all ${
+                        translationEnabled
+                          ? "bg-orange-500 text-white"
+                          : darkMode ? "hover:bg-orange-900/30 text-orange-300" : "hover:bg-orange-100 text-orange-600"
+                      }`}
+                      title={translationEnabled ? "Translation on" : "Translation off"}
+                    >
+                      <Languages className="w-5 h-5" />
+                    </button>
+
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
@@ -927,6 +1044,9 @@ function ChatsContent() {
                   ) : (
                     currentChatDetail.messages.map((msg) => {
                       const isMe = msg.sender.toString() === currentUserId?.toString();
+                      // ✅ only shown on the recipient's own view, never the sender's
+                      const hasTranslation = !isMe && Boolean(msg.translatedText);
+                      const translationLabel = getLanguageLabel(msg.translatedLang);
                       
                       return (
                         <div
@@ -949,7 +1069,35 @@ function ChatsContent() {
                                     : "bg-white text-orange-950 border border-orange-200"
                               }`}
                             >
+                              {/* Original text always stays primary */}
                               <p className="text-sm wrap-break-word">{msg.text}</p>
+
+                              {/* translation shown alongside, never instead of, the original */}
+                              {hasTranslation && (
+                                <div className={`mt-1.5 pt-1.5 border-t flex items-start gap-1.5 ${
+                                  isMe 
+                                    ? "border-white/20" 
+                                    : darkMode ? "border-orange-700/30" : "border-orange-200"
+                                }`}>
+                                  <Languages className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${
+                                    isMe ? "text-white/70" : darkMode ? "text-orange-300/70" : "text-orange-600/70"
+                                  }`} />
+                                  <div>
+                                    {translationLabel && (
+                                      <p className={`text-[10px] uppercase tracking-wide mb-0.5 ${
+                                        isMe ? "text-white/60" : darkMode ? "text-orange-300/60" : "text-orange-600/60"
+                                      }`}>
+                                        Translated to {translationLabel}
+                                      </p>
+                                    )}
+                                    <p className={`text-sm italic wrap-break-word ${
+                                      isMe ? "text-white/85" : darkMode ? "text-orange-100/85" : "text-orange-900/85"
+                                    }`}>
+                                      {msg.translatedText}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                             
                             <div className="flex items-center gap-1 mt-1 px-2">
