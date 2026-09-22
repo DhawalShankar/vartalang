@@ -16,7 +16,8 @@ import {
   Trash2,
   AlertTriangle,
   User as UserIcon,
-  Languages // ✅ icon for the translated-text caption + toggle button
+  Languages,
+  Volume2 
 } from "lucide-react";
 import { useDarkMode } from '@/lib/DarkModeContext';
 import { createChatSocket, destroyChatSocket } from '@/lib/socketClient';
@@ -118,8 +119,10 @@ function ChatsContent() {
   const [reportReason, setReportReason] = useState("");
   const [showPledgeModal, setShowPledgeModal] = useState(false);
   const [hasPledged, setHasPledged] = useState(false);
-  // ✅ NEW: local toggle state for the recipient's translation-on-view setting
   const [translationEnabled, setTranslationEnabled] = useState(false);
+  // ✅ NEW: tracks which message's pronunciation is currently loading/playing,
+  // so we can disable that one button and show a loading state on tap.
+  const [playingId, setPlayingId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const currentUserId = typeof window !== 'undefined' ? localStorage.getItem("userId") : null;
 
@@ -249,7 +252,7 @@ function ChatsContent() {
     });
   }, [currentUserId]);
 
-  // ✅ NEW: backend's background/backfill translation lands here and patches
+  // ✅ backend's background/backfill translation lands here and patches
   // the matching message in-place if the chat is currently open.
   const handleMessageTranslated = useCallback((data: any) => {
     console.log("🌐 Message translated:", data);
@@ -303,7 +306,7 @@ function ChatsContent() {
     socket.on("messages_read", handleMessagesRead);
     socket.on("user_blocked", handleUserBlocked);
     socket.on("user_unblocked", handleUserUnblocked);
-    socket.on("message_translated", handleMessageTranslated); // ✅ NEW
+    socket.on("message_translated", handleMessageTranslated);
 
     return () => {
       console.log("🧹 Cleaning up socket...");
@@ -313,7 +316,7 @@ function ChatsContent() {
       socket.off("messages_read");
       socket.off("user_blocked");
       socket.off("user_unblocked");
-      socket.off("message_translated"); // ✅ NEW
+      socket.off("message_translated");
       destroyChatSocket();
     };
   }, [handleReceiveMessage, handleMessagesRead, handleUserBlocked, handleUserUnblocked, handleMessageTranslated]);
@@ -451,8 +454,6 @@ function ChatsContent() {
       _id: tempMessageId,
       sender: currentUserId || '',
       text: messageInput.trim(),
-      // ✅ translation is never computed at send time now — it's populated
-      // later via the "message_translated" socket event, if applicable.
       translatedText: null,
       translatedLang: null,
       timestamp: new Date().toISOString(),
@@ -526,6 +527,38 @@ function ChatsContent() {
     }
   };
 
+  // ✅ NEW: fetches (or hits the cache for) pronunciation audio for one
+  // message and plays it. `useTranslated` decides whether to speak the
+  // translated text or the original — pass in whichever is currently shown.
+  const handlePronounce = async (chatId: string, messageId: string, useTranslated: boolean) => {
+    if (playingId) return; // one at a time, avoid overlapping audio
+
+    const token = localStorage.getItem("token");
+    setPlayingId(messageId);
+
+    try {
+      const res = await fetch(
+        `${API_URL}/chats/${chatId}/message/${messageId}/pronounce?lang=${useTranslated ? "translated" : "original"}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to fetch pronunciation");
+
+      const data = await res.json();
+      const audio = new Audio(`data:audio/${data.audioFormat};base64,${data.audioData}`);
+
+      audio.onended = () => setPlayingId(null);
+      audio.onerror = () => setPlayingId(null);
+
+      await audio.play();
+    } catch (error) {
+      console.error("Pronounce error:", error);
+      setPlayingId(null);
+    }
+  };
+
   const handleChatClick = (chatId: string) => {
     if (!hasPledged) {
       setShowPledgeModal(true);
@@ -567,9 +600,6 @@ function ChatsContent() {
     router.push(`/profile/${userId}`);
   };
 
-  // ✅ NEW: flips the recipient's translation-on-view setting on the backend,
-  // then refetches the open chat so any backfilled translations come back
-  // immediately.
   const handleToggleTranslation = async () => {
     const token = localStorage.getItem("token");
     const next = !translationEnabled;
@@ -930,7 +960,7 @@ function ChatsContent() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 relative">
-                    {/* ✅ NEW: translation toggle */}
+                    {/* ✅ translation toggle */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -1047,6 +1077,7 @@ function ChatsContent() {
                       // ✅ only shown on the recipient's own view, never the sender's
                       const hasTranslation = !isMe && Boolean(msg.translatedText);
                       const translationLabel = getLanguageLabel(msg.translatedLang);
+                      const isPlaying = playingId === msg._id;
                       
                       return (
                         <div
@@ -1069,8 +1100,23 @@ function ChatsContent() {
                                     : "bg-white text-orange-950 border border-orange-200"
                               }`}
                             >
-                              {/* Original text always stays primary */}
-                              <p className="text-sm wrap-break-word">{msg.text}</p>
+                              {/* Original text always stays primary, with a
+                                  pronounce button next to it — recipient side only */}
+                              <div className="flex items-start gap-1.5">
+                                <p className="text-sm wrap-break-word flex-1">{msg.text}</p>
+                                {!isMe && (
+                                  <button
+                                    onClick={() => handlePronounce(currentChatDetail.id, msg._id, false)}
+                                    disabled={playingId !== null}
+                                    className={`shrink-0 p-1 rounded transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                                      darkMode ? "hover:bg-orange-800/40 text-orange-300" : "hover:bg-orange-100 text-orange-700"
+                                    } ${isPlaying ? "animate-pulse" : ""}`}
+                                    title="Listen"
+                                  >
+                                    <Volume2 className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                              </div>
 
                               {/* translation shown alongside, never instead of, the original */}
                               {hasTranslation && (
@@ -1082,7 +1128,7 @@ function ChatsContent() {
                                   <Languages className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${
                                     isMe ? "text-white/70" : darkMode ? "text-orange-300/70" : "text-orange-600/70"
                                   }`} />
-                                  <div>
+                                  <div className="flex-1">
                                     {translationLabel && (
                                       <p className={`text-[10px] uppercase tracking-wide mb-0.5 ${
                                         isMe ? "text-white/60" : darkMode ? "text-orange-300/60" : "text-orange-600/60"
@@ -1090,11 +1136,25 @@ function ChatsContent() {
                                         Translated to {translationLabel}
                                       </p>
                                     )}
-                                    <p className={`text-sm italic wrap-break-word ${
-                                      isMe ? "text-white/85" : darkMode ? "text-orange-100/85" : "text-orange-900/85"
-                                    }`}>
-                                      {msg.translatedText}
-                                    </p>
+                                    <div className="flex items-start gap-1.5">
+                                      <p className={`text-sm italic wrap-break-word flex-1 ${
+                                        isMe ? "text-white/85" : darkMode ? "text-orange-100/85" : "text-orange-900/85"
+                                      }`}>
+                                        {msg.translatedText}
+                                      </p>
+                                      {!isMe && (
+                                        <button
+                                          onClick={() => handlePronounce(currentChatDetail.id, msg._id, true)}
+                                          disabled={playingId !== null}
+                                          className={`shrink-0 p-1 rounded transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                                            darkMode ? "hover:bg-orange-800/40 text-orange-300" : "hover:bg-orange-100 text-orange-700"
+                                          } ${isPlaying ? "animate-pulse" : ""}`}
+                                          title="Listen to translation"
+                                        >
+                                          <Volume2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               )}
