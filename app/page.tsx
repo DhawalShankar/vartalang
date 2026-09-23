@@ -271,6 +271,29 @@ export default function VartaLangLanding() {
               <p className={`text-sm ${darkMode ? 'text-orange-300/60' : 'text-gray-500'}`}>
                 22+ Languages • ISL & Braille supported
               </p>
+
+              <div className="mt-4">
+                  <a  
+                href="https://www.sarvam.ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Visit Sarvam AI"
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border transition-all duration-200 hover:scale-105 hover:shadow-md cursor-pointer ${
+                  darkMode
+                    ? 'bg-orange-900/10 border-orange-800/30 hover:bg-orange-900/20 hover:border-orange-700/50'
+                    : 'bg-white border-orange-200 hover:border-orange-300 hover:bg-orange-50'
+                }`}
+              >
+                <span className={`text-xs font-medium ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
+                  Now powered by
+                </span>
+                <img
+                  src={darkMode ? '/sarvam-logo-white.png' : '/sarvam-logo-dark.png'}
+                  alt="Sarvam AI"
+                  className="h-4 w-auto"
+                />
+              </a>
+            </div>
             </div>
 
             {/* RIGHT: Stats */}
