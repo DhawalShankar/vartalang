@@ -46,7 +46,7 @@ export default function Footer() {
 
   const socials = [
     { name: "Instagram", href: "https://instagram.com/cosmoindiaprakashan", icon: Instagram },
-    { name: "Twitter", href: "https://x.com/vartalang", icon: Twitter },
+    { name: "Twitter", href: "https://x.com/IndiaCosmo", icon: Twitter },
     { name: "WhatsApp", href: "https://wa.me/7388270331", icon: MessageCircle },
   ];
 
@@ -64,7 +64,7 @@ export default function Footer() {
 
         <div className="max-w-7xl mx-auto px-4 py-16 relative z-10">
           {/* Top Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12 mb-12">
             {/* Brand Column */}
             <div className="lg:col-span-2">
               <Link href="/" className="flex items-center gap-2.5 mb-4">
@@ -77,32 +77,12 @@ export default function Footer() {
                   VartaLang
                 </span>
               </Link>
-              <p className={`text-sm leading-relaxed mb-6 max-w-sm ${
+              <p className={`text-sm leading-relaxed max-w-sm ${
                 darkMode ? "text-orange-200/70" : "text-gray-600"
               }`}>
                 India's inclusive language learning ecosystem. Connecting learners with creators, tradition with opportunity—for every Indian.
-                <br /> Images shown are for representation purposes only. 
+                <br /><br />An Initiative of <a href="https://cosmoindiaprakashan.in">Cosmo India Prakashan</a>
               </p>
-              
-              {/* Social Links */}
-              <div className="flex items-center gap-3">
-                {socials.map((social) => (
-                  <a
-                    key={social.name}
-                    href={social.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={social.name}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all hover:scale-110 ${
-                      darkMode
-                        ? "bg-orange-900/20 border-orange-800/40 text-orange-300 hover:bg-orange-900/30"
-                        : "bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100"
-                    }`}
-                  >
-                    <social.icon className="w-4 h-4" />
-                  </a>
-                ))}
-              </div>
             </div>
 
             {/* Links Columns */}
@@ -144,13 +124,51 @@ export default function Footer() {
                 </ul>
               </div>
             ))}
+
+            {/* Connect Column — Powered by Sarvam AI + Socials */}
+            <div>
+              <h4 className={`text-sm font-semibold mb-4 ${
+                darkMode ? "text-orange-200" : "text-gray-900"
+              }`}>
+                Connect
+              </h4>
+
+              {/* Social Links */}
+              <div className="flex items-center gap-3">
+                {socials.map((social) => (
+                  <a
+                    key={social.name}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={social.name}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all hover:scale-110 ${
+                      darkMode
+                        ? "bg-orange-900/20 border-orange-800/40 text-orange-300 hover:bg-orange-900/30"
+                        : "bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100"
+                    }`}
+                  >
+                    <social.icon className="w-4 h-4" />
+                  </a>
+                ))}
+              </div>
+                <div className={`inline-flex items-center gap-1.5 text-xs font-medium mt-6 px-3 py-1.5 rounded-full border ${
+                darkMode
+                  ? "bg-orange-900/20 border-orange-800/40 text-orange-300/80"
+                  : "bg-orange-50 border-orange-200 text-orange-700"
+              }`}>
+                Powered by <span className="font-semibold">Sarvam AI</span>
+              </div>
+            </div>
+            
           </div>
+
 
           {/* Contact Info */}
           <div className={`py-6 mb-6 border-y ${darkMode ? "border-orange-900/30" : "border-orange-100"}`}>
             <div className="flex flex-wrap gap-6 justify-center md:justify-start">
               <a
-                href="mailto:cosmoindiaprakashan@gmail.com"
+                href="mailto:dhawal@cosmoindiaprakashan.in"
                 className={`flex items-center gap-2 text-sm transition-colors ${
                   darkMode
                     ? "text-orange-300/70 hover:text-orange-200"
@@ -158,7 +176,7 @@ export default function Footer() {
                 }`}
               >
                 <Mail className="w-4 h-4" />
-                cosmoindiaprakashan@gmail.com
+                dhawal@cosmoindiaprakashan.in
               </a>
               <div className={`flex items-center gap-2 text-sm ${
                 darkMode ? "text-orange-300/70" : "text-gray-600"
