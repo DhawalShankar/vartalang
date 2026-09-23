@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Yatra_One } from "next/font/google";
 import Script from "next/script";
-// The global stylesheet is resolved by Next.js at build time.
-// @ts-expect-error TypeScript may not have a declaration for CSS side-effect imports.
 import "./globals.css";
 import { DarkModeProvider } from "@/lib/DarkModeContext";
 import { AuthProvider } from "@/lib/AuthContext";
