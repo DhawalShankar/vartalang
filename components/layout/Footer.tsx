@@ -81,8 +81,27 @@ export default function Footer() {
                 darkMode ? "text-orange-200/70" : "text-gray-600"
               }`}>
                 India's inclusive language learning ecosystem. Connecting learners with creators, tradition with opportunity—for every Indian.
-                <br /><br />An Initiative of <a href="https://cosmoindiaprakashan.in">Cosmo India Prakashan</a>
               </p>
+
+              {/* An Initiative of Cosmo India Prakashan badge */}
+              <div className={`mt-4 inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border ${
+                darkMode
+                  ? "bg-orange-900/20 border-orange-800/40 text-orange-300/80"
+                  : "bg-orange-50 border-orange-200 text-orange-700"
+              }`}>
+                <span>An Initiative of</span>
+                <a                
+                    href="https://cosmoindiaprakashan.in"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ fontFamily: "var(--font-yatra-one)" }}
+                    className={`transition-colors hover:underline underline-offset-2 ${
+                      darkMode ? "hover:text-orange-100" : "hover:text-orange-900"
+                    }`}
+                  >
+                    Cosmo India Prakashan
+                  </a>
+              </div>
             </div>
 
             {/* Links Columns */}
@@ -152,17 +171,26 @@ export default function Footer() {
                   </a>
                 ))}
               </div>
-                <div className={`inline-flex items-center gap-1.5 text-xs font-medium mt-6 px-3 py-1.5 rounded-full border ${
+
+              {/* Powered by Sarvam AI badge */}
+              <a
+                href="https://www.sarvam.ai/"
+                target="_blank"
+                rel="noopener noreferrer" 
+                className={`inline-flex items-center gap-2 text-xs font-medium mt-6 px-2 py-2 rounded-full border ${
                 darkMode
                   ? "bg-orange-900/20 border-orange-800/40 text-orange-300/80"
                   : "bg-orange-50 border-orange-200 text-orange-700"
               }`}>
-                Powered by <span className="font-semibold">Sarvam AI</span>
-              </div>
+                <span>Powered by</span>
+                <img
+                  src={darkMode ? "/sarvam-logo-white.png" : "/sarvam-logo-dark.png"}
+                  alt="Sarvam AI"
+                  className="h-3.5 w-auto"
+                />
+              </a>
             </div>
-            
           </div>
-
 
           {/* Contact Info */}
           <div className={`py-6 mb-6 border-y ${darkMode ? "border-orange-900/30" : "border-orange-100"}`}>

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Yatra_One } from "next/font/google";
 import Script from "next/script";
+// The global stylesheet is resolved by Next.js at build time.
+// @ts-expect-error TypeScript may not have a declaration for CSS side-effect imports.
 import "./globals.css";
 import { DarkModeProvider } from "@/lib/DarkModeContext";
 import { AuthProvider } from "@/lib/AuthContext";
@@ -13,6 +15,12 @@ const geistSans = Geist({
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+const yatraOne = Yatra_One({
+  variable: "--font-yatra-one",
+  weight: "400",
   subsets: ["latin"],
 });
 
@@ -33,7 +41,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${yatraOne.variable} antialiased`}>
 
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-7WM95MNBGL"
