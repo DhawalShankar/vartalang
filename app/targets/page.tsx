@@ -762,9 +762,11 @@ export default function TargetRolesPage() {
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredRoles.map((role, i) => (
-                <Link
+                <a
                   key={i}
-                  href={`/roles/${role.slug}`}
+                  href={`https://medium.com/search?q=${encodeURIComponent(role.title + ' career India')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className={`group relative p-6 rounded-2xl border transition-all duration-300 hover:scale-[1.02] overflow-hidden ${
                     darkMode 
                       ? 'bg-linear-to-br from-orange-900/10 to-red-900/5 border-orange-800/30 hover:bg-orange-900/20 hover:border-orange-700/50' 
@@ -928,7 +930,7 @@ export default function TargetRolesPage() {
 
                   {/* Hover Effect Border */}
                   <div className={`absolute inset-0 rounded-2xl bg-linear-to-r ${role.color} opacity-0 group-hover:opacity-20 transition-opacity duration-300 pointer-events-none`}></div>
-                </Link>
+                </a>
               ))}
             </div>
           )}
