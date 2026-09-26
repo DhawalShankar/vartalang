@@ -45,13 +45,22 @@ interface Report {
   timestamp: string;
 }
 
-// ✅ NEW
 interface Member {
   _id: string;
   name: string;
   email: string;
   primaryRole?: string;
   createdAt: string;
+}
+
+// ✅ NEW
+interface MatchRecord {
+  _id: string;
+  user1: { _id: string; name: string; email: string };
+  user2: { _id: string; name: string; email: string };
+  status: 'pending' | 'accepted' | 'rejected';
+  createdAt: string;
+  hasChat: boolean;
 }
 
 interface PlatformStats {
@@ -80,17 +89,19 @@ export default function AdminPortal() {
   const [stats, setStats] = useState<PlatformStats | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
-  const [members, setMembers] = useState<Member[]>([]); // ✅ NEW
-  const [memberSearch, setMemberSearch] = useState(''); // ✅ NEW
-  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]); // ✅ NEW: max 2
+  const [members, setMembers] = useState<Member[]>([]);
+  const [memberSearch, setMemberSearch] = useState('');
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]); // max 2
+  const [matches, setMatches] = useState<MatchRecord[]>([]); // ✅ NEW
+  const [matchResetLoadingId, setMatchResetLoadingId] = useState<string | null>(null); // ✅ NEW
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [showExtendModal, setShowExtendModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [resetLoadingId, setResetLoadingId] = useState<string | null>(null);
-  const [membersResetLoading, setMembersResetLoading] = useState(false); // ✅ NEW
-  const [activeTab, setActiveTab] = useState<'jobs' | 'reports' | 'users'>('jobs'); // ✅ 'users' added
+  const [membersResetLoading, setMembersResetLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'jobs' | 'reports' | 'users' | 'matches'>('jobs'); // ✅ 'matches' added
 
   useEffect(() => {
     checkAdminAccess();
@@ -117,7 +128,7 @@ export default function AdminPortal() {
       }
 
       setIsAdmin(true);
-      await Promise.all([fetchStats(), fetchJobs(), fetchReports(), fetchMembers()]); // ✅ fetchMembers added
+      await Promise.all([fetchStats(), fetchJobs(), fetchReports(), fetchMembers(), fetchMatches()]); // ✅ fetchMatches added
     } catch (error) {
       console.error('Admin check error:', error);
       router.push('/');
@@ -165,7 +176,6 @@ export default function AdminPortal() {
     }
   };
 
-  // ✅ NEW
   const fetchMembers = async () => {
     const token = localStorage.getItem('token');
     try {
@@ -176,6 +186,20 @@ export default function AdminPortal() {
       if (data.success) setMembers(data.users);
     } catch (error) {
       console.error('Fetch members error:', error);
+    }
+  };
+
+  // ✅ NEW
+  const fetchMatches = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`${API_URL}/admin/matches`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) setMatches(data.matches);
+    } catch (error) {
+      console.error('Fetch matches error:', error);
     }
   };
 
@@ -272,7 +296,7 @@ export default function AdminPortal() {
     }
   };
 
-  // ✅ Reset via a report row (existing flow, unchanged)
+  // Reset via a report row
   const handleResetConnection = async (report: Report) => {
     const reporterName = report.reporter?.name || 'this user';
     const reportedName = report.reportedUser?.name || 'the reported user';
@@ -306,7 +330,7 @@ export default function AdminPortal() {
           `chat deleted: ${data.chatDeleted ? 'yes' : 'no'}, ` +
           `${data.notificationsDeleted} notification(s) cleared.`
         );
-        await fetchStats();
+        await Promise.all([fetchStats(), fetchMatches()]);
       } else {
         alert(data.error || 'Failed to reset connection');
       }
@@ -318,21 +342,20 @@ export default function AdminPortal() {
     }
   };
 
-  // ✅ NEW: toggle a member's selection — capped at 2
+  // toggle a member's selection — capped at 2
   const toggleMemberSelection = (userId: string) => {
     setSelectedMemberIds((prev) => {
       if (prev.includes(userId)) {
         return prev.filter((id) => id !== userId);
       }
       if (prev.length >= 2) {
-        // swap out the oldest selection so a third click still feels responsive
         return [prev[1], userId];
       }
       return [...prev, userId];
     });
   };
 
-  // ✅ NEW: reset connection between the two selected members
+  // reset connection between the two selected members
   const handleResetSelectedMembers = async () => {
     if (selectedMemberIds.length !== 2) return;
 
@@ -367,7 +390,7 @@ export default function AdminPortal() {
           `${data.notificationsDeleted} notification(s) cleared.`
         );
         setSelectedMemberIds([]);
-        await fetchStats();
+        await Promise.all([fetchStats(), fetchMatches()]);
       } else {
         alert(data.error || 'Failed to reset connection');
       }
@@ -376,6 +399,49 @@ export default function AdminPortal() {
       alert('Failed to reset connection');
     } finally {
       setMembersResetLoading(false);
+    }
+  };
+
+  // ✅ NEW: reset connection directly from a match row
+  const handleResetMatch = async (match: MatchRecord) => {
+    if (
+      !confirm(
+        `Delete the match and chat between ${match.user1.name} and ${match.user2.name}?\n\n` +
+        `This removes their existing connection entirely — they will be able to match and chat again as if they never connected.`
+      )
+    ) {
+      return;
+    }
+
+    setMatchResetLoadingId(match._id);
+    const token = localStorage.getItem('token');
+
+    try {
+      const res = await fetch(
+        `${API_URL}/admin/connections/${match.user1._id}/${match.user2._id}`,
+        {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert(
+          `Connection reset: ${data.matchesDeleted} match(es) deleted, ` +
+          `chat deleted: ${data.chatDeleted ? 'yes' : 'no'}, ` +
+          `${data.notificationsDeleted} notification(s) cleared.`
+        );
+        await Promise.all([fetchMatches(), fetchStats()]);
+      } else {
+        alert(data.error || 'Failed to reset connection');
+      }
+    } catch (error) {
+      console.error('Reset match error:', error);
+      alert('Failed to reset connection');
+    } finally {
+      setMatchResetLoadingId(null);
     }
   };
 
@@ -398,7 +464,6 @@ export default function AdminPortal() {
     });
   };
 
-  // ✅ NEW: filter members by search
   const filteredMembers = members.filter((m) => {
     const q = memberSearch.trim().toLowerCase();
     if (!q) return true;
@@ -538,7 +603,6 @@ export default function AdminPortal() {
                 </span>
               )}
             </button>
-            {/* ✅ NEW TAB */}
             <button
               onClick={() => setActiveTab('users')}
               className={`px-6 py-3 rounded-xl font-semibold transition-all ${
@@ -552,6 +616,21 @@ export default function AdminPortal() {
               }`}
             >
               Users ({members.length})
+            </button>
+            {/* ✅ NEW TAB */}
+            <button
+              onClick={() => setActiveTab('matches')}
+              className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+                activeTab === 'matches'
+                  ? darkMode
+                    ? 'bg-orange-500 text-white'
+                    : 'bg-orange-600 text-white'
+                  : darkMode
+                    ? 'bg-orange-900/10 text-orange-300 border border-orange-800/30'
+                    : 'bg-white text-gray-700 border border-orange-200'
+              }`}
+            >
+              Matches ({matches.length})
             </button>
           </div>
 
@@ -763,7 +842,7 @@ export default function AdminPortal() {
             </div>
           )}
 
-          {/* ✅ NEW: Users Tab — pick any 2 members and reset their connection */}
+          {/* Users Tab — pick any 2 members and reset their connection */}
           {activeTab === 'users' && (
             <div className={`rounded-2xl border overflow-hidden ${
               darkMode ? 'bg-orange-900/10 border-orange-800/30' : 'bg-white border-orange-100'
@@ -872,6 +951,113 @@ export default function AdminPortal() {
                   </tbody>
                 </table>
               </div>
+            </div>
+          )}
+
+          {/* ✅ NEW: Matches Tab — every match that ever existed */}
+          {activeTab === 'matches' && (
+            <div className={`rounded-2xl border overflow-hidden ${
+              darkMode ? 'bg-orange-900/10 border-orange-800/30' : 'bg-white border-orange-100'
+            }`}>
+              <div className="p-6 border-b border-orange-800/30">
+                <h2 className={`text-xl font-bold ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                  All Matches ({matches.length})
+                </h2>
+                <p className={`text-sm mt-1 ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>
+                  Every match record that currently exists, with its chat status
+                </p>
+              </div>
+
+              {matches.length === 0 ? (
+                <div className="p-12 text-center">
+                  <CheckCircle className={`w-16 h-16 mx-auto mb-4 ${darkMode ? 'text-green-400' : 'text-green-600'}`} />
+                  <p className={`text-lg font-semibold ${darkMode ? 'text-orange-100' : 'text-gray-900'}`}>
+                    No matches yet
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+                  <table className="w-full">
+                    <thead className={`sticky top-0 ${darkMode ? 'bg-orange-900/20' : 'bg-orange-50'}`}>
+                      <tr>
+                        <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
+                          User 1
+                        </th>
+                        <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
+                          User 2
+                        </th>
+                        <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
+                          Status
+                        </th>
+                        <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
+                          Chat
+                        </th>
+                        <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
+                          Matched On
+                        </th>
+                        <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-orange-800/20">
+                      {matches.map((match) => (
+                        <tr key={match._id} className={darkMode ? 'hover:bg-orange-900/10' : 'hover:bg-orange-50/50'}>
+                          <td className={`px-6 py-4 ${darkMode ? 'text-orange-100' : 'text-gray-900'}`}>
+                            <p className="font-medium">{match.user1?.name || 'Unknown'}</p>
+                            <p className={`text-xs ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
+                              {match.user1?.email || 'N/A'}
+                            </p>
+                          </td>
+                          <td className={`px-6 py-4 ${darkMode ? 'text-orange-100' : 'text-gray-900'}`}>
+                            <p className="font-medium">{match.user2?.name || 'Unknown'}</p>
+                            <p className={`text-xs ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
+                              {match.user2?.email || 'N/A'}
+                            </p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              match.status === 'accepted'
+                                ? darkMode ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-700'
+                                : match.status === 'rejected'
+                                  ? darkMode ? 'bg-red-900/30 text-red-300' : 'bg-red-100 text-red-700'
+                                  : darkMode ? 'bg-yellow-900/30 text-yellow-300' : 'bg-yellow-100 text-yellow-700'
+                            }`}>
+                              {match.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`text-xs font-medium ${
+                              match.hasChat
+                                ? darkMode ? 'text-green-400' : 'text-green-600'
+                                : darkMode ? 'text-orange-300/50' : 'text-gray-400'
+                            }`}>
+                              {match.hasChat ? 'Active chat' : 'No chat'}
+                            </span>
+                          </td>
+                          <td className={`px-6 py-4 text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-700'}`}>
+                            {formatDate(match.createdAt)}
+                          </td>
+                          <td className="px-6 py-4">
+                            <button
+                              onClick={() => handleResetMatch(match)}
+                              disabled={matchResetLoadingId === match._id}
+                              className="p-2 rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Delete match & chat between these two users"
+                            >
+                              {matchResetLoadingId === match._id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Link2Off className="w-4 h-4" />
+                              )}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
         </div>
