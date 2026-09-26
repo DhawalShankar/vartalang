@@ -8,7 +8,7 @@ import ReportDetailsModal from '@/components/ReportDetailsModal';
 import { 
   Shield, Users, Briefcase, TrendingUp, Clock, 
   Trash2, Calendar, Loader2, AlertTriangle, CheckCircle,
-  AlertCircle as ReportIcon, Eye
+  AlertCircle as ReportIcon, Eye, Link2Off
 } from 'lucide-react';
 import { useDarkMode } from '@/lib/DarkModeContext';
 
@@ -76,6 +76,7 @@ export default function AdminPortal() {
   const [showExtendModal, setShowExtendModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [resetLoadingId, setResetLoadingId] = useState<string | null>(null); // ✅ NEW: track which report's reset is in-flight
   const [activeTab, setActiveTab] = useState<'jobs' | 'reports'>('jobs');
 
   useEffect(() => {
@@ -241,6 +242,53 @@ export default function AdminPortal() {
       alert('Failed to delete report');
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  // ✅ NEW: Reset match + chat between the two users on a report,
+  // so they can match/chat again from scratch.
+  const handleResetConnection = async (report: Report) => {
+    const reporterName = report.reporter?.name || 'this user';
+    const reportedName = report.reportedUser?.name || 'the reported user';
+
+    if (
+      !confirm(
+        `Delete the match and chat between ${reporterName} and ${reportedName}?\n\n` +
+        `This removes their existing conversation entirely — they will be able to match and chat again as if they never connected.`
+      )
+    ) {
+      return;
+    }
+
+    setResetLoadingId(report._id);
+    const token = localStorage.getItem('token');
+
+    try {
+      const res = await fetch(
+        `${API_URL}/admin/connections/${report.reporter._id}/${report.reportedUser._id}`,
+        {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert(
+          `Connection reset: ${data.matchesDeleted} match(es) deleted, ` +
+          `chat deleted: ${data.chatDeleted ? 'yes' : 'no'}, ` +
+          `${data.notificationsDeleted} notification(s) cleared.`
+        );
+        await fetchStats(); // engagement counts (matches/chats) will have changed
+      } else {
+        alert(data.error || 'Failed to reset connection');
+      }
+    } catch (error) {
+      console.error('Reset connection error:', error);
+      alert('Failed to reset connection');
+    } finally {
+      setResetLoadingId(null);
     }
   };
 
@@ -584,6 +632,19 @@ export default function AdminPortal() {
                                 title="View details"
                               >
                                 <Eye className="w-4 h-4" />
+                              </button>
+                              {/* ✅ NEW: Reset match + chat between reporter and reported user */}
+                              <button
+                                onClick={() => handleResetConnection(report)}
+                                disabled={resetLoadingId === report._id}
+                                className="p-2 rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Delete match & chat between these two users"
+                              >
+                                {resetLoadingId === report._id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Link2Off className="w-4 h-4" />
+                                )}
                               </button>
                             </div>
                           </td>
