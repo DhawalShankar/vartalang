@@ -45,6 +45,15 @@ interface Report {
   timestamp: string;
 }
 
+// ✅ NEW
+interface Member {
+  _id: string;
+  name: string;
+  email: string;
+  primaryRole?: string;
+  createdAt: string;
+}
+
 interface PlatformStats {
   users: {
     total: number;
@@ -71,13 +80,17 @@ export default function AdminPortal() {
   const [stats, setStats] = useState<PlatformStats | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
+  const [members, setMembers] = useState<Member[]>([]); // ✅ NEW
+  const [memberSearch, setMemberSearch] = useState(''); // ✅ NEW
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]); // ✅ NEW: max 2
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [showExtendModal, setShowExtendModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
-  const [resetLoadingId, setResetLoadingId] = useState<string | null>(null); // ✅ NEW: track which report's reset is in-flight
-  const [activeTab, setActiveTab] = useState<'jobs' | 'reports'>('jobs');
+  const [resetLoadingId, setResetLoadingId] = useState<string | null>(null);
+  const [membersResetLoading, setMembersResetLoading] = useState(false); // ✅ NEW
+  const [activeTab, setActiveTab] = useState<'jobs' | 'reports' | 'users'>('jobs'); // ✅ 'users' added
 
   useEffect(() => {
     checkAdminAccess();
@@ -104,7 +117,7 @@ export default function AdminPortal() {
       }
 
       setIsAdmin(true);
-      await Promise.all([fetchStats(), fetchJobs(), fetchReports()]);
+      await Promise.all([fetchStats(), fetchJobs(), fetchReports(), fetchMembers()]); // ✅ fetchMembers added
     } catch (error) {
       console.error('Admin check error:', error);
       router.push('/');
@@ -149,6 +162,20 @@ export default function AdminPortal() {
       if (data.success) setReports(data.reports);
     } catch (error) {
       console.error('Fetch reports error:', error);
+    }
+  };
+
+  // ✅ NEW
+  const fetchMembers = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`${API_URL}/admin/users`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) setMembers(data.users);
+    } catch (error) {
+      console.error('Fetch members error:', error);
     }
   };
 
@@ -245,8 +272,7 @@ export default function AdminPortal() {
     }
   };
 
-  // ✅ NEW: Reset match + chat between the two users on a report,
-  // so they can match/chat again from scratch.
+  // ✅ Reset via a report row (existing flow, unchanged)
   const handleResetConnection = async (report: Report) => {
     const reporterName = report.reporter?.name || 'this user';
     const reportedName = report.reportedUser?.name || 'the reported user';
@@ -280,7 +306,7 @@ export default function AdminPortal() {
           `chat deleted: ${data.chatDeleted ? 'yes' : 'no'}, ` +
           `${data.notificationsDeleted} notification(s) cleared.`
         );
-        await fetchStats(); // engagement counts (matches/chats) will have changed
+        await fetchStats();
       } else {
         alert(data.error || 'Failed to reset connection');
       }
@@ -289,6 +315,67 @@ export default function AdminPortal() {
       alert('Failed to reset connection');
     } finally {
       setResetLoadingId(null);
+    }
+  };
+
+  // ✅ NEW: toggle a member's selection — capped at 2
+  const toggleMemberSelection = (userId: string) => {
+    setSelectedMemberIds((prev) => {
+      if (prev.includes(userId)) {
+        return prev.filter((id) => id !== userId);
+      }
+      if (prev.length >= 2) {
+        // swap out the oldest selection so a third click still feels responsive
+        return [prev[1], userId];
+      }
+      return [...prev, userId];
+    });
+  };
+
+  // ✅ NEW: reset connection between the two selected members
+  const handleResetSelectedMembers = async () => {
+    if (selectedMemberIds.length !== 2) return;
+
+    const [id1, id2] = selectedMemberIds;
+    const name1 = members.find((m) => m._id === id1)?.name || 'User A';
+    const name2 = members.find((m) => m._id === id2)?.name || 'User B';
+
+    if (
+      !confirm(
+        `Delete the match and chat between ${name1} and ${name2}?\n\n` +
+        `This removes their existing conversation entirely — they will be able to match and chat again as if they never connected.`
+      )
+    ) {
+      return;
+    }
+
+    setMembersResetLoading(true);
+    const token = localStorage.getItem('token');
+
+    try {
+      const res = await fetch(`${API_URL}/admin/connections/${id1}/${id2}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert(
+          `Connection reset: ${data.matchesDeleted} match(es) deleted, ` +
+          `chat deleted: ${data.chatDeleted ? 'yes' : 'no'}, ` +
+          `${data.notificationsDeleted} notification(s) cleared.`
+        );
+        setSelectedMemberIds([]);
+        await fetchStats();
+      } else {
+        alert(data.error || 'Failed to reset connection');
+      }
+    } catch (error) {
+      console.error('Reset connection error:', error);
+      alert('Failed to reset connection');
+    } finally {
+      setMembersResetLoading(false);
     }
   };
 
@@ -310,6 +397,13 @@ export default function AdminPortal() {
       minute: '2-digit'
     });
   };
+
+  // ✅ NEW: filter members by search
+  const filteredMembers = members.filter((m) => {
+    const q = memberSearch.trim().toLowerCase();
+    if (!q) return true;
+    return m.name?.toLowerCase().includes(q) || m.email?.toLowerCase().includes(q);
+  });
 
   if (loading) {
     return (
@@ -444,6 +538,21 @@ export default function AdminPortal() {
                 </span>
               )}
             </button>
+            {/* ✅ NEW TAB */}
+            <button
+              onClick={() => setActiveTab('users')}
+              className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+                activeTab === 'users'
+                  ? darkMode
+                    ? 'bg-orange-500 text-white'
+                    : 'bg-orange-600 text-white'
+                  : darkMode
+                    ? 'bg-orange-900/10 text-orange-300 border border-orange-800/30'
+                    : 'bg-white text-gray-700 border border-orange-200'
+              }`}
+            >
+              Users ({members.length})
+            </button>
           </div>
 
           {/* Jobs Table */}
@@ -500,7 +609,6 @@ export default function AdminPortal() {
                           {job.language}
                         </td>
 
-                        {/* ✅ STATUS COLUMN */}
                         <td className="px-6 py-4">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                             !isActuallyExpired(job)
@@ -511,7 +619,6 @@ export default function AdminPortal() {
                           </span>
                         </td>
 
-                        {/* ✅ EXPIRES IN COLUMN - no negative values */}
                         <td className={`px-6 py-4 text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-700'}`}>
                           {isActuallyExpired(job) ? (
                             <div>
@@ -633,7 +740,6 @@ export default function AdminPortal() {
                               >
                                 <Eye className="w-4 h-4" />
                               </button>
-                              {/* ✅ NEW: Reset match + chat between reporter and reported user */}
                               <button
                                 onClick={() => handleResetConnection(report)}
                                 disabled={resetLoadingId === report._id}
@@ -654,6 +760,118 @@ export default function AdminPortal() {
                   </table>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ✅ NEW: Users Tab — pick any 2 members and reset their connection */}
+          {activeTab === 'users' && (
+            <div className={`rounded-2xl border overflow-hidden ${
+              darkMode ? 'bg-orange-900/10 border-orange-800/30' : 'bg-white border-orange-100'
+            }`}>
+              <div className="p-6 border-b border-orange-800/30 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <h2 className={`text-xl font-bold ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                    All Members ({members.length})
+                  </h2>
+                  <p className={`text-sm mt-1 ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>
+                    Select exactly two users to delete their match & chat, so they can connect again
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="text"
+                    placeholder="Search by name or email..."
+                    value={memberSearch}
+                    onChange={(e) => setMemberSearch(e.target.value)}
+                    className={`px-4 py-2 rounded-lg text-sm border w-64 focus:outline-none ${
+                      darkMode
+                        ? 'bg-orange-900/10 border-orange-800/30 text-orange-100 placeholder:text-orange-300/40'
+                        : 'bg-white border-orange-200 text-gray-900 placeholder:text-gray-400'
+                    }`}
+                  />
+                  <button
+                    onClick={handleResetSelectedMembers}
+                    disabled={selectedMemberIds.length !== 2 || membersResetLoading}
+                    className="px-4 py-2 rounded-lg bg-amber-500 text-white font-semibold text-sm hover:bg-amber-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+                  >
+                    {membersResetLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Link2Off className="w-4 h-4" />
+                    )}
+                    Reset Connection ({selectedMemberIds.length}/2)
+                  </button>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+                <table className="w-full">
+                  <thead className={`sticky top-0 ${darkMode ? 'bg-orange-900/20' : 'bg-orange-50'}`}>
+                    <tr>
+                      <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
+                        Select
+                      </th>
+                      <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
+                        Name
+                      </th>
+                      <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
+                        Email
+                      </th>
+                      <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
+                        Role
+                      </th>
+                      <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
+                        Joined
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-orange-800/20">
+                    {filteredMembers.map((member) => {
+                      const isSelected = selectedMemberIds.includes(member._id);
+                      return (
+                        <tr
+                          key={member._id}
+                          onClick={() => toggleMemberSelection(member._id)}
+                          className={`cursor-pointer transition-all ${
+                            isSelected
+                              ? darkMode ? 'bg-amber-900/30' : 'bg-amber-50'
+                              : darkMode ? 'hover:bg-orange-900/10' : 'hover:bg-orange-50/50'
+                          }`}
+                        >
+                          <td className="px-6 py-4">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleMemberSelection(member._id)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-4 h-4 accent-amber-500"
+                            />
+                          </td>
+                          <td className={`px-6 py-4 font-medium ${darkMode ? 'text-orange-100' : 'text-gray-900'}`}>
+                            {member.name}
+                          </td>
+                          <td className={`px-6 py-4 text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-700'}`}>
+                            {member.email}
+                          </td>
+                          <td className={`px-6 py-4 text-sm capitalize ${darkMode ? 'text-orange-200/70' : 'text-gray-700'}`}>
+                            {member.primaryRole || '—'}
+                          </td>
+                          <td className={`px-6 py-4 text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-700'}`}>
+                            {formatDate(member.createdAt)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {filteredMembers.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className={`px-6 py-12 text-center text-sm ${darkMode ? 'text-orange-300/60' : 'text-gray-500'}`}>
+                          No members match your search
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>
