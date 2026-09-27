@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -47,6 +47,12 @@ interface LanguageGuide {
   paidContent?: { enabled: boolean; url: string };
 }
 
+interface AuthUser {
+  _id: string;
+  name: string;
+  email: string;
+}
+
 const RESOURCE_LABELS: Record<string, string> = {
   youtube: 'YouTube',
   website: 'Website',
@@ -62,20 +68,54 @@ const RESOURCE_LABELS: Record<string, string> = {
 export default function LanguageGuidePage() {
   const { darkMode } = useDarkMode();
   const params = useParams();
+  const router = useRouter();
   const slug = params?.slug as string;
+
+  /* ---------------- Auth guard state ---------------- */
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   const [guide, setGuide] = useState<LanguageGuide | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  /* ---------------- Auth guard ---------------- */
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.replace(`/auth/login?redirect=/learn/${slug}`);
+      return;
+    }
+
+    fetch(`${API_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Session expired");
+        return res.json();
+      })
+      .then((data) => {
+        setUser(data.user);
+        setCheckingAuth(false);
+      })
+      .catch(() => {
+        localStorage.removeItem("token");
+        router.replace(`/auth/login?redirect=/learn/${slug}`);
+      });
+  }, [router, slug]);
+
+  useEffect(() => {
+    if (checkingAuth) return; // wait until we know the user is signed in
     if (!slug) return;
 
     const fetchGuide = async () => {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch(`${API_URL}/learn/${slug}`);
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_URL}/learn/${slug}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
         if (!res.ok) throw new Error('Not found');
         const data = await res.json();
         setGuide(data.language);
@@ -88,11 +128,23 @@ export default function LanguageGuidePage() {
     };
 
     fetchGuide();
-  }, [slug]);
+  }, [slug, checkingAuth]);
 
   const cardClass = darkMode
     ? 'bg-linear-to-br from-orange-900/10 to-red-900/5 border-orange-800/30'
     : 'bg-white border-orange-100';
+
+  /* ---------------- Auth loading ---------------- */
+  if (checkingAuth) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-[#1a1410]' : 'bg-[#FFF9F5]'}`}>
+        <div className="text-center">
+          <div className="w-14 h-14 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className={darkMode ? 'text-orange-200' : 'text-gray-700'}>Checking your sign-in…</p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
