@@ -80,6 +80,7 @@ export default function Navbar() {
                 <>
                   {[
                     { name: "Challenge", href: "/challenge" },
+                    { name: "Learn", href: "/learn" },
                     { name: "Matches", href: "/matches" },
                     { name: "Chats", href: "/chats" },
                     { name: "Target Roles", href: "/targets" },
@@ -226,6 +227,15 @@ export default function Navbar() {
             }`}
           >
             Challenge
+          </Link>
+          <Link
+            href="/learn"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-all ${
+              darkMode ? "text-orange-200 hover:bg-orange-900/40" : "text-gray-700 hover:bg-orange-50"
+            }`}
+          >
+            Learn
           </Link>
           <Link
             href="/matches"
