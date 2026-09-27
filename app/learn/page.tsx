@@ -1,12 +1,13 @@
 "use client";
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { BookOpen, Search, MapPin, Languages as LanguagesIcon } from 'lucide-react';
+import { BookOpen, Search, MapPin, Languages as LanguagesIcon, Sparkles, ExternalLink } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useDarkMode } from '@/lib/DarkModeContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const PREMIUM_URL = "https://learn.vartalang.in";
 
 interface LanguageSummary {
   name: string;
@@ -94,7 +95,7 @@ export default function LearnPage() {
       </section>
 
       {/* Grid */}
-      <section className="px-4 pb-24">
+      <section className="px-4 pb-16">
         <div className="max-w-6xl mx-auto">
           {loading && (
             <div className="flex items-center justify-center py-20">
@@ -158,6 +159,37 @@ export default function LearnPage() {
               ))}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Premium Learning CTA */}
+      <section className="px-4 pb-24">
+        <div className="max-w-4xl mx-auto">
+          <div className={`p-8 md:p-10 rounded-2xl border text-center ${
+            darkMode
+              ? 'bg-linear-to-br from-orange-900/20 to-red-900/10 border-orange-800/30'
+              : 'bg-linear-to-br from-orange-50 to-red-50 border-orange-100'
+          }`}>
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 ${
+              darkMode ? 'bg-orange-500/20' : 'bg-white'
+            }`}>
+              <Sparkles className={`w-7 h-7 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+            </div>
+            <h2 className={`text-2xl md:text-3xl font-bold mb-2 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+              Didn't find your desired language or premium content?
+            </h2>
+            <p className={`mb-6 max-w-xl mx-auto ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
+              Explore our Premium Learning Platform for structured courses and additional languages.
+            </p>
+            <a
+              href={PREMIUM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-8 py-3 rounded-full font-semibold bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-xl hover:scale-105 transition-all"
+            >
+              Explore Premium Learning Platform <ExternalLink className="w-4 h-4" />
+            </a>
+          </div>
         </div>
       </section>
 
