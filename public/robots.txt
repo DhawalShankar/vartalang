@@ -1,0 +1,17 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /api/
+Disallow: /chats/
+Disallow: /matches/
+Disallow: /profile/
+Disallow: /roles/
+Disallow: /targets/
+Disallow: /teachers/
+Disallow: /auth/
+Disallow: /jobs/board
+Allow: /auth/login
+Allow: /auth/signup
+Allow: /jobs
+Allow: /
+
+Sitemap: https://vartalang.in/sitemap.xml

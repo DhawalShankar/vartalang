@@ -8,15 +8,102 @@ import {
   MessageCircle,
   Users,
   Sparkles,
-  Quote
+  Quote,
+  ChevronDown
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useDarkMode } from '@/lib/DarkModeContext';
 
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is VartaLang free to use?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Everything on VartaLang is currently free, including the language challenge, jobs board, matches, and chat. Paid courses with full mentor support and scenario-based Practice Labs are launching in December."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is VartaLang?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "VartaLang is a platform that helps people learn and get assessed on Indian languages by taking a speaking challenge, matching with language partners to practice with, and finding language-focused job opportunities."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the VartaLang Language Challenge?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Language Challenge is a short recording exercise where you read a script aloud in a chosen Indian language for one minute. Your recording is reviewed and scored, and results are shared by email within a few months."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the Jobs board on VartaLang?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Jobs board lists language-focused opportunities such as translation, teaching, interpretation, and content work. Employers post listings for free, and candidates contact them directly by email."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are Matches on VartaLang?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Matches connect you with other users to practice speaking a language together, based on genuine compatibility rather than engagement algorithms."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does chatting work on VartaLang?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Once you're matched with someone, you can message them directly through VartaLang's built-in chat to arrange practice sessions and stay in touch."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is VartaLang safe to use?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Safety is our foundation, not an afterthought. You can block a user or report inappropriate behavior at any time. We recommend keeping conversations on-platform and never sharing sensitive personal or financial information with someone you've just matched with."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are the paid courses and Practice Labs launching in December?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Starting in December, VartaLang is launching paid courses with full mentor support, along with scenario-based Practice Labs to help learners practice real-world language situations."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I sign up for VartaLang?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Go to the sign-up page, create a free account with your email, and you can start using VartaLang right away."
+      }
+    }
+  ]
+};
+
+// Same Q&As shown as visible text below, kept in sync with the schema above.
+const faqs = faqSchema.mainEntity.map((item) => ({
+  question: item.name,
+  answer: item.acceptedAnswer.text,
+}));
+
 export default function AboutPage() {
   const { darkMode } = useDarkMode();
   const [scrollY, setScrollY] = useState(0);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -67,11 +154,17 @@ export default function AboutPage() {
 
   return (
     <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'bg-[#1a1410]' : 'bg-[#FFF9F5]'}`}>
+      {/* FAQ structured data for search engines and AI assistants.
+          Keep this in sync with the visible FAQ section below. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+
       <Navbar />
 
       {/* Gentle Hero Section */}
       <section className="relative pt-32 pb-16 px-4 overflow-hidden">
-        {/* Subtle Background */}
         <div 
           className={`absolute top-20 right-1/4 w-64 h-64 rounded-full blur-3xl opacity-20 transition-transform duration-1000 ${
             darkMode ? 'bg-orange-500' : 'bg-orange-300'
@@ -157,7 +250,6 @@ export default function AboutPage() {
                     : 'border-orange-200 hover:border-orange-400'
                 }`}
               >
-                {/* Year Dot */}
                 <div className={`absolute -left-2.5 top-0 w-5 h-5 rounded-full border-4 transition-all ${
                   darkMode 
                     ? 'bg-orange-500 border-[#1a1410]' 
@@ -334,6 +426,61 @@ export default function AboutPage() {
                 </p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Frequently Asked Questions - visible text, kept in sync with faqSchema above */}
+      <section className="py-16 px-4">
+        <div className="max-w-2xl mx-auto">
+          <h2 className={`text-2xl md:text-3xl font-bold mb-8 text-center ${
+            darkMode ? 'text-orange-100' : 'text-gray-900'
+          }`}>
+            Frequently Asked Questions
+          </h2>
+
+          <div className="space-y-3">
+            {faqs.map((faq, i) => {
+              const isOpen = openFaq === i;
+              return (
+                <div
+                  key={i}
+                  className={`rounded-xl border overflow-hidden transition-all ${
+                    darkMode
+                      ? 'bg-orange-900/5 border-orange-800/20'
+                      : 'bg-white border-orange-100'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaq(isOpen ? null : i)}
+                    aria-expanded={isOpen}
+                    className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left"
+                  >
+                    <span className={`text-sm md:text-base font-semibold ${
+                      darkMode ? 'text-orange-100' : 'text-gray-900'
+                    }`}>
+                      {faq.question}
+                    </span>
+                    <ChevronDown
+                      className={`w-4 h-4 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''} ${
+                        darkMode ? 'text-orange-400' : 'text-orange-600'
+                      }`}
+                    />
+                  </button>
+
+                  {isOpen && (
+                    <div className="px-5 pb-4">
+                      <p className={`text-sm md:text-base leading-relaxed ${
+                        darkMode ? 'text-orange-200/70' : 'text-gray-600'
+                      }`}>
+                        {faq.answer}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>

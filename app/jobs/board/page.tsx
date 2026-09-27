@@ -73,10 +73,20 @@ interface FormErrors {
   general?: string;
 }
 
+interface AuthUser {
+  _id: string;
+  name: string;
+  email: string;
+}
+
 export default function VartaLangJobsBoard() {
   const { darkMode } = useDarkMode();
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  /* ---------------- Auth guard state ---------------- */
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [user, setUser] = useState<AuthUser | null>(null);
   
   const [jobs, setJobs] = useState<Job[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
@@ -139,12 +149,38 @@ export default function VartaLangJobsBoard() {
     { value: 'freelance', label: 'Freelance' }
   ];
 
+  /* ---------------- Auth guard ---------------- */
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.replace("/auth/login?redirect=/jobs");
+      return;
+    }
+
+    fetch(`${API_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Session expired");
+        return res.json();
+      })
+      .then((data) => {
+        setUser(data.user);
+        setCheckingAuth(false);
+      })
+      .catch(() => {
+        localStorage.removeItem("token");
+        router.replace("/auth/login?redirect=/jobs");
+      });
+  }, [router]);
+
+  useEffect(() => {
+    if (checkingAuth) return; // wait until we know the user is signed in
     fetchJobs();
     if (searchParams.get('post') === 'true') {
       setShowPostModal(true);
     }
-  }, [searchParams]);
+  }, [searchParams, checkingAuth]);
 
   useEffect(() => {
     applyFilters();
@@ -152,7 +188,10 @@ export default function VartaLangJobsBoard() {
 
   const fetchJobs = async () => {
     try {
-      const res = await fetch(`${API_URL}/jobs/listings`);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/jobs/listings`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
       if (res.ok) {
         const data = await res.json();
         setJobs(data.jobs || []);
@@ -363,6 +402,18 @@ export default function VartaLangJobsBoard() {
     const days = Math.ceil((new Date(expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
     return days > 0 ? days : 0;
   };
+
+  /* ---------------- Auth loading ---------------- */
+  if (checkingAuth) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-[#1a1410]' : 'bg-[#FFF9F5]'}`}>
+        <div className="text-center">
+          <div className="w-14 h-14 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className={darkMode ? 'text-orange-200' : 'text-gray-700'}>Checking your sign-in…</p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

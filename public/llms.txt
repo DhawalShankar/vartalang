@@ -1,0 +1,13 @@
+# VartaLang
+
+> VartaLang is India's language bridge — a free platform to learn Indian languages by speaking with real people and taking a language proficiency challenge. Paid courses with full mentor support and scenario-based Practice Labs are launching in December 2026.
+
+## Docs
+- [About](https://vartalang.in/about): What VartaLang is and how it works
+- [Language Challenge](https://vartalang.in/challenge): Record a short passage in an Indian language and get assessed on fluency
+- [Sign up](https://vartalang.in/auth/signup): Create a free VartaLang account
+
+## Optional
+- [Login](https://vartalang.in/auth/login): Sign in to an existing account
+
+Note: Everything on VartaLang is currently free. Paid courses with mentor support and scenario-based Practice Labs are coming in December. Pages such as jobs, chats, matches, and profile require a signed-in account and are not listed here for crawling.
