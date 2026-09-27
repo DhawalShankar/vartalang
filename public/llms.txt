@@ -1,13 +1,29 @@
 # VartaLang
 
-> VartaLang is India's language bridge — a free platform to learn Indian languages by speaking with real people and taking a language proficiency challenge. Paid courses with full mentor support and scenario-based Practice Labs are launching in December 2026.
+> VartaLang is India's language bridge — a free platform connecting people through Indian languages, language learning, speaking practice, and language-based opportunities.
 
-## Docs
-- [About](https://vartalang.in/about): What VartaLang is and how it works
-- [Language Challenge](https://vartalang.in/challenge): Record a short passage in an Indian language and get assessed on fluency
-- [Sign up](https://vartalang.in/auth/signup): Create a free VartaLang account
+## Learn
 
-## Optional
-- [Login](https://vartalang.in/auth/login): Sign in to an existing account
+- [Language Guides](https://vartalang.in/learn): Curated learning guides for Indian and other supported languages, including recommended articles, books, YouTube channels, websites, and practice resources.
+- [Language Challenge](https://vartalang.in/challenge): Record a short passage in an Indian language and get assessed on fluency.
 
-Note: Everything on VartaLang is currently free. Paid courses with mentor support and scenario-based Practice Labs are coming in December. Pages such as jobs, chats, matches, and profile require a signed-in account and are not listed here for crawling.
+## About
+
+- [About VartaLang](https://vartalang.in/about): What VartaLang is and how it works.
+
+## Opportunities
+
+- [Jobs](https://vartalang.in/jobs): Language-related opportunities available through VartaLang.
+
+## Account
+
+- [Sign up](https://vartalang.in/auth/signup): Create a free VartaLang account.
+- [Login](https://vartalang.in/auth/login): Sign in to an existing account.
+
+## Paid Learning
+
+- [VartaLang Learn](https://learn.vartalang.in): VartaLang's dedicated learning platform for structured paid courses and future Practice Labs.
+
+## Private Areas
+
+Pages such as matches, chats, profiles, administration, and other authenticated areas require a signed-in account and are not intended for crawling.
