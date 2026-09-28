@@ -1,16 +1,20 @@
 "use client";
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowRight, MessageCircle, Target, Shield, Briefcase, CheckCircle, MapPin, Languages, Eye, Clock, FileText, Compass, BookOpen, Headphones, Lightbulb, TrendingUp, Globe, Award } from 'lucide-react';
+import { ArrowRight, MessageCircle, Target, Shield, Briefcase, CheckCircle, MapPin, Languages, Eye, Clock, FileText, Compass, BookOpen, Headphones, Lightbulb, TrendingUp, Globe, Award, Volume2, Sparkles, Mic } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useDarkMode } from '@/lib/DarkModeContext';
+
+type ChatMessage = { from: 'you' | 'them'; text: string; translation?: string };
+type ChatDemo = { partner: string; messages: ChatMessage[] };
 
 export default function VartaLangLanding() {
   const { darkMode } = useDarkMode();
   
   const [activeMatchDemo, setActiveMatchDemo] = useState(0);
   const [activeChatDemo, setActiveChatDemo] = useState(0);
+  const [activeLabDemo, setActiveLabDemo] = useState(0);
   const [activeJobDemo, setActiveJobDemo] = useState(0);
   const [activeRoleDemo, setActiveRoleDemo] = useState(0);
   const [activeArticle, setActiveArticle] = useState(0);
@@ -51,19 +55,21 @@ export default function VartaLangLanding() {
     }
   ];
 
-  const chatDemos = [
+  // Chat demos now show the translation under the original message,
+  // plus a speaker icon for pronunciation.
+  const chatDemos: ChatDemo[] = [
     {
       partner: "Priya S.",
       messages: [
-        { from: "them", text: "नमस्ते! कैसे हो?" },
+        { from: "them", text: "नमस्ते! कैसे हो?", translation: "Hello! How are you?" },
         { from: "you", text: "मैं ठीक हूँ! आप कैसे हैं?" },
-        { from: "them", text: "बहुत अच्छा! चलो आज कुछ नया सीखते हैं।" }
+        { from: "them", text: "बहुत अच्छा! चलो आज कुछ नया सीखते हैं।", translation: "Very good! Let's learn something new today." }
       ]
     },
     {
       partner: "Rahul K.",
       messages: [
-        { from: "them", text: "వణక్కం! ఎలా ఉన్నారు?" },
+        { from: "them", text: "నమస్కారం! ఎలా ఉన్నారు?", translation: "Hello! How are you?" },
         { from: "you", text: "నేను బాగున్నాను!" },
         { from: "them", text: "Great! Let's practice some more phrases." }
       ]
@@ -71,10 +77,41 @@ export default function VartaLangLanding() {
     {
       partner: "Anjali M.",
       messages: [
-        { from: "them", text: "Hello! How was your day?" },
+        { from: "them", text: "ഹലോ! ഇന്ന് എങ്ങനെയുണ്ടായിരുന്നു?", translation: "Hello! How was your day?" },
         { from: "you", text: "It was good! Ready to practice?" },
         { from: "them", text: "Yes! Let's work on vocabulary today." }
       ]
+    }
+  ];
+
+  // Everyday scenarios for the Practice Labs preview.
+  const labDemos = [
+    {
+      scenario: "Order food at a restaurant",
+      language: "Hindi",
+      aiRole: "Waiter",
+      aiLine: "आप क्या लेना पसंद करेंगे?",
+      aiMeaning: "What would you like to have?",
+      yourLine: "मुझे एक मसाला डोसा चाहिए।",
+      yourMeaning: "I would like one masala dosa."
+    },
+    {
+      scenario: "Ask for directions",
+      language: "Tamil",
+      aiRole: "Passer-by",
+      aiLine: "நீங்கள் எங்கே போக வேண்டும்?",
+      aiMeaning: "Where do you need to go?",
+      yourLine: "எனக்கு பஸ் நிலையம் போக வேண்டும்.",
+      yourMeaning: "I need to go to the bus stand."
+    },
+    {
+      scenario: "Shop at a market",
+      language: "Telugu",
+      aiRole: "Vendor",
+      aiLine: "ఈ కూరగాయలు కిలో యాభై రూపాయలు.",
+      aiMeaning: "These vegetables are fifty rupees a kilo.",
+      yourLine: "కొంచెం తగ్గించండి.",
+      yourMeaning: "Please reduce it a little."
     }
   ];
 
@@ -191,6 +228,10 @@ export default function VartaLangLanding() {
       setActiveChatDemo((prev) => (prev + 1) % chatDemos.length);
     }, 4000);
 
+    const labInterval = setInterval(() => {
+      setActiveLabDemo((prev) => (prev + 1) % labDemos.length);
+    }, 4500);
+
     const jobInterval = setInterval(() => {
       setActiveJobDemo((prev) => (prev + 1) % jobDemos.length);
     }, 3500);
@@ -206,6 +247,7 @@ export default function VartaLangLanding() {
     return () => {
       clearInterval(matchInterval);
       clearInterval(chatInterval);
+      clearInterval(labInterval);
       clearInterval(jobInterval);
       clearInterval(roleInterval);
       clearInterval(articleInterval);
@@ -251,7 +293,7 @@ export default function VartaLangLanding() {
               <p className={`text-lg mb-6 leading-relaxed ${
                 darkMode ? 'text-orange-200/80' : 'text-gray-700'
               }`}>
-                The complete pipeline connecting language learners with career opportunities—through practice partners, communication training, and job matching.
+                One place to learn, practise and use Indian languages—structured courses, AI practice scenarios, real conversations with language partners, and language-focused jobs.
               </p>
 
               <div className="flex flex-wrap gap-3 mb-4">
@@ -329,22 +371,22 @@ export default function VartaLangLanding() {
                 </div>
               </div>
 
-              {/* Pipeline */}
+              {/* Pipeline: Learn → Practise → Connect → Work */}
               <div className={`p-4 rounded-xl ${darkMode ? 'bg-orange-900/20' : 'bg-orange-50'}`}>
                 <div className="flex items-center justify-between text-xs font-bold">
                   <div className="flex flex-col items-center">
-                    <Compass className={`w-5 h-5 mb-1 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
-                    <span className={darkMode ? 'text-orange-200' : 'text-gray-900'}>Discover</span>
+                    <BookOpen className={`w-5 h-5 mb-1 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                    <span className={darkMode ? 'text-orange-200' : 'text-gray-900'}>Learn</span>
                   </div>
                   <ArrowRight className={`w-4 h-4 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
                   <div className="flex flex-col items-center">
-                    <Target className={`w-5 h-5 mb-1 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
-                    <span className={darkMode ? 'text-orange-200' : 'text-gray-900'}>Match</span>
+                    <Sparkles className={`w-5 h-5 mb-1 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                    <span className={darkMode ? 'text-orange-200' : 'text-gray-900'}>Practise</span>
                   </div>
                   <ArrowRight className={`w-4 h-4 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
                   <div className="flex flex-col items-center">
                     <MessageCircle className={`w-5 h-5 mb-1 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
-                    <span className={darkMode ? 'text-orange-200' : 'text-gray-900'}>Practice</span>
+                    <span className={darkMode ? 'text-orange-200' : 'text-gray-900'}>Connect</span>
                   </div>
                   <ArrowRight className={`w-4 h-4 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
                   <div className="flex flex-col items-center">
@@ -422,7 +464,7 @@ export default function VartaLangLanding() {
               : 'bg-linear-to-r from-orange-50 to-blue-50 border-orange-200'
           }`}>
             <p className={`text-base font-semibold ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
-              VartaLang bridges this gap—connecting learners with practice partners, communication training, and real job opportunities where their languages are assets, not barriers.
+              VartaLang bridges this gap—learn with courses and AI practice, speak with real partners, and find jobs where your languages are assets, not barriers.
             </p>
           </div>
         </div>
@@ -659,7 +701,7 @@ export default function VartaLangLanding() {
                 : 'bg-white border-orange-200 shadow-xl'
             }`}>
               <div className={`text-xs font-bold mb-3 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                LIVE MATCHES
+                MATCH PREVIEW
               </div>
 
               <div className="flex items-start gap-3 mb-3">
@@ -724,7 +766,7 @@ export default function VartaLangLanding() {
               <div className="grid sm:grid-cols-2 gap-3 mb-6">
                 {[
                   'Match by language & location',
-                  'Verified community',
+                  'Safe, respectful community',
                   'Unlimited partners',
                   'Safe messaging'
                 ].map((feature, i) => (
@@ -749,7 +791,7 @@ export default function VartaLangLanding() {
         </div>
       </section>
 
-      {/* Feature: CHATS */}
+      {/* Feature: CHATS (now with translation + pronunciation) */}
       <section className={`py-12 px-4 ${darkMode ? 'bg-[#1f1612]' : 'bg-orange-50/30'}`}>
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-10 items-center">
@@ -760,14 +802,14 @@ export default function VartaLangLanding() {
               </h2>
 
               <p className={`text-base mb-5 ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-                No textbooks, no drills. Just real messaging with real people building real communication skills.
+                Chat with real people and never get stuck. Read each message alongside its translation and hear how it sounds, so you learn new phrases right inside the conversation.
               </p>
 
               <div className="grid sm:grid-cols-2 gap-3 mb-6">
                 {[
                   'Real-time messaging',
-                  'Your own pace',
-                  'Build confidence',
+                  'Optional message translation',
+                  'Hear the pronunciation',
                   'Private & secure'
                 ].map((feature, i) => (
                   <div key={i} className="flex items-center gap-2">
@@ -794,7 +836,7 @@ export default function VartaLangLanding() {
                 : 'bg-white border-orange-200 shadow-xl'
             }`}>
               <div className={`text-xs font-bold mb-3 ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
-                LIVE CHAT
+                CHAT PREVIEW
               </div>
 
               <div className={`p-3 rounded-t-lg border-b ${
@@ -826,7 +868,24 @@ export default function VartaLangLanding() {
                           ? 'bg-orange-900/30 text-orange-100'
                           : 'bg-gray-100 text-gray-900'
                     }`}>
-                      {msg.text}
+                      <div className="flex items-start gap-2">
+                        <span>{msg.text}</span>
+                        {msg.from === 'them' && (
+                          <Volume2
+                            className="w-3.5 h-3.5 shrink-0 mt-0.5 opacity-70"
+                            aria-label="Play pronunciation"
+                          />
+                        )}
+                      </div>
+                      {msg.translation && (
+                        <div className={`mt-1.5 pt-1.5 border-t text-xs ${
+                          darkMode
+                            ? 'border-orange-700/40 text-orange-300/80'
+                            : 'border-gray-300 text-gray-500'
+                        }`}>
+                          {msg.translation}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -873,18 +932,194 @@ export default function VartaLangLanding() {
         </div>
       </section>
 
+      {/* Feature: PRACTICE LABS - real AI live conversations with microphone */}
+      <section className="py-12 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-10 items-center">
+
+            <div className={`p-5 rounded-xl border ${
+              darkMode
+                ? 'bg-orange-900/10 border-orange-800/30'
+                : 'bg-white border-orange-200 shadow-xl'
+            }`}>
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2">
+                  <div className={`text-xs font-bold ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                    PRACTICE LAB PREVIEW
+                  </div>
+                  {/* Live indicator */}
+                  <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    darkMode ? 'bg-red-500/20 text-red-300' : 'bg-red-100 text-red-700'
+                  }`}>
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75 animate-ping"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
+                    </span>
+                    LIVE
+                  </span>
+                </div>
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${
+                  darkMode ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-100 text-orange-700'
+                }`}>
+                  Launching in December
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles className={`w-4 h-4 shrink-0 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                <h4 className={`font-bold text-base ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                  {labDemos[activeLabDemo].scenario}
+                </h4>
+                <span className={`ml-auto text-xs px-2 py-0.5 rounded-full shrink-0 ${
+                  darkMode ? 'bg-orange-900/30 text-orange-300' : 'bg-orange-50 text-gray-700'
+                }`}>
+                  {labDemos[activeLabDemo].language}
+                </span>
+              </div>
+
+              <div className="space-y-3 mb-3">
+                <div className="flex justify-start">
+                  <div className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${
+                    darkMode ? 'bg-orange-900/30 text-orange-100' : 'bg-gray-100 text-gray-900'
+                  }`}>
+                    <div className={`text-xs font-semibold mb-1 ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
+                      AI {labDemos[activeLabDemo].aiRole}
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span>{labDemos[activeLabDemo].aiLine}</span>
+                      <Volume2
+                        className="w-3.5 h-3.5 shrink-0 mt-0.5 opacity-70"
+                        aria-label="AI speaks this line aloud"
+                      />
+                    </div>
+                    <div className={`mt-1.5 pt-1.5 border-t text-xs ${
+                      darkMode ? 'border-orange-700/40 text-orange-300/80' : 'border-gray-300 text-gray-500'
+                    }`}>
+                      {labDemos[activeLabDemo].aiMeaning}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <div className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${
+                    darkMode ? 'bg-orange-500 text-white' : 'bg-orange-600 text-white'
+                  }`}>
+                    <div className="text-xs font-semibold mb-1 opacity-80">Your turn</div>
+                    <div>{labDemos[activeLabDemo].yourLine}</div>
+                    <div className="mt-1.5 pt-1.5 border-t border-white/30 text-xs opacity-90">
+                      {labDemos[activeLabDemo].yourMeaning}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Microphone visual */}
+              <div className={`mt-4 p-4 rounded-xl flex flex-col items-center gap-3 ${
+                darkMode ? 'bg-orange-900/20' : 'bg-orange-50'
+              }`}>
+                <div className="flex items-center justify-center gap-4">
+                  {/* Left waveform */}
+                  <div className="flex items-center gap-1 h-8" aria-hidden="true">
+                    {[0, 1, 2, 3].map((i) => (
+                      <span
+                        key={i}
+                        className={`wave-bar w-1 h-full rounded-full ${darkMode ? 'bg-orange-400' : 'bg-orange-500'}`}
+                        style={{ animationDelay: `${i * 0.15}s` }}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Mic button with pulsing rings */}
+                  <div className="relative flex items-center justify-center w-16 h-16">
+                    <span className="absolute inset-0 rounded-full bg-orange-500/30 animate-ping"></span>
+                    <span className={`absolute inset-1 rounded-full animate-pulse ${
+                      darkMode ? 'bg-orange-500/25' : 'bg-orange-400/30'
+                    }`}></span>
+                    <div className="relative w-12 h-12 rounded-full bg-linear-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg">
+                      <Mic className="w-6 h-6 text-white" aria-label="Microphone" />
+                    </div>
+                  </div>
+
+                  {/* Right waveform */}
+                  <div className="flex items-center gap-1 h-8" aria-hidden="true">
+                    {[0, 1, 2, 3].map((i) => (
+                      <span
+                        key={i}
+                        className={`wave-bar w-1 h-full rounded-full ${darkMode ? 'bg-orange-400' : 'bg-orange-500'}`}
+                        style={{ animationDelay: `${(3 - i) * 0.15}s` }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <p className={`text-xs font-semibold ${darkMode ? 'text-orange-200' : 'text-orange-800'}`}>
+                  Listening... speak your reply out loud
+                </p>
+              </div>
+
+              <div className="flex gap-1.5 justify-center mt-4">
+                {labDemos.map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-1 rounded-full transition-all ${
+                      i === activeLabDemo
+                        ? 'w-6 bg-orange-500'
+                        : darkMode ? 'w-1 bg-orange-800/30' : 'w-1 bg-orange-300'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h2 className={`text-2xl lg:text-3xl font-black mb-4 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                Real AI Live Conversations
+              </h2>
+
+              <p className={`text-base mb-5 ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
+                Talk out loud with a real AI in a live conversation, not a scripted lesson. Pick an everyday scenario like ordering food, asking for directions or bargaining at a market, speak into your microphone, and the AI replies instantly in your chosen language. Practise before you try it with real people.
+              </p>
+
+              <div className="grid sm:grid-cols-2 gap-3 mb-6">
+                {[
+                  'Real AI live conversations',
+                  'Speak with your own voice',
+                  'Everyday scenarios',
+                  'Powered by Sarvam AI'
+                ].map((feature, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <CheckCircle className={`w-4 h-4 shrink-0 ${darkMode ? 'text-green-400' : 'text-green-600'}`} />
+                    <span className={`text-sm ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}>
+                      {feature}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <Link
+                href="/auth/signup"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full font-bold text-base bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-xl hover:scale-105 transition-all"
+              >
+                Join Free to Get Early Access
+                <Mic className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Feature: JOBS */}
       <section className="py-12 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-10 items-center">
             
-            <div className={`p-5 rounded-xl border ${
+            <div className={`p-5 rounded-xl border lg:order-2 ${
               darkMode 
                 ? 'bg-orange-900/10 border-orange-800/30' 
                 : 'bg-white border-orange-200 shadow-xl'
             }`}>
               <div className={`text-xs font-bold mb-3 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                LIVE JOBS
+                JOB PREVIEW
               </div>
 
               <div className="flex items-start gap-3 mb-3">
@@ -941,7 +1176,7 @@ export default function VartaLangLanding() {
               </div>
             </div>
 
-            <div>
+            <div className="lg:order-1">
               <h2 className={`text-2xl lg:text-3xl font-black mb-4 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
                 Monetize Your Language Skills
               </h2>
@@ -1001,19 +1236,28 @@ export default function VartaLangLanding() {
           <p className={`text-base mb-8 max-w-2xl mx-auto ${
             darkMode ? 'text-orange-200/80' : 'text-gray-600'
           }`}>
-            Join thousands using VartaLang to turn language skills into career opportunities. Free forever.
+            Learn, practise and turn your language skills into career opportunities. Matches, chat and the jobs board are free today. Paid courses and Practice Labs launch in December.
           </p>
 
-          <Link href="/auth/signup" className="inline-flex items-center gap-2 px-10 py-4 rounded-full font-black text-lg bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-2xl hover:scale-110 transition-all">
-            Join Free Now
-            <ArrowRight className="w-5 h-5" />
-          </Link>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Link href="/auth/signup" className="inline-flex items-center gap-2 px-10 py-4 rounded-full font-black text-lg bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-2xl hover:scale-110 transition-all">
+              Join Free Now
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+            <Link href="/teachers" className={`inline-flex items-center gap-2 px-8 py-4 rounded-full font-semibold text-lg border transition-all hover:scale-105 ${
+              darkMode
+                ? 'border-orange-700 text-orange-200 hover:bg-orange-900/20'
+                : 'border-orange-300 text-gray-700 hover:bg-orange-50'
+            }`}>
+              Teach on VartaLang
+            </Link>
+          </div>
 
           <div className="grid grid-cols-4 gap-4 max-w-2xl mx-auto mt-10">
             {[
-              { icon: Compass, text: 'Discover' },
-              { icon: Target, text: 'Match' },
-              { icon: MessageCircle, text: 'Practice' },
+              { icon: BookOpen, text: 'Learn' },
+              { icon: Sparkles, text: 'Practise' },
+              { icon: MessageCircle, text: 'Connect' },
               { icon: Briefcase, text: 'Work' }
             ].map((item, i) => (
               <div key={i} className={`p-4 rounded-lg ${
@@ -1042,6 +1286,17 @@ export default function VartaLangLanding() {
         }
         .animate-scroll {
           animation: scroll 30s linear infinite;
+        }
+        @keyframes wave {
+          0%, 100% { transform: scaleY(0.25); }
+          50% { transform: scaleY(1); }
+        }
+        .wave-bar {
+          transform-origin: center;
+          animation: wave 1s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .wave-bar { animation: none; transform: scaleY(0.6); }
         }
       `}</style>
     </div>

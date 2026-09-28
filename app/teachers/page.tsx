@@ -1,442 +1,379 @@
 "use client";
-import { 
-  Heart, Sparkles, ArrowRight, 
-  Users, Award, BookOpen, Globe, Star,
-  MessageSquare, TrendingUp, CheckCircle, FileText
+import {
+  ArrowRight, BookOpen, Users, Globe, CheckCircle,
+  Video, Award, TrendingUp, MessageSquare, Wallet, Sparkles
 } from 'lucide-react';
 import { useDarkMode } from '@/lib/DarkModeContext';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
+const FORM_URL = "https://forms.gle/ZntGjAdgjDJYe8Vm9";
+
 export default function JoinAsCreator() {
   const { darkMode } = useDarkMode();
+
+  const card = darkMode
+    ? 'bg-orange-900/10 border-orange-800/30'
+    : 'bg-white border-orange-100 shadow-sm';
+  const heading = darkMode ? 'text-orange-50' : 'text-gray-900';
+  const body = darkMode ? 'text-orange-200/80' : 'text-gray-700';
+  const muted = darkMode ? 'text-orange-200/70' : 'text-gray-600';
+  const iconBox = darkMode ? 'bg-orange-500/20' : 'bg-orange-50';
+  const iconColor = darkMode ? 'text-orange-400' : 'text-orange-600';
 
   return (
     <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'bg-[#1a1410]' : 'bg-[#FFF9F5]'}`}>
       <Navbar />
-      
+
       {/* Space for Navbar */}
       <div className="h-20"></div>
 
-      {/* Hero Section */}
+      {/* Hero */}
       <section className="pt-16 pb-12 px-4 relative overflow-hidden">
         <div className={`absolute top-0 right-1/4 w-96 h-96 rounded-full blur-3xl ${
           darkMode ? 'bg-orange-900/20' : 'bg-orange-200/40'
         }`}></div>
-        
+
         <div className="max-w-4xl mx-auto relative z-10 text-center">
           <div className={`inline-flex items-center gap-2 px-5 py-2 rounded-full mb-6 border ${
-            darkMode 
-              ? 'bg-orange-900/20 border-orange-800/40 text-orange-300' 
+            darkMode
+              ? 'bg-orange-900/20 border-orange-800/40 text-orange-300'
               : 'bg-orange-50 border-orange-200 text-orange-700'
           }`}>
             <Sparkles className="w-4 h-4" />
-            <span className="text-sm font-medium">Something Special is Beginning</span>
+            <span className="text-sm font-medium">Founding teacher program</span>
           </div>
-          
-          <h1 className={`text-5xl md:text-6xl font-bold mb-6 leading-tight ${
-            darkMode ? 'text-orange-50' : 'text-gray-900'
-          }`}>
-            India Speaks Many Languages.
+
+          <h1 className={`text-5xl md:text-6xl font-bold mb-6 leading-tight ${heading}`}>
+            Teach Indian languages on VartaLang.
             <br />
             <span className="bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
-              But Not Everyone Can Share Them.
+              Keep 90% of every course.
             </span>
           </h1>
-          
-          <p className={`text-xl md:text-2xl mb-4 leading-relaxed ${
-            darkMode ? 'text-orange-200/80' : 'text-gray-700'
-          }`}>
-            We're building something different. Not another platform promising quick money.
-            But a community where creators become trusted guides.
+
+          <p className={`text-xl md:text-2xl mb-4 leading-relaxed ${body}`}>
+            We are opening VartaLang to its first teachers. You sell courses and run live
+            practice sessions. We handle payments, scheduling and reach.
           </p>
 
-          <p className={`text-base mb-6 ${darkMode ? 'text-orange-300/60' : 'text-gray-600'}`}>
-            Teachers • Language Coaches • Content Creators • Authors • Publishers • Educational Institutions
+          <p className={`text-base mb-8 ${darkMode ? 'text-orange-300/60' : 'text-gray-600'}`}>
+            For teachers, language coaches, authors and institutions
           </p>
+
+          <a
+            href={FORM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-linear-to-r from-orange-500 to-red-600 text-white text-lg font-bold hover:shadow-2xl hover:scale-105 transition-all"
+          >
+            Apply as a founding teacher
+            <ArrowRight className="w-5 h-5" />
+          </a>
         </div>
       </section>
 
-      {/* The Reality Section */}
+      {/* Why now */}
       <section className="py-12 px-4">
         <div className="max-w-4xl mx-auto">
-          <div className={`p-8 rounded-3xl border ${
-            darkMode 
-              ? 'bg-orange-900/10 border-orange-800/30' 
-              : 'bg-white border-orange-100 shadow-xl'
-          }`}>
-            <h2 className={`text-3xl font-bold mb-5 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-              Here's the truth.
+          <div className={`p-8 rounded-3xl border ${card}`}>
+            <h2 className={`text-3xl font-bold mb-5 ${heading}`}>
+              Why join now
             </h2>
-            
-            <div className="space-y-5">
-              <p className={`text-lg leading-relaxed ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-                Right now, VartaLang doesn't have thousands of students waiting for you. We don't have a magic formula for instant income. We're not going to promise you ₹50,000 in your first month.
+            <div className="space-y-4">
+              <p className={`text-lg leading-relaxed ${body}`}>
+                There are no professional teachers on VartaLang yet. That means the first
+                teachers to join get full visibility with no one competing for the same
+                learners.
               </p>
-              
-              <p className={`text-lg leading-relaxed ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-                What we do have is a vision: to make quality language education accessible across India. To connect learners who struggle to find good resources with creators who truly care about their craft—whether you're a teacher, author, coach, or institution.
-              </p>
-              
-              <p className={`text-lg leading-relaxed ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-                But here's what makes this interesting for you.
+              <p className={`text-lg leading-relaxed ${body}`}>
+                Founding teachers also help decide how pricing works and how Language Labs
+                are run. When we open the platform to more teachers, the standard you set
+                becomes the standard everyone follows.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* The Opportunity Section */}
+      {/* Revenue split */}
       <section className="py-12 px-4">
         <div className="max-w-4xl mx-auto">
-          <h2 className={`text-4xl font-bold mb-10 text-center ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-            You're Not Just Creating Content.
-            <br />
-            <span className="bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
-              You're Building Something.
-            </span>
+          <h2 className={`text-4xl font-bold mb-3 text-center ${heading}`}>
+            How you earn
           </h2>
+          <p className={`text-lg text-center mb-10 ${muted}`}>
+            Three ways to earn, and a share that grows as your students stay active.
+          </p>
 
-          <div className="grid md:grid-cols-2 gap-6 mb-10">
-            {[
-              {
-                icon: Award,
-                title: 'Earn Your Credibility',
-                description: 'Every student you teach, every course you create, every resource you share builds your reputation. When we launch the Varta Badge program (after 50+ creators and 500+ learners), you\'ll be among the first verified educators on the platform.'
-              },
-              {
-                icon: Users,
-                title: 'Your Content, Your Community',
-                description: 'Build relationships with learners. Once you\'ve proven your quality through reviews and student success, you\'ll have the credibility to charge what you\'re worth—here or anywhere else. Your work becomes your portfolio.'
-              },
-              {
-                icon: Award,
-                title: 'Shape the Platform',
-                description: 'Early creators don\'t just use VartaLang—they shape it. Your feedback influences what features we build. You help decide how content should work, what learners truly need, how the community grows.'
-              },
-              {
-                icon: Globe,
-                title: 'Be Part of the Mission',
-                description: 'India has 22 official languages and hundreds of dialects. Millions want to learn but can\'t find quality resources. You\'re not just creating content—you\'re solving a real problem for real people across the country.'
-              }
-            ].map((item, index) => (
-              <div
-                key={index}
-                className={`p-7 rounded-2xl border transition-all ${
-                  darkMode 
-                    ? 'bg-orange-900/10 border-orange-800/30 hover:bg-orange-900/20' 
-                    : 'bg-white border-orange-100 hover:shadow-lg'
-                }`}
-              >
-                <div className={`w-14 h-14 rounded-xl mb-4 flex items-center justify-center ${
-                  darkMode ? 'bg-orange-500/20' : 'bg-orange-50'
-                }`}>
-                  <item.icon className={`w-7 h-7 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
-                </div>
-                <h3 className={`text-xl font-bold mb-2 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-                  {item.title}
-                </h3>
-                <p className={`text-base leading-relaxed ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                  {item.description}
-                </p>
+          {/* Split bar */}
+          <div className={`p-7 rounded-2xl border mb-8 ${card}`}>
+            <p className={`text-sm font-semibold mb-3 ${muted}`}>
+              On every self-paced course you sell
+            </p>
+            <div className="flex h-14 rounded-xl overflow-hidden text-white font-bold">
+              <div className="basis-[90%] bg-linear-to-r from-orange-500 to-red-600 flex items-center justify-center">
+                You keep 90%
               </div>
-            ))}
+              <div className={`basis-[10%] flex items-center justify-center text-sm ${
+                darkMode ? 'bg-orange-900/60' : 'bg-orange-300 text-orange-950'
+              }`}>
+                10%
+              </div>
+            </div>
+            <p className={`text-sm mt-3 ${muted}`}>
+              10% is the starting commission for founding teachers. It goes toward payments,
+              hosting and bringing learners to your course.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className={`p-7 rounded-2xl border ${card}`}>
+              <div className={`w-14 h-14 rounded-xl mb-4 flex items-center justify-center ${iconBox}`}>
+                <BookOpen className={`w-7 h-7 ${iconColor}`} />
+              </div>
+              <h3 className={`text-xl font-bold mb-2 ${heading}`}>Courses</h3>
+              <p className={`text-base leading-relaxed ${muted}`}>
+                Upload structured language lessons and videos. Learners pay once and learn at
+                their own pace. You keep 90% of each sale.
+              </p>
+            </div>
+
+            <div className={`p-7 rounded-2xl border ${card}`}>
+              <div className={`w-14 h-14 rounded-xl mb-4 flex items-center justify-center ${iconBox}`}>
+                <Video className={`w-7 h-7 ${iconColor}`} />
+              </div>
+              <h3 className={`text-xl font-bold mb-2 ${heading}`}>Language Labs</h3>
+              <p className={`text-base leading-relaxed ${muted}`}>
+                Run live conversation and practice sessions, one-off or as ongoing cohorts.
+                You set the price for each session or package. We add our commission on top
+                and the rest goes straight to you.
+              </p>
+            </div>
+
+            <div className={`p-7 rounded-2xl border ${card}`}>
+              <div className={`w-14 h-14 rounded-xl mb-4 flex items-center justify-center ${iconBox}`}>
+                <Users className={`w-7 h-7 ${iconColor}`} />
+              </div>
+              <h3 className={`text-xl font-bold mb-2 ${heading}`}>Your own students</h3>
+              <p className={`text-base leading-relaxed ${muted}`}>
+                Bring the students you already teach. When at least 50 of them use VartaLang
+                regularly, we raise your revenue share on each course above 90%.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* The Journey Section */}
+      {/* No cold start */}
       <section className="py-12 px-4">
         <div className="max-w-4xl mx-auto">
           <div className={`p-8 rounded-3xl border ${
-            darkMode 
-              ? 'bg-linear-to-br from-orange-900/20 to-red-900/20 border-orange-800/30' 
+            darkMode
+              ? 'bg-linear-to-br from-orange-900/20 to-red-900/20 border-orange-800/30'
               : 'bg-linear-to-br from-orange-50 to-red-50 border-orange-100'
           }`}>
-            <h2 className={`text-3xl font-bold mb-7 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-              Here's How This Works
-            </h2>
-
-            <div className="space-y-6">
-              {[
-                {
-                  step: '01',
-                  title: 'You Join & Create',
-                  description: 'Share your story. Create your first course, upload study materials, publish your book, schedule mentorship sessions, or offer your institutional programs. Start building your presence on VartaLang.'
-                },
-                {
-                  step: '02',
-                  title: 'Learners Discover You',
-                  description: 'As VartaLang grows, students find your content. They take your courses, download your materials, attend your sessions, leave reviews. Your profile becomes a portfolio of real impact—proof of work that speaks for itself.'
-                },
-                {
-                  step: '03',
-                  title: 'You Earn the Badge',
-                  description: 'Once VartaLang reaches 50+ creators and 500+ learners—a milestone we\'ll hit together—the Varta Badge launches. Creators with proven track records get verified. This badge means something: you\'ve created real value for real learners.'
-                },
-                {
-                  step: '04',
-                  title: 'Opportunities Open Up',
-                  description: 'With credibility comes choice. Monetize on VartaLang when we enable it. Take your verified status to other platforms. Companies looking for language content creators will see your proof of work. Publishers, institutions, brands—they all want verified creators. The badge is your credential.'
-                }
-              ].map((item, index) => (
-                <div key={index} className="flex gap-5">
-                  <div className={`shrink-0 w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold ${
-                    darkMode 
-                      ? 'bg-orange-500/20 text-orange-300' 
-                      : 'bg-orange-100 text-orange-600'
-                  }`}>
-                    {item.step}
-                  </div>
-                  <div>
-                    <h3 className={`text-lg font-bold mb-2 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-                      {item.title}
-                    </h3>
-                    <p className={`text-base leading-relaxed ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                      {item.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-start gap-5">
+              <div className={`shrink-0 w-14 h-14 rounded-xl flex items-center justify-center ${
+                darkMode ? 'bg-orange-500/20' : 'bg-white'
+              }`}>
+                <MessageSquare className={`w-7 h-7 ${iconColor}`} />
+              </div>
+              <div>
+                <h2 className={`text-2xl font-bold mb-3 ${heading}`}>
+                  You don't start from zero
+                </h2>
+                <p className={`text-lg leading-relaxed ${body}`}>
+                  VartaLang already has users who chat and translate across languages. When a
+                  learner shows interest in learning a language, we send them to the labs and
+                  courses for that language. You get learners from your own audience and from
+                  ours.
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* What You Can Do Section */}
+      {/* How it works */}
       <section className="py-12 px-4">
         <div className="max-w-4xl mx-auto">
-          <h2 className={`text-3xl font-bold mb-7 text-center ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-            What You Can Do on VartaLang
+          <h2 className={`text-3xl font-bold mb-8 text-center ${heading}`}>
+            How to get started
           </h2>
 
-          <div className="grid md:grid-cols-3 gap-5">
+          <div className="space-y-5">
             {[
               {
-                icon: BookOpen,
-                title: 'Create Courses',
-                description: 'Video lessons, structured programs, exam prep courses'
+                step: '1',
+                title: 'Apply with the short form',
+                description: 'Tell us your language, your teaching experience and what you want to offer. We reply within 3-5 days.'
               },
               {
-                icon: FileText,
-                title: 'Share Resources',
-                description: 'Upload books, notes, PDFs, study materials'
+                step: '2',
+                title: 'We onboard you',
+                description: 'We walk you through the exact commission tiers, set up your profile and help you publish your first course or lab.'
               },
               {
-                icon: MessageSquare,
-                title: 'Mentor Learners',
-                description: '1:1 or group sessions for personalized guidance'
+                step: '3',
+                title: 'Bring your students, or start with ours',
+                description: 'Invite your existing students. We also route interested learners from the platform to your courses and labs.'
               },
               {
-                icon: Globe,
-                title: 'Give Feedback',
-                description: 'Review pronunciation, assignments, practice work'
-              },
-              {
-                icon: Star,
-                title: 'Build Reputation',
-                description: 'Earn reviews and ratings from real learners'
-              },
-              {
-                icon: TrendingUp,
-                title: 'Grow Together',
-                description: 'Shape India\'s language learning future'
+                step: '4',
+                title: 'Get paid',
+                description: 'VartaLang handles payments and scheduling. Your share is paid out to you, and it can increase as your students stay active.'
               }
-            ].map((item, index) => (
-              <div
-                key={index}
-                className={`p-5 rounded-xl border text-center transition-all ${
-                  darkMode 
-                    ? 'bg-orange-900/10 border-orange-800/30 hover:bg-orange-900/20' 
-                    : 'bg-white border-orange-100 hover:shadow-lg'
-                }`}
-              >
-                <div className={`w-12 h-12 rounded-lg mx-auto mb-3 flex items-center justify-center ${
-                  darkMode ? 'bg-orange-500/20' : 'bg-orange-50'
+            ].map((item) => (
+              <div key={item.step} className={`flex gap-5 p-6 rounded-2xl border ${card}`}>
+                <div className={`shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold ${
+                  darkMode ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-100 text-orange-600'
                 }`}>
-                  <item.icon className={`w-6 h-6 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                  {item.step}
                 </div>
-                <h3 className={`font-bold mb-2 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-                  {item.title}
-                </h3>
-                <p className={`text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-600'}`}>
-                  {item.description}
-                </p>
+                <div>
+                  <h3 className={`text-lg font-bold mb-1 ${heading}`}>{item.title}</h3>
+                  <p className={`text-base leading-relaxed ${muted}`}>{item.description}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Who Should Join Section */}
-
-      {/* Who Should Join Section */}
+      {/* Certification */}
       <section className="py-12 px-4">
         <div className="max-w-4xl mx-auto">
-          <h2 className={`text-3xl font-bold mb-7 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-            This Is For You If...
+          <div className={`p-8 rounded-3xl border ${card}`}>
+            <div className="flex items-start gap-5">
+              <div className={`shrink-0 w-14 h-14 rounded-xl flex items-center justify-center ${iconBox}`}>
+                <Award className={`w-7 h-7 ${iconColor}`} />
+              </div>
+              <div>
+                <h2 className={`text-2xl font-bold mb-3 ${heading}`}>
+                  Optional: certificates for your learners
+                </h2>
+                <p className={`text-lg leading-relaxed ${body}`}>
+                  Learners who finish your course or lab can receive a VartaLang certificate.
+                  It adds value to your program and needs no extra work from you.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* What we handle vs what you do */}
+      <section className="py-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className={`p-7 rounded-2xl border ${card}`}>
+              <div className="flex items-center gap-3 mb-4">
+                <TrendingUp className={`w-6 h-6 ${iconColor}`} />
+                <h3 className={`text-xl font-bold ${heading}`}>You do</h3>
+              </div>
+              <ul className={`space-y-2 text-base ${body}`}>
+                <li>Teach and create your course or lab</li>
+                <li>Set your prices for labs</li>
+                <li>Invite the students you already have</li>
+              </ul>
+            </div>
+            <div className={`p-7 rounded-2xl border ${card}`}>
+              <div className="flex items-center gap-3 mb-4">
+                <Wallet className={`w-6 h-6 ${iconColor}`} />
+                <h3 className={`text-xl font-bold ${heading}`}>We do</h3>
+              </div>
+              <ul className={`space-y-2 text-base ${body}`}>
+                <li>Collect payments and pay you out</li>
+                <li>Handle scheduling for live sessions</li>
+                <li>Bring learners from the VartaLang community</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Who should apply */}
+      <section className="py-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          <h2 className={`text-3xl font-bold mb-7 ${heading}`}>
+            This is a good fit if you
           </h2>
 
           <div className="space-y-3">
             {[
-              'You care more about learner success than quick profits',
-              'You believe quality education should be accessible, not just expensive',
-              'You\'re willing to invest time now to build something meaningful',
-              'You want to be part of a community, not just a platform',
-              'You have expertise in Indian languages and want to share it',
-              'You\'re a teacher, coach, author, publisher, or educational institution',
-              'You are okay with starting small to build credibility for bigger opportunities',
-              'You want your work to create real impact, not just transactions'
+              'Teach an Indian language and want to reach learners across the country',
+              'Already have students and want a place to teach and get paid online',
+              'Want to run live practice sessions as well as recorded courses',
+              'Are a teacher, coach, author, publisher or educational institution',
+              'Would like a say in how pricing and Language Labs work from the start'
             ].map((item, index) => (
-              <div
-                key={index}
-                className={`flex items-start gap-4 p-4 rounded-xl border transition-all ${
-                  darkMode 
-                    ? 'bg-orange-900/10 border-orange-800/30' 
-                    : 'bg-white border-orange-100'
-                }`}
-              >
-                <CheckCircle className={`w-5 h-5 shrink-0 mt-0.5 ${
-                  darkMode ? 'text-orange-400' : 'text-orange-600'
-                }`} />
-                <p className={`text-base ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-                  {item}
-                </p>
+              <div key={index} className={`flex items-start gap-4 p-4 rounded-xl border ${card}`}>
+                <CheckCircle className={`w-5 h-5 shrink-0 mt-0.5 ${iconColor}`} />
+                <p className={`text-base ${body}`}>{item}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* The Honest Section */}
+      {/* Honest note */}
       <section className="py-12 px-4">
         <div className="max-w-4xl mx-auto">
-          <div className={`p-8 rounded-3xl border ${
-            darkMode 
-              ? 'bg-orange-900/10 border-orange-800/30' 
-              : 'bg-white border-orange-100 shadow-xl'
-          }`}>
-            <h2 className={`text-3xl font-bold mb-5 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-              Let's Be Clear About What This Isn't
-            </h2>
-            
-            <div className="space-y-3">
-              <p className={`text-lg leading-relaxed ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-                {'\u274C'} This is not a "get rich quick" platform
-              </p>
-              <p className={`text-lg leading-relaxed ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-                {'\u274C'} We're not promising immediate earnings or thousands of learners overnight
-              </p>
-              <p className={`text-lg leading-relaxed ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-                {'\u274C'} There's no guarantee of instant success or passive income
-              </p>
-              <p className={`text-lg leading-relaxed ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-                {'\u274C'} We're still building, still growing, still figuring things out
-              </p>
-              
-              <div className="h-px bg-linear-to-r from-transparent via-orange-500/30 to-transparent my-6"></div>
-              
-              <p className={`text-lg leading-relaxed ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-                {'\u2713'} This is about building credibility that lasts
-              </p>
-              <p className={`text-lg leading-relaxed ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-                {'\u2713'} It's about creating proof of your impact—verifiable, shareable, real
-              </p>
-              <p className={`text-lg leading-relaxed ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-                {'\u2713'} It's about being part of something that could transform language education in India
-              </p>
-              <p className={`text-lg leading-relaxed ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-                {'\u2713'} It's about investing in yourself and your future as a creator
-              </p>
+          <div className={`p-8 rounded-3xl border ${card}`}>
+            <div className="flex items-start gap-5">
+              <div className={`shrink-0 w-14 h-14 rounded-xl flex items-center justify-center ${iconBox}`}>
+                <Globe className={`w-7 h-7 ${iconColor}`} />
+              </div>
+              <div>
+                <h2 className={`text-2xl font-bold mb-3 ${heading}`}>
+                  What to expect
+                </h2>
+                <p className={`text-lg leading-relaxed mb-3 ${body}`}>
+                  VartaLang is still early. We cannot promise a fixed income or a set number
+                  of learners. What we can promise is a low starting commission, a clear
+                  revenue share that improves as your students engage, and direct access to
+                  the team while we build.
+                </p>
+                <p className={`text-lg leading-relaxed ${body}`}>
+                  If you are interested, we will go through the exact tiers with you before
+                  you commit to anything.
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* The Vision Section */}
-      <section className="py-12 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className={`text-4xl font-bold mb-5 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-            Together, We Can Make This Work
-          </h2>
-          
-          <p className={`text-xl mb-6 leading-relaxed ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-            When we reach 50+ creators and 500+ learners, VartaLang becomes real. 
-            Monetization unlocks. The Varta Badge launches. Opportunities multiply.
-          </p>
-
-          <p className={`text-xl mb-10 leading-relaxed ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-            But we need creators who believe in the mission. Creators who'll help bring those first 500 learners.
-            Teachers, coaches, authors, institutions—people who'll create content that matters and build this community together.
-          </p>
-
-          <div className={`inline-block p-7 rounded-2xl border ${
-            darkMode 
-              ? 'bg-linear-to-br from-orange-900/20 to-red-900/20 border-orange-800/30' 
-              : 'bg-linear-to-br from-orange-50 to-red-50 border-orange-200'
-          }`}>
-            <h3 className={`text-2xl font-bold mb-3 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-              The question is simple:
-            </h3>
-            <p className={`text-xl ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-              Do you want to be someone who was there from the beginning?
-              <br />
-              Someone who helped build this?
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
+      {/* CTA */}
       <section className="py-16 px-4">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className={`text-4xl md:text-5xl font-bold mb-5 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-            Ready to Start Building?
+          <h2 className={`text-4xl md:text-5xl font-bold mb-5 ${heading}`}>
+            Become a founding teacher
           </h2>
-          
-          <p className={`text-xl mb-8 ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-            Fill out this simple form. Tell us who you are, what you want to create, and why VartaLang.
-            <br />
-            We'll review and get back to you within 3-5 days.
+
+          <p className={`text-xl mb-8 ${body}`}>
+            Fill out the short form with your language, your experience and what you want to
+            teach. We will reply within 3-5 days.
           </p>
 
           <a
-            href="https://forms.gle/ZntGjAdgjDJYe8Vm9"
+            href={FORM_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-3 px-10 py-5 rounded-2xl bg-linear-to-r from-orange-500 to-red-600 text-white text-xl font-bold hover:shadow-2xl hover:scale-105 transition-all"
           >
-            Join as a Creator
+            Apply as a founding teacher
             <ArrowRight className="w-6 h-6" />
           </a>
 
           <p className={`mt-6 text-sm ${darkMode ? 'text-orange-200/60' : 'text-gray-500'}`}>
-            No fees. No commitments. Just honest work and community building.
+            No joining fee. Applying does not commit you to anything.
           </p>
         </div>
       </section>
 
-      {/* Final Message */}
-      <section className="py-12 px-4 mb-16">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className={`p-7 rounded-2xl border ${
-            darkMode 
-              ? 'bg-orange-900/10 border-orange-800/30' 
-              : 'bg-white border-orange-100'
-          }`}>
-            <Heart className={`w-12 h-12 mx-auto mb-4 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
-            <p className={`text-lg italic leading-relaxed ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-              "The best time to plant a tree was 20 years ago.
-              <br />
-              The second best time is now."
-            </p>
-            <p className={`mt-3 text-base ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>
-              — Let's plant this together.
-            </p>
-          </div>
-        </div>
-      </section>
-
+      <div className="mb-8"></div>
       <Footer />
     </div>
   );
