@@ -1,13 +1,14 @@
 "use client";
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { BookOpen, Search, MapPin, Languages as LanguagesIcon, Sparkles, ExternalLink } from 'lucide-react';
+import { BookOpen, Search, MapPin, Languages as LanguagesIcon, Sparkles, ExternalLink, Puzzle } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useDarkMode } from '@/lib/DarkModeContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 const PREMIUM_URL = "https://learn.vartalang.in";
+const GAMES_URL = "https://games.vartalang.in";
 
 interface LanguageSummary {
   name: string;
@@ -90,6 +91,24 @@ export default function LearnPage() {
                   : 'bg-white border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400'
               }`}
             />
+          </div>
+
+          {/* Crossword CTA */}
+          <div className="mt-5">
+            <a
+              href={GAMES_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-full font-semibold border transition-all hover:scale-105 hover:shadow-lg ${
+                darkMode
+                  ? 'bg-orange-900/20 border-orange-700/40 text-orange-200 hover:border-orange-500'
+                  : 'bg-white border-orange-200 text-orange-700 hover:border-orange-400'
+              }`}
+            >
+              <Puzzle className="w-4 h-4" />
+              Play a language crossword
+              <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+            </a>
           </div>
         </div>
       </section>
