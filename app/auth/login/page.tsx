@@ -245,7 +245,7 @@ export default function SigninPage() {
                 <input type="checkbox" className="w-4 h-4 rounded accent-orange-500" />
                 Remember me
               </label>
-              <a href="#" className={`font-medium ${darkMode ? "text-orange-400 hover:text-orange-300" : "text-orange-600 hover:text-orange-700"}`}>Forgot password?</a>
+              <Link href="/auth/forgot-password" className={`font-medium ${darkMode ? "text-orange-400 hover:text-orange-300" : "text-orange-600 hover:text-orange-700"}`}>Forgot password?</Link>
             </div>
 
             <button
