@@ -25,7 +25,7 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="max-w-md w-full">
         {sent ? (
-          <p>Agar ye email registered hai to reset link bhej diya gaya hai. Inbox check karo.</p>
+          <p>If this email is registered, a password reset link has been sent. Please check your inbox.</p>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <h1 className="text-2xl font-bold">Forgot Password</h1>
