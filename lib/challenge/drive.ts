@@ -3,27 +3,46 @@ import { Readable } from 'stream';
 
 /*
  * Everything Drive-related for the Voice Challenge lives in this one file.
- * Deleting the challenge feature later = delete this file, its callers,
- * and the GOOGLE_* env vars below. Nothing else in the app touches Drive.
  *
  * Auth: OAuth (user account), NOT a service account — service accounts have
- * no storage quota on regular Gmail (non-Workspace) My Drive, so uploads to
- * personal Drive folders must go through the actual Gmail account via OAuth.
+ * no storage quota on regular Gmail (non-Workspace) My Drive.
  *
- * Required env vars (.env.local):
- *   GOOGLE_OAUTH_CLIENT_ID       - from OAuth client (Desktop app type)
- *   GOOGLE_OAUTH_CLIENT_SECRET   - from OAuth client
- *   GOOGLE_REFRESH_TOKEN         - one-time generated via get-refresh-token.js
- *   GOOGLE_DRIVE_FOLDER_ID       - the folder ID in the actual Gmail account
+ * Required env vars:
+ *   GOOGLE_OAUTH_CLIENT_ID       - plain client ID (no http://, no trailing /)
+ *   GOOGLE_OAUTH_CLIENT_SECRET
+ *   GOOGLE_REFRESH_TOKEN         - generated AFTER app is "In production"
+ *   GOOGLE_DRIVE_FOLDER_ID
  */
 
+function clean(v: string | undefined): string | undefined {
+  // Strips accidental spaces, newlines and wrapping quotes from env values.
+  return v?.trim().replace(/^["']|["']$/g, '');
+}
+
 function getDriveClient() {
-  const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
-  const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
+  const clientId = clean(process.env.GOOGLE_OAUTH_CLIENT_ID);
+  const clientSecret = clean(process.env.GOOGLE_OAUTH_CLIENT_SECRET);
+  const refreshToken = clean(process.env.GOOGLE_REFRESH_TOKEN);
 
   if (!clientId || !clientSecret || !refreshToken) {
-    throw new Error('Missing GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET / GOOGLE_REFRESH_TOKEN env vars');
+    throw new Error(
+      'Missing GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET / GOOGLE_REFRESH_TOKEN env vars'
+    );
+  }
+
+  // ---- TEMP DEBUG: remove after checking Vercel logs ----
+  console.log('DRIVE ENV CHECK', {
+    idStart: clientId.slice(0, 8),
+    idEnd: clientId.slice(-12),
+    idLen: clientId.length,
+    secretLen: clientSecret.length,
+    secretEnd: clientSecret.slice(-4),
+    tokenStart: refreshToken.slice(0, 4),
+  });
+  // --------------------------------------------------------
+
+  if (/^https?:\/\//i.test(clientId) || clientId.endsWith('/')) {
+    throw new Error('GOOGLE_OAUTH_CLIENT_ID is malformed (remove http:// and trailing /)');
   }
 
   const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
@@ -32,16 +51,34 @@ function getDriveClient() {
   return google.drive({ version: 'v3', auth: oauth2Client });
 }
 
+function getFolderId(): string {
+  const id = clean(process.env.GOOGLE_DRIVE_FOLDER_ID);
+  if (!id) throw new Error('Missing GOOGLE_DRIVE_FOLDER_ID env var');
+  return id;
+}
+
+/**
+ * True when Google rejected our OAuth credentials (dead refresh token,
+ * wrong client ID/secret).
+ */
+export function isDriveAuthError(err: unknown): boolean {
+  const e = err as { message?: string; response?: { data?: { error?: string } } };
+  const msg = `${e?.message ?? ''} ${e?.response?.data?.error ?? ''}`;
+  return msg.includes('invalid_grant') || msg.includes('invalid_client');
+}
+
+export const DRIVE_AUTH_LOG =
+  'DRIVE OAUTH CREDENTIALS INVALID — regenerate GOOGLE_REFRESH_TOKEN (app must be In production) and redeploy';
+
 /**
  * Checks whether this user has already submitted a recording for this
  * language, by looking for a filename that starts with "Language_UserID_".
- * This is our stand-in for a database row — the filename itself is the record.
  */
 export async function hasExistingSubmission(language: string, userId: string): Promise<boolean> {
   const drive = getDriveClient();
-  const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+  const folderId = getFolderId();
 
-  const prefix = `${language.replace(/[^a-zA-Z]/g, '')}_${userId}_`;
+  const prefix = `${language.replace(/[^a-zA-Z]/g, '')}_${userId.replace(/[^a-zA-Z0-9]/g, '')}_`;
 
   const res = await drive.files.list({
     q: `'${folderId}' in parents and trashed = false and name contains '${prefix}'`,
@@ -64,12 +101,12 @@ interface UploadParams {
  */
 export async function uploadToDrive({ filename, mimeType, buffer }: UploadParams): Promise<string> {
   const drive = getDriveClient();
-  const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+  const folderId = getFolderId();
 
   const res = await drive.files.create({
     requestBody: {
       name: filename,
-      parents: folderId ? [folderId] : undefined,
+      parents: [folderId],
     },
     media: {
       mimeType,
@@ -94,13 +131,11 @@ export interface DriveSubmissionFile {
 
 /**
  * Lists every recording currently in the challenge folder, newest first.
- * Paginates through Drive's results so it works past the 1000-file mark.
- * Used by the admin challenge page — this file itself has no notion of
- * "users" or "languages", it just hands back raw Drive file records.
+ * Paginates so it works past the 1000-file mark.
  */
 export async function listSubmissions(): Promise<DriveSubmissionFile[]> {
   const drive = getDriveClient();
-  const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+  const folderId = getFolderId();
 
   const files: DriveSubmissionFile[] = [];
   let pageToken: string | undefined;
