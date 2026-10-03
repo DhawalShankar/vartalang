@@ -204,7 +204,7 @@ export default function Footer() {
                 }`}
               >
                 <Mail className="w-4 h-4" />
-                dhawal@cosmoindiaprakashan.in
+                support@cosmoindiaprakashan.in
               </a>
               <div className={`flex items-center gap-2 text-sm ${
                 darkMode ? "text-orange-300/70" : "text-gray-600"
