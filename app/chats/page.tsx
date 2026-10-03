@@ -1238,7 +1238,7 @@ function ChatsContent() {
               Report User
             </h3>
             <p className={`text-sm mb-4 ${darkMode ? "text-orange-200/70" : "text-orange-700/70"}`}>
-              Please describe why you're reporting this user. This will be sent to cosmoindiaprakashan@gmail.com and the user will be automatically blocked.
+              Please describe why you're reporting this user. This will be sent to support@cosmoindiaprakashan.in and the user will be automatically blocked.
             </p>
             <textarea
               value={reportReason}

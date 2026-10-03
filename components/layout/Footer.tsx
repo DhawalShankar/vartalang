@@ -47,7 +47,7 @@ export default function Footer() {
   const socials = [
     { name: "Instagram", href: "https://instagram.com/cosmoindiaprakashan", icon: Instagram },
     { name: "Twitter", href: "https://x.com/IndiaCosmo", icon: Twitter },
-    { name: "WhatsApp", href: "https://wa.me/7388270331", icon: MessageCircle },
+    { name: "WhatsApp", href: "https://whatsapp.com/channel/0029VaF2wFRLo4hmxhLu6L1U", icon: MessageCircle },
   ];
 
   return (
@@ -196,7 +196,7 @@ export default function Footer() {
           <div className={`py-6 mb-6 border-y ${darkMode ? "border-orange-900/30" : "border-orange-100"}`}>
             <div className="flex flex-wrap gap-6 justify-center md:justify-start">
               <a
-                href="mailto:dhawal@cosmoindiaprakashan.in"
+                href="mailto:support@cosmoindiaprakashan.in"
                 className={`flex items-center gap-2 text-sm transition-colors ${
                   darkMode
                     ? "text-orange-300/70 hover:text-orange-200"
