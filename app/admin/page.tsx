@@ -7,7 +7,7 @@ import ExtendJobModal from '@/components/ExtendJobModal';
 import ReportDetailsModal from '@/components/ReportDetailsModal';
 import { 
   Shield, Users, Briefcase, TrendingUp, Clock, 
-  Trash2, Calendar, Loader2, AlertTriangle, CheckCircle,
+  Trash2, Calendar, Loader2, CheckCircle,
   AlertCircle as ReportIcon, Eye, Link2Off, Search
 } from 'lucide-react';
 import { useDarkMode } from '@/lib/DarkModeContext';
@@ -51,6 +51,9 @@ interface Member {
   email: string;
   primaryRole?: string;
   createdAt: string;
+  languagesKnow?: { language: string; fluency: string }[];
+  primaryLanguageToLearn?: string;
+  secondaryLanguageToLearn?: string;
 }
 
 interface MatchRecord {
@@ -60,6 +63,14 @@ interface MatchRecord {
   status: 'pending' | 'accepted' | 'rejected';
   createdAt: string;
   hasChat: boolean;
+}
+
+interface PossibleMatch {
+  user1: { _id: string; name: string; email: string };
+  user2: { _id: string; name: string; email: string };
+  user1Learns: string[];
+  user2Learns: string[];
+  score: number;
 }
 
 interface PlatformStats {
@@ -89,9 +100,12 @@ export default function AdminPortal() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
-  const [memberSearch, setMemberSearch] = useState(''); // ✅ Users tab search — kept
+  const [memberSearch, setMemberSearch] = useState('');
   const [matches, setMatches] = useState<MatchRecord[]>([]);
-  const [matchSearch, setMatchSearch] = useState(''); // ✅ NEW: Matches tab search
+  const [matchSearch, setMatchSearch] = useState('');
+  const [matchView, setMatchView] = useState<'existing' | 'possible'>('existing');
+  const [possibleMatches, setPossibleMatches] = useState<PossibleMatch[]>([]);
+  const [possibleTotal, setPossibleTotal] = useState(0);
   const [matchResetLoadingId, setMatchResetLoadingId] = useState<string | null>(null);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
@@ -126,7 +140,14 @@ export default function AdminPortal() {
       }
 
       setIsAdmin(true);
-      await Promise.all([fetchStats(), fetchJobs(), fetchReports(), fetchMembers(), fetchMatches()]);
+      await Promise.all([
+        fetchStats(),
+        fetchJobs(),
+        fetchReports(),
+        fetchMembers(),
+        fetchMatches(),
+        fetchPossibleMatches()
+      ]);
     } catch (error) {
       console.error('Admin check error:', error);
       router.push('/');
@@ -197,6 +218,22 @@ export default function AdminPortal() {
       if (data.success) setMatches(data.matches);
     } catch (error) {
       console.error('Fetch matches error:', error);
+    }
+  };
+
+  const fetchPossibleMatches = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`${API_URL}/admin/possible-matches?limit=200`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPossibleMatches(data.possibleMatches);
+        setPossibleTotal(data.total);
+      }
+    } catch (error) {
+      console.error('Fetch possible matches error:', error);
     }
   };
 
@@ -326,7 +363,7 @@ export default function AdminPortal() {
           `chat deleted: ${data.chatDeleted ? 'yes' : 'no'}, ` +
           `${data.notificationsDeleted} notification(s) cleared.`
         );
-        await Promise.all([fetchStats(), fetchMatches()]);
+        await Promise.all([fetchStats(), fetchMatches(), fetchPossibleMatches()]);
       } else {
         alert(data.error || 'Failed to reset connection');
       }
@@ -369,7 +406,7 @@ export default function AdminPortal() {
           `chat deleted: ${data.chatDeleted ? 'yes' : 'no'}, ` +
           `${data.notificationsDeleted} notification(s) cleared.`
         );
-        await Promise.all([fetchMatches(), fetchStats()]);
+        await Promise.all([fetchMatches(), fetchStats(), fetchPossibleMatches()]);
       } else {
         alert(data.error || 'Failed to reset connection');
       }
@@ -399,13 +436,20 @@ export default function AdminPortal() {
     });
   };
 
+  // Users tab search: name, email, and both language lists
   const filteredMembers = members.filter((m) => {
     const q = memberSearch.trim().toLowerCase();
     if (!q) return true;
-    return m.name?.toLowerCase().includes(q) || m.email?.toLowerCase().includes(q);
+    return (
+      m.name?.toLowerCase().includes(q) ||
+      m.email?.toLowerCase().includes(q) ||
+      m.primaryLanguageToLearn?.toLowerCase().includes(q) ||
+      m.secondaryLanguageToLearn?.toLowerCase().includes(q) ||
+      m.languagesKnow?.some((l) => l.language?.toLowerCase().includes(q))
+    );
   });
 
-  // ✅ NEW: filter matches by either user's name or email
+  // Existing matches: filter by either user's name or email
   const filteredMatches = matches.filter((m) => {
     const q = matchSearch.trim().toLowerCase();
     if (!q) return true;
@@ -416,6 +460,22 @@ export default function AdminPortal() {
       m.user2?.email?.toLowerCase().includes(q)
     );
   });
+
+  // Possible matches: name, email, or language
+  const filteredPossible = possibleMatches.filter((m) => {
+    const q = matchSearch.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      m.user1.name?.toLowerCase().includes(q) ||
+      m.user1.email?.toLowerCase().includes(q) ||
+      m.user2.name?.toLowerCase().includes(q) ||
+      m.user2.email?.toLowerCase().includes(q) ||
+      m.user1Learns.some((l) => l.toLowerCase().includes(q)) ||
+      m.user2Learns.some((l) => l.toLowerCase().includes(q))
+    );
+  });
+
+  const thCls = `px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`;
 
   if (loading) {
     return (
@@ -595,27 +655,9 @@ export default function AdminPortal() {
                 <table className="w-full">
                   <thead className={darkMode ? 'bg-orange-900/20' : 'bg-orange-50'}>
                     <tr>
-                      <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                        Job Title
-                      </th>
-                      <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                        Company
-                      </th>
-                      <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                        Language
-                      </th>
-                      <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                        Status
-                      </th>
-                      <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                        Expires In
-                      </th>
-                      <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                        Views
-                      </th>
-                      <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                        Actions
-                      </th>
+                      {['Job Title', 'Company', 'Language', 'Status', 'Expires In', 'Views', 'Actions'].map((h) => (
+                        <th key={h} className={thCls}>{h}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-orange-800/20">
@@ -715,21 +757,9 @@ export default function AdminPortal() {
                   <table className="w-full">
                     <thead className={darkMode ? 'bg-orange-900/20' : 'bg-orange-50'}>
                       <tr>
-                        <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                          Reporter
-                        </th>
-                        <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                          Reported User
-                        </th>
-                        <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                          Reason
-                        </th>
-                        <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                          Date
-                        </th>
-                        <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                          Actions
-                        </th>
+                        {['Reporter', 'Reported User', 'Reason', 'Date', 'Actions'].map((h) => (
+                          <th key={h} className={thCls}>{h}</th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-orange-800/20">
@@ -788,7 +818,7 @@ export default function AdminPortal() {
             </div>
           )}
 
-          {/* ✅ UPDATED: Users Tab — search only, no selection/reset system */}
+          {/* Users Tab — with Knows / Learning language columns */}
           {activeTab === 'users' && (
             <div className={`rounded-2xl border overflow-hidden ${
               darkMode ? 'bg-orange-900/10 border-orange-800/30' : 'bg-white border-orange-100'
@@ -801,7 +831,7 @@ export default function AdminPortal() {
                   <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${darkMode ? 'text-orange-300/50' : 'text-gray-400'}`} />
                   <input
                     type="text"
-                    placeholder="Search by name or email..."
+                    placeholder="Search by name, email or language..."
                     value={memberSearch}
                     onChange={(e) => setMemberSearch(e.target.value)}
                     className={`pl-9 pr-4 py-2 rounded-lg text-sm border w-full focus:outline-none ${
@@ -817,18 +847,9 @@ export default function AdminPortal() {
                 <table className="w-full">
                   <thead className={`sticky top-0 ${darkMode ? 'bg-orange-900/20' : 'bg-orange-50'}`}>
                     <tr>
-                      <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                        Name
-                      </th>
-                      <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                        Email
-                      </th>
-                      <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                        Role
-                      </th>
-                      <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                        Joined
-                      </th>
+                      {['Name', 'Email', 'LMS Role', 'Knows', 'Learning', 'Joined'].map((h) => (
+                        <th key={h} className={thCls}>{h}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-orange-800/20">
@@ -843,6 +864,44 @@ export default function AdminPortal() {
                         <td className={`px-6 py-4 text-sm capitalize ${darkMode ? 'text-orange-200/70' : 'text-gray-700'}`}>
                           {member.primaryRole || '—'}
                         </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-wrap gap-1">
+                            {member.languagesKnow?.length ? (
+                              member.languagesKnow.map((l, i) => (
+                                <span
+                                  key={i}
+                                  className={`px-2 py-0.5 rounded-full text-xs whitespace-nowrap ${
+                                    darkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700'
+                                  }`}
+                                >
+                                  {l.language} · {l.fluency}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-xs text-gray-400">—</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-wrap gap-1">
+                            {[member.primaryLanguageToLearn, member.secondaryLanguageToLearn].filter(Boolean).length ? (
+                              [member.primaryLanguageToLearn, member.secondaryLanguageToLearn]
+                                .filter(Boolean)
+                                .map((l, i) => (
+                                  <span
+                                    key={i}
+                                    className={`px-2 py-0.5 rounded-full text-xs whitespace-nowrap ${
+                                      darkMode ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-700'
+                                    }`}
+                                  >
+                                    {l}
+                                  </span>
+                                ))
+                            ) : (
+                              <span className="text-xs text-gray-400">—</span>
+                            )}
+                          </div>
+                        </td>
                         <td className={`px-6 py-4 text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-700'}`}>
                           {formatDate(member.createdAt)}
                         </td>
@@ -850,7 +909,7 @@ export default function AdminPortal() {
                     ))}
                     {filteredMembers.length === 0 && (
                       <tr>
-                        <td colSpan={4} className={`px-6 py-12 text-center text-sm ${darkMode ? 'text-orange-300/60' : 'text-gray-500'}`}>
+                        <td colSpan={6} className={`px-6 py-12 text-center text-sm ${darkMode ? 'text-orange-300/60' : 'text-gray-500'}`}>
                           No members match your search
                         </td>
                       </tr>
@@ -861,25 +920,41 @@ export default function AdminPortal() {
             </div>
           )}
 
-          {/* ✅ UPDATED: Matches Tab — search added */}
+          {/* Matches Tab — Existing / Possible toggle */}
           {activeTab === 'matches' && (
             <div className={`rounded-2xl border overflow-hidden ${
               darkMode ? 'bg-orange-900/10 border-orange-800/30' : 'bg-white border-orange-100'
             }`}>
               <div className="p-6 border-b border-orange-800/30 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                  <h2 className={`text-xl font-bold ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
-                    All Matches ({matches.length})
-                  </h2>
-                  <p className={`text-sm mt-1 ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>
-                    Every match record that currently exists, with its chat status
+                  <div className="flex gap-2 mb-2">
+                    {(['existing', 'possible'] as const).map((v) => (
+                      <button
+                        key={v}
+                        onClick={() => setMatchView(v)}
+                        className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                          matchView === v
+                            ? darkMode ? 'bg-orange-500 text-white' : 'bg-orange-600 text-white'
+                            : darkMode
+                              ? 'bg-orange-900/10 text-orange-300 border border-orange-800/30'
+                              : 'bg-white text-gray-700 border border-orange-200'
+                        }`}
+                      >
+                        {v === 'existing' ? `Existing (${matches.length})` : `Possible (${possibleTotal})`}
+                      </button>
+                    ))}
+                  </div>
+                  <p className={`text-sm ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>
+                    {matchView === 'existing'
+                      ? 'Every match record that currently exists, with its chat status'
+                      : 'Pairs with a mutual language fit and no match record yet (best first)'}
                   </p>
                 </div>
                 <div className="relative w-full md:w-64">
                   <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${darkMode ? 'text-orange-300/50' : 'text-gray-400'}`} />
                   <input
                     type="text"
-                    placeholder="Search by name or email..."
+                    placeholder="Search by name, email or language..."
                     value={matchSearch}
                     onChange={(e) => setMatchSearch(e.target.value)}
                     className={`pl-9 pr-4 py-2 rounded-lg text-sm border w-full focus:outline-none ${
@@ -891,96 +966,134 @@ export default function AdminPortal() {
                 </div>
               </div>
 
-              {matches.length === 0 ? (
-                <div className="p-12 text-center">
-                  <CheckCircle className={`w-16 h-16 mx-auto mb-4 ${darkMode ? 'text-green-400' : 'text-green-600'}`} />
-                  <p className={`text-lg font-semibold ${darkMode ? 'text-orange-100' : 'text-gray-900'}`}>
-                    No matches yet
-                  </p>
-                </div>
+              {matchView === 'existing' ? (
+                matches.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <CheckCircle className={`w-16 h-16 mx-auto mb-4 ${darkMode ? 'text-green-400' : 'text-green-600'}`} />
+                    <p className={`text-lg font-semibold ${darkMode ? 'text-orange-100' : 'text-gray-900'}`}>
+                      No matches yet
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+                    <table className="w-full">
+                      <thead className={`sticky top-0 ${darkMode ? 'bg-orange-900/20' : 'bg-orange-50'}`}>
+                        <tr>
+                          {['User 1', 'User 2', 'Status', 'Chat', 'Matched On', 'Actions'].map((h) => (
+                            <th key={h} className={thCls}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-orange-800/20">
+                        {filteredMatches.map((match) => (
+                          <tr key={match._id} className={darkMode ? 'hover:bg-orange-900/10' : 'hover:bg-orange-50/50'}>
+                            <td className={`px-6 py-4 ${darkMode ? 'text-orange-100' : 'text-gray-900'}`}>
+                              <p className="font-medium">{match.user1?.name || 'Unknown'}</p>
+                              <p className={`text-xs ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
+                                {match.user1?.email || 'N/A'}
+                              </p>
+                            </td>
+                            <td className={`px-6 py-4 ${darkMode ? 'text-orange-100' : 'text-gray-900'}`}>
+                              <p className="font-medium">{match.user2?.name || 'Unknown'}</p>
+                              <p className={`text-xs ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
+                                {match.user2?.email || 'N/A'}
+                              </p>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                match.status === 'accepted'
+                                  ? darkMode ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-700'
+                                  : match.status === 'rejected'
+                                    ? darkMode ? 'bg-red-900/30 text-red-300' : 'bg-red-100 text-red-700'
+                                    : darkMode ? 'bg-yellow-900/30 text-yellow-300' : 'bg-yellow-100 text-yellow-700'
+                              }`}>
+                                {match.status}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`text-xs font-medium ${
+                                match.hasChat
+                                  ? darkMode ? 'text-green-400' : 'text-green-600'
+                                  : darkMode ? 'text-orange-300/50' : 'text-gray-400'
+                              }`}>
+                                {match.hasChat ? 'Active chat' : 'No chat'}
+                              </span>
+                            </td>
+                            <td className={`px-6 py-4 text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-700'}`}>
+                              {formatDate(match.createdAt)}
+                            </td>
+                            <td className="px-6 py-4">
+                              <button
+                                onClick={() => handleResetMatch(match)}
+                                disabled={matchResetLoadingId === match._id}
+                                className="p-2 rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Delete match & chat between these two users"
+                              >
+                                {matchResetLoadingId === match._id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Link2Off className="w-4 h-4" />
+                                )}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {filteredMatches.length === 0 && (
+                          <tr>
+                            <td colSpan={6} className={`px-6 py-12 text-center text-sm ${darkMode ? 'text-orange-300/60' : 'text-gray-500'}`}>
+                              No matches found for this search
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )
               ) : (
                 <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
                   <table className="w-full">
                     <thead className={`sticky top-0 ${darkMode ? 'bg-orange-900/20' : 'bg-orange-50'}`}>
                       <tr>
-                        <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                          User 1
-                        </th>
-                        <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                          User 2
-                        </th>
-                        <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                          Status
-                        </th>
-                        <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                          Chat
-                        </th>
-                        <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                          Matched On
-                        </th>
-                        <th className={`px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`}>
-                          Actions
-                        </th>
+                        {['User 1', 'User 2', 'Language swap', 'Score'].map((h) => (
+                          <th key={h} className={thCls}>{h}</th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-orange-800/20">
-                      {filteredMatches.map((match) => (
-                        <tr key={match._id} className={darkMode ? 'hover:bg-orange-900/10' : 'hover:bg-orange-50/50'}>
+                      {filteredPossible.map((pm) => (
+                        <tr
+                          key={`${pm.user1._id}-${pm.user2._id}`}
+                          className={darkMode ? 'hover:bg-orange-900/10' : 'hover:bg-orange-50/50'}
+                        >
                           <td className={`px-6 py-4 ${darkMode ? 'text-orange-100' : 'text-gray-900'}`}>
-                            <p className="font-medium">{match.user1?.name || 'Unknown'}</p>
+                            <p className="font-medium">{pm.user1.name}</p>
                             <p className={`text-xs ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
-                              {match.user1?.email || 'N/A'}
+                              {pm.user1.email}
                             </p>
                           </td>
                           <td className={`px-6 py-4 ${darkMode ? 'text-orange-100' : 'text-gray-900'}`}>
-                            <p className="font-medium">{match.user2?.name || 'Unknown'}</p>
+                            <p className="font-medium">{pm.user2.name}</p>
                             <p className={`text-xs ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
-                              {match.user2?.email || 'N/A'}
+                              {pm.user2.email}
                             </p>
+                          </td>
+                          <td className={`px-6 py-4 text-xs ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
+                            <p>{(pm.user1.name || 'User 1').split(' ')[0]} learns: <b>{pm.user1Learns.join(', ')}</b></p>
+                            <p>{(pm.user2.name || 'User 2').split(' ')[0]} learns: <b>{pm.user2Learns.join(', ')}</b></p>
                           </td>
                           <td className="px-6 py-4">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              match.status === 'accepted'
-                                ? darkMode ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-700'
-                                : match.status === 'rejected'
-                                  ? darkMode ? 'bg-red-900/30 text-red-300' : 'bg-red-100 text-red-700'
-                                  : darkMode ? 'bg-yellow-900/30 text-yellow-300' : 'bg-yellow-100 text-yellow-700'
+                              darkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700'
                             }`}>
-                              {match.status}
+                              {pm.score}
                             </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`text-xs font-medium ${
-                              match.hasChat
-                                ? darkMode ? 'text-green-400' : 'text-green-600'
-                                : darkMode ? 'text-orange-300/50' : 'text-gray-400'
-                            }`}>
-                              {match.hasChat ? 'Active chat' : 'No chat'}
-                            </span>
-                          </td>
-                          <td className={`px-6 py-4 text-sm ${darkMode ? 'text-orange-200/70' : 'text-gray-700'}`}>
-                            {formatDate(match.createdAt)}
-                          </td>
-                          <td className="px-6 py-4">
-                            <button
-                              onClick={() => handleResetMatch(match)}
-                              disabled={matchResetLoadingId === match._id}
-                              className="p-2 rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                              title="Delete match & chat between these two users"
-                            >
-                              {matchResetLoadingId === match._id ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <Link2Off className="w-4 h-4" />
-                              )}
-                            </button>
                           </td>
                         </tr>
                       ))}
-                      {filteredMatches.length === 0 && (
+                      {filteredPossible.length === 0 && (
                         <tr>
-                          <td colSpan={6} className={`px-6 py-12 text-center text-sm ${darkMode ? 'text-orange-300/60' : 'text-gray-500'}`}>
-                            No matches found for this search
+                          <td colSpan={4} className={`px-6 py-12 text-center text-sm ${darkMode ? 'text-orange-300/60' : 'text-gray-500'}`}>
+                            No possible matches found
                           </td>
                         </tr>
                       )}
