@@ -1,6 +1,6 @@
 // app/admin/page.tsx
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import ExtendJobModal from '@/components/ExtendJobModal';
@@ -8,7 +8,8 @@ import ReportDetailsModal from '@/components/ReportDetailsModal';
 import { 
   Shield, Users, Briefcase, TrendingUp, Clock, 
   Trash2, Calendar, Loader2, CheckCircle,
-  AlertCircle as ReportIcon, Eye, Link2Off, Search
+  AlertCircle as ReportIcon, Eye, Link2Off, Search,
+  ChevronDown, ChevronRight
 } from 'lucide-react';
 import { useDarkMode } from '@/lib/DarkModeContext';
 
@@ -73,6 +74,18 @@ interface PossibleMatch {
   score: number;
 }
 
+interface PossiblePartner {
+  user: { _id: string; name: string; email: string };
+  youLearn: string[];   // what this person learns from the partner
+  theyLearn: string[];  // what the partner learns from this person
+  score: number;
+}
+
+interface PossiblePerson {
+  user: { _id: string; name: string; email: string };
+  partners: PossiblePartner[];
+}
+
 interface PlatformStats {
   users: {
     total: number;
@@ -106,6 +119,7 @@ export default function AdminPortal() {
   const [matchView, setMatchView] = useState<'existing' | 'possible'>('existing');
   const [possibleMatches, setPossibleMatches] = useState<PossibleMatch[]>([]);
   const [possibleTotal, setPossibleTotal] = useState(0);
+  const [expandedPeople, setExpandedPeople] = useState<Set<string>>(new Set());
   const [matchResetLoadingId, setMatchResetLoadingId] = useState<string | null>(null);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
@@ -224,7 +238,7 @@ export default function AdminPortal() {
   const fetchPossibleMatches = async () => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${API_URL}/admin/possible-matches?limit=200`, {
+      const res = await fetch(`${API_URL}/admin/possible-matches?limit=1000`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -461,19 +475,55 @@ export default function AdminPortal() {
     );
   });
 
-  // Possible matches: name, email, or language
-  const filteredPossible = possibleMatches.filter((m) => {
+  // Possible matches grouped by person: one row per user, with all partners inside
+  const groupedPossible: PossiblePerson[] = (() => {
+    const map = new Map<string, PossiblePerson>();
+    const add = (
+      me: PossiblePerson['user'],
+      other: PossiblePerson['user'],
+      myLearns: string[],
+      otherLearns: string[],
+      score: number
+    ) => {
+      if (!map.has(me._id)) map.set(me._id, { user: me, partners: [] });
+      map.get(me._id)!.partners.push({ user: other, youLearn: myLearns, theyLearn: otherLearns, score });
+    };
+    possibleMatches.forEach((pm) => {
+      add(pm.user1, pm.user2, pm.user1Learns, pm.user2Learns, pm.score);
+      add(pm.user2, pm.user1, pm.user2Learns, pm.user1Learns, pm.score);
+    });
+    const people = Array.from(map.values());
+    people.forEach((p) => p.partners.sort((a, b) => b.score - a.score));
+    return people.sort(
+      (a, b) => b.partners.length - a.partners.length || (a.user.name || '').localeCompare(b.user.name || '')
+    );
+  })();
+
+  // Search: the person, or any of their partners, by name / email / language
+  const filteredPossible = groupedPossible.filter((person) => {
     const q = matchSearch.trim().toLowerCase();
     if (!q) return true;
+    const hit = (u: { name: string; email: string }) =>
+      u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q);
     return (
-      m.user1.name?.toLowerCase().includes(q) ||
-      m.user1.email?.toLowerCase().includes(q) ||
-      m.user2.name?.toLowerCase().includes(q) ||
-      m.user2.email?.toLowerCase().includes(q) ||
-      m.user1Learns.some((l) => l.toLowerCase().includes(q)) ||
-      m.user2Learns.some((l) => l.toLowerCase().includes(q))
+      hit(person.user) ||
+      person.partners.some(
+        (p) =>
+          hit(p.user) ||
+          p.youLearn.some((l) => l.toLowerCase().includes(q)) ||
+          p.theyLearn.some((l) => l.toLowerCase().includes(q))
+      )
     );
   });
+
+  const togglePerson = (id: string) => {
+    setExpandedPeople((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const thCls = `px-6 py-3 text-left text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-gray-700'}`;
 
@@ -940,14 +990,14 @@ export default function AdminPortal() {
                               : 'bg-white text-gray-700 border border-orange-200'
                         }`}
                       >
-                        {v === 'existing' ? `Existing (${matches.length})` : `Possible (${possibleTotal})`}
+                        {v === 'existing' ? `Existing (${matches.length})` : `Possible (${groupedPossible.length} people)`}
                       </button>
                     ))}
                   </div>
                   <p className={`text-sm ${darkMode ? 'text-orange-300/70' : 'text-gray-600'}`}>
                     {matchView === 'existing'
                       ? 'Every match record that currently exists, with its chat status'
-                      : 'Pairs with a mutual language fit and no match record yet (best first)'}
+                      : `${groupedPossible.length} people can match with someone (${possibleTotal} possible pairs). Click a row to see who.`}
                   </p>
                 </div>
                 <div className="relative w-full md:w-64">
@@ -1054,45 +1104,107 @@ export default function AdminPortal() {
                   <table className="w-full">
                     <thead className={`sticky top-0 ${darkMode ? 'bg-orange-900/20' : 'bg-orange-50'}`}>
                       <tr>
-                        {['User 1', 'User 2', 'Language swap', 'Score'].map((h) => (
+                        {['Person', 'Wants to learn', 'Can match with'].map((h) => (
                           <th key={h} className={thCls}>{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-orange-800/20">
-                      {filteredPossible.map((pm) => (
-                        <tr
-                          key={`${pm.user1._id}-${pm.user2._id}`}
-                          className={darkMode ? 'hover:bg-orange-900/10' : 'hover:bg-orange-50/50'}
-                        >
-                          <td className={`px-6 py-4 ${darkMode ? 'text-orange-100' : 'text-gray-900'}`}>
-                            <p className="font-medium">{pm.user1.name}</p>
-                            <p className={`text-xs ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
-                              {pm.user1.email}
-                            </p>
-                          </td>
-                          <td className={`px-6 py-4 ${darkMode ? 'text-orange-100' : 'text-gray-900'}`}>
-                            <p className="font-medium">{pm.user2.name}</p>
-                            <p className={`text-xs ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
-                              {pm.user2.email}
-                            </p>
-                          </td>
-                          <td className={`px-6 py-4 text-xs ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
-                            <p>{(pm.user1.name || 'User 1').split(' ')[0]} learns: <b>{pm.user1Learns.join(', ')}</b></p>
-                            <p>{(pm.user2.name || 'User 2').split(' ')[0]} learns: <b>{pm.user2Learns.join(', ')}</b></p>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              darkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700'
-                            }`}>
-                              {pm.score}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                      {filteredPossible.map((person) => {
+                        const isOpen = expandedPeople.has(person.user._id);
+                        const wanted = Array.from(new Set(person.partners.flatMap((p) => p.youLearn)));
+                        const count = person.partners.length;
+                        return (
+                          <Fragment key={person.user._id}>
+                            <tr
+                              onClick={() => togglePerson(person.user._id)}
+                              className={`cursor-pointer ${darkMode ? 'hover:bg-orange-900/10' : 'hover:bg-orange-50/50'}`}
+                            >
+                              <td className={`px-6 py-4 ${darkMode ? 'text-orange-100' : 'text-gray-900'}`}>
+                                <div className="flex items-center gap-3">
+                                  {isOpen ? (
+                                    <ChevronDown className="w-4 h-4 shrink-0" />
+                                  ) : (
+                                    <ChevronRight className="w-4 h-4 shrink-0" />
+                                  )}
+                                  <div>
+                                    <p className="font-medium">{person.user.name}</p>
+                                    <p className={`text-xs ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
+                                      {person.user.email}
+                                    </p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex flex-wrap gap-1">
+                                  {wanted.map((l) => (
+                                    <span
+                                      key={l}
+                                      className={`px-2 py-0.5 rounded-full text-xs whitespace-nowrap ${
+                                        darkMode ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-700'
+                                      }`}
+                                    >
+                                      {l}
+                                    </span>
+                                  ))}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <span
+                                  className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
+                                    darkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700'
+                                  }`}
+                                >
+                                  {count} {count === 1 ? 'person' : 'people'}
+                                </span>
+                              </td>
+                            </tr>
+
+                            {isOpen && (
+                              <tr>
+                                <td
+                                  colSpan={3}
+                                  className={`px-6 py-4 ${darkMode ? 'bg-orange-900/5' : 'bg-orange-50/40'}`}
+                                >
+                                  <div className="space-y-2 pl-7">
+                                    {person.partners.map((p) => (
+                                      <div
+                                        key={p.user._id}
+                                        className={`flex flex-col md:flex-row md:items-center md:justify-between gap-2 p-3 rounded-lg border ${
+                                          darkMode ? 'border-orange-800/30' : 'border-orange-100 bg-white'
+                                        }`}
+                                      >
+                                        <div>
+                                          <p className={`text-sm font-medium ${darkMode ? 'text-orange-100' : 'text-gray-900'}`}>
+                                            {p.user.name}
+                                          </p>
+                                          <p className={`text-xs ${darkMode ? 'text-orange-300/70' : 'text-gray-500'}`}>
+                                            {p.user.email}
+                                          </p>
+                                        </div>
+                                        <div className={`text-xs ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
+                                          <p>{(person.user.name || 'They').split(' ')[0]} learns: <b>{p.youLearn.join(', ')}</b></p>
+                                          <p>{(p.user.name || 'They').split(' ')[0]} learns: <b>{p.theyLearn.join(', ')}</b></p>
+                                        </div>
+                                        <span
+                                          className={`px-2 py-1 rounded-full text-xs font-medium self-start md:self-center ${
+                                            darkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700'
+                                          }`}
+                                        >
+                                          Score {p.score}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </Fragment>
+                        );
+                      })}
                       {filteredPossible.length === 0 && (
                         <tr>
-                          <td colSpan={4} className={`px-6 py-12 text-center text-sm ${darkMode ? 'text-orange-300/60' : 'text-gray-500'}`}>
+                          <td colSpan={3} className={`px-6 py-12 text-center text-sm ${darkMode ? 'text-orange-300/60' : 'text-gray-500'}`}>
                             No possible matches found
                           </td>
                         </tr>
