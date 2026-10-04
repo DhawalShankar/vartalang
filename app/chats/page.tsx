@@ -25,7 +25,7 @@ import type { Socket } from "socket.io-client";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
-// ✅ display names for the BCP-47 codes the backend stores on
+// display names for the BCP-47 codes the backend stores on
 // translatedLang, so the UI can show "Translated to Hindi" instead of
 // a raw code like "hi-IN". Kept in sync with src/utils/languageCodes.js
 // on the backend. Unrecognized codes just fall back to the raw code.
@@ -73,7 +73,7 @@ interface Message {
   _id: string;
   sender: string;
   text: string;
-  // ✅ present only once translated (either via send-time background job
+  // present only once translated (either via send-time background job
   // or via view-time backfill on fetch). Always optional — every place
   // that reads these must handle them being missing/null.
   translatedText?: string | null;
@@ -95,6 +95,7 @@ interface ChatDetail {
   id: string;
   user: User;
   messages: Message[];
+  translationEnabled?: boolean;
   isBlocked: boolean;
 }
 
@@ -120,13 +121,13 @@ function ChatsContent() {
   const [showPledgeModal, setShowPledgeModal] = useState(false);
   const [hasPledged, setHasPledged] = useState(false);
   const [translationEnabled, setTranslationEnabled] = useState(false);
-  // ✅ NEW: tracks which message's pronunciation is currently loading/playing,
+  // tracks which message's pronunciation is currently loading/playing,
   // so we can disable that one button and show a loading state on tap.
   const [playingId, setPlayingId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const currentUserId = typeof window !== 'undefined' ? localStorage.getItem("userId") : null;
 
-  // ✅ Clear all chat notifications on page load
+  // Clear all chat notifications on page load
   useEffect(() => {
     const clearAllChatNotifications = async () => {
       const token = localStorage.getItem("token");
@@ -184,6 +185,58 @@ function ChatsContent() {
     }
   }, [router]);
 
+  const deleteNotificationsForChat = useCallback(async (chatId: string) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${API_URL}/notifications/chat/${chatId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        console.log(`✅ Deleted notifications for chat ${chatId}`);
+      }
+    } catch (error) {
+      console.error("Delete chat notifications error:", error);
+    }
+  }, []);
+
+  // Defined before the socket handlers (so they never see an undefined
+  // reference) and uses socketRef.current.connected instead of the
+  // isConnected state, so its identity stays stable and doesn't
+  // re-create the socket effect.
+  const fetchChatMessages = useCallback(async (chatId: string) => {
+    const token = localStorage.getItem("token");
+    
+    try {
+      const res = await fetch(`${API_URL}/chats/${chatId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Failed to fetch messages");
+
+      const data = await res.json();
+      setCurrentChatDetail(data.chat);
+      // sync the toggle with what's actually saved on the server
+      setTranslationEnabled(Boolean(data.chat.translationEnabled));
+      
+      await deleteNotificationsForChat(chatId);
+      
+      if (socketRef.current?.connected) {
+        console.log(`📍 Joining chat room: chat_${chatId}`);
+        socketRef.current.emit("join_chat", `chat_${chatId}`);
+      } else {
+        console.warn("⚠️ Cannot join chat room - socket not connected");
+      }
+    } catch (error) {
+      console.error("Fetch messages error:", error);
+    }
+  }, [deleteNotificationsForChat]);
+
   const handleReceiveMessage = useCallback((data: any) => {
     console.log("📨 Received message:", data);
     const { chatId, message } = data;
@@ -223,7 +276,7 @@ function ChatsContent() {
         }, 500);
       }
 
-      // ✅ message arrives untranslated (send-time translation was removed);
+      // message arrives untranslated (send-time translation was removed);
       // "message_translated" patches it in shortly after, if applicable.
       return {
         ...prev,
@@ -252,7 +305,7 @@ function ChatsContent() {
     });
   }, [currentUserId]);
 
-  // ✅ backend's background/backfill translation lands here and patches
+  // backend's background/backfill translation lands here and patches
   // the matching message in-place if the chat is currently open.
   const handleMessageTranslated = useCallback((data: any) => {
     console.log("🌐 Message translated:", data);
@@ -274,13 +327,20 @@ function ChatsContent() {
     console.log("🚫 User blocked event");
     fetchChats();
     if (selectedChat) fetchChatMessages(selectedChat);
-  }, [selectedChat, fetchChats]);
+  }, [selectedChat, fetchChats, fetchChatMessages]);
 
   const handleUserUnblocked = useCallback(() => {
     console.log("✅ User unblocked event");
     fetchChats();
     if (selectedChat) fetchChatMessages(selectedChat);
-  }, [selectedChat, fetchChats]);
+  }, [selectedChat, fetchChats, fetchChatMessages]);
+
+  // The other user sent a message into a chat we had deleted: the backend
+  // un-hides it, so just refetch the list and it shows up again.
+  const handleChatRestored = useCallback(() => {
+    console.log("♻️ Chat restored event");
+    fetchChats();
+  }, [fetchChats]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -307,6 +367,7 @@ function ChatsContent() {
     socket.on("user_blocked", handleUserBlocked);
     socket.on("user_unblocked", handleUserUnblocked);
     socket.on("message_translated", handleMessageTranslated);
+    socket.on("chat_restored", handleChatRestored);
 
     return () => {
       console.log("🧹 Cleaning up socket...");
@@ -317,9 +378,17 @@ function ChatsContent() {
       socket.off("user_blocked");
       socket.off("user_unblocked");
       socket.off("message_translated");
+      socket.off("chat_restored");
       destroyChatSocket();
     };
-  }, [handleReceiveMessage, handleMessagesRead, handleUserBlocked, handleUserUnblocked, handleMessageTranslated]);
+  }, [
+    handleReceiveMessage,
+    handleMessagesRead,
+    handleUserBlocked,
+    handleUserUnblocked,
+    handleMessageTranslated,
+    handleChatRestored
+  ]);
 
   useEffect(() => {
     if (!selectedChat || !socketRef.current || !isConnected) return;
@@ -398,53 +467,7 @@ function ChatsContent() {
     if (chatParam && !loading) {
       openChatFromUrl();
     }
-  }, [chatParam, loading, hasPledged, fetchChats]);
-
-  const deleteNotificationsForChat = async (chatId: string) => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    try {
-      const res = await fetch(`${API_URL}/notifications/chat/${chatId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (res.ok) {
-        console.log(`✅ Deleted notifications for chat ${chatId}`);
-      }
-    } catch (error) {
-      console.error("Delete chat notifications error:", error);
-    }
-  };
-
-  const fetchChatMessages = async (chatId: string) => {
-    const token = localStorage.getItem("token");
-    
-    try {
-      const res = await fetch(`${API_URL}/chats/${chatId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) throw new Error("Failed to fetch messages");
-
-      const data = await res.json();
-      setCurrentChatDetail(data.chat);
-      
-      await deleteNotificationsForChat(chatId);
-      
-      if (socketRef.current && isConnected) {
-        console.log(`📍 Joining chat room: chat_${chatId}`);
-        socketRef.current.emit("join_chat", `chat_${chatId}`);
-      } else {
-        console.warn("⚠️ Cannot join chat room - socket not connected");
-      }
-    } catch (error) {
-      console.error("Fetch messages error:", error);
-    }
-  };
+  }, [chatParam, loading, hasPledged, fetchChats, fetchChatMessages]);
 
   const handleSendMessage = async () => {
     if (!messageInput.trim() || !selectedChat || sending) return;
@@ -527,7 +550,7 @@ function ChatsContent() {
     }
   };
 
-  // ✅ NEW: fetches (or hits the cache for) pronunciation audio for one
+  // fetches (or hits the cache for) pronunciation audio for one
   // message and plays it. `useTranslated` decides whether to speak the
   // translated text or the original — pass in whichever is currently shown.
   const handlePronounce = async (chatId: string, messageId: string, useTranslated: boolean) => {
@@ -680,7 +703,7 @@ function ChatsContent() {
   const handleDeleteChat = async () => {
     if (!selectedChat) return;
 
-    if (!confirm("Are you sure you want to delete this chat? This cannot be undone.")) {
+    if (!confirm("Delete this chat? Your message history will be cleared. If the other person messages you again, the chat will reappear with only the new messages.")) {
       return;
     }
 
@@ -960,7 +983,7 @@ function ChatsContent() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 relative">
-                    {/* ✅ translation toggle */}
+                    {/* translation toggle */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -1074,7 +1097,7 @@ function ChatsContent() {
                   ) : (
                     currentChatDetail.messages.map((msg) => {
                       const isMe = msg.sender.toString() === currentUserId?.toString();
-                      // ✅ only shown on the recipient's own view, never the sender's
+                      // only shown on the recipient's own view, never the sender's
                       const hasTranslation = !isMe && Boolean(msg.translatedText);
                       const translationLabel = getLanguageLabel(msg.translatedLang);
                       const isPlaying = playingId === msg._id;
@@ -1119,31 +1142,31 @@ function ChatsContent() {
                               </div>
 
                               {/* translation shown alongside, never instead of, the original */}
-                                {hasTranslation && (
-                                  <div className={`mt-1.5 pt-1.5 border-t flex items-start gap-1.5 ${
-                                    isMe 
-                                      ? "border-white/20" 
-                                      : darkMode ? "border-orange-700/30" : "border-orange-200"
-                                  }`}>
-                                    <Languages className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${
-                                      isMe ? "text-white/70" : darkMode ? "text-orange-300/70" : "text-orange-600/70"
-                                    }`} />
-                                    <div className="flex-1">
-                                      {translationLabel && (
-                                        <p className={`text-[10px] uppercase tracking-wide mb-0.5 ${
-                                          isMe ? "text-white/60" : darkMode ? "text-orange-300/60" : "text-orange-600/60"
-                                        }`}>
-                                          Translated to {translationLabel}
-                                        </p>
-                                      )}
-                                      <p className={`text-sm italic wrap-break-word ${
-                                        isMe ? "text-white/85" : darkMode ? "text-orange-100/85" : "text-orange-900/85"
+                              {hasTranslation && (
+                                <div className={`mt-1.5 pt-1.5 border-t flex items-start gap-1.5 ${
+                                  isMe 
+                                    ? "border-white/20" 
+                                    : darkMode ? "border-orange-700/30" : "border-orange-200"
+                                }`}>
+                                  <Languages className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${
+                                    isMe ? "text-white/70" : darkMode ? "text-orange-300/70" : "text-orange-600/70"
+                                  }`} />
+                                  <div className="flex-1">
+                                    {translationLabel && (
+                                      <p className={`text-[10px] uppercase tracking-wide mb-0.5 ${
+                                        isMe ? "text-white/60" : darkMode ? "text-orange-300/60" : "text-orange-600/60"
                                       }`}>
-                                        {msg.translatedText}
+                                        Translated to {translationLabel}
                                       </p>
-                                    </div>
+                                    )}
+                                    <p className={`text-sm italic wrap-break-word ${
+                                      isMe ? "text-white/85" : darkMode ? "text-orange-100/85" : "text-orange-900/85"
+                                    }`}>
+                                      {msg.translatedText}
+                                    </p>
                                   </div>
-                                )}
+                                </div>
+                              )}
                             </div>
                             
                             <div className="flex items-center gap-1 mt-1 px-2">
