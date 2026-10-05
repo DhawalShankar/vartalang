@@ -90,17 +90,17 @@ export default function Footer() {
                   : "bg-orange-50 border-orange-200 text-orange-700"
               }`}>
                 <span>An Initiative of</span>
-                <a                
-                    href="https://cosmoindiaprakashan.in"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ fontFamily: "var(--font-yatra-one)" }}
-                    className={`transition-colors hover:underline underline-offset-2 ${
-                      darkMode ? "hover:text-orange-100" : "hover:text-orange-900"
-                    }`}
-                  >
-                    Cosmo India Prakashan
-                  </a>
+                <a
+                  href="https://cosmoindiaprakashan.in"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontFamily: "var(--font-yatra-one)" }}
+                  className={`transition-colors hover:underline underline-offset-2 ${
+                    darkMode ? "hover:text-orange-100" : "hover:text-orange-900"
+                  }`}
+                >
+                  Cosmo India Prakashan
+                </a>
               </div>
             </div>
 
@@ -144,7 +144,7 @@ export default function Footer() {
               </div>
             ))}
 
-            {/* Connect Column — Powered by Sarvam AI + Socials */}
+            {/* Connect Column — Socials + Powered by Sarvam AI + Product Hunt */}
             <div>
               <h4 className={`text-sm font-semibold mb-4 ${
                 darkMode ? "text-orange-200" : "text-gray-900"
@@ -176,17 +176,34 @@ export default function Footer() {
               <a
                 href="https://www.sarvam.ai/"
                 target="_blank"
-                rel="noopener noreferrer" 
+                rel="noopener noreferrer"
                 className={`inline-flex items-center gap-2 text-xs font-medium mt-6 px-2 py-2 rounded-full border ${
-                darkMode
-                  ? "bg-orange-900/20 border-orange-800/40 text-orange-300/80"
-                  : "bg-orange-50 border-orange-200 text-orange-700"
-              }`}>
+                  darkMode
+                    ? "bg-orange-900/20 border-orange-800/40 text-orange-300/80"
+                    : "bg-orange-50 border-orange-200 text-orange-700"
+                }`}
+              >
                 <span>Powered by</span>
                 <img
                   src={darkMode ? "/sarvam-logo-white.png" : "/sarvam-logo-dark.png"}
                   alt="Sarvam AI"
                   className="h-3.5 w-auto"
+                />
+              </a>
+
+              {/* Product Hunt badge */}
+              <a
+                href="https://www.producthunt.com/products/vartalang?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-vartalang"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block mt-4"
+              >
+                <img
+                  alt="VartaLang - India's Language Bridge | Product Hunt"
+                  width={250}
+                  height={54}
+                  className="max-w-full h-auto"
+                  src={`https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1270205&theme=${darkMode ? "dark" : "light"}&t=1791202255528`}
                 />
               </a>
             </div>
