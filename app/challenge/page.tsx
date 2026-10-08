@@ -11,7 +11,7 @@ import Footer from '@/components/layout/Footer';
 import { useDarkMode } from '@/lib/DarkModeContext';
 
 // TODO: replace with the real VartaLang support address before deploying
-const PROTECT_EMAIL = 'hello@vartalang.in';
+const PROTECT_EMAIL = 'dhawal@cosmoindiaprakashan.in';
 const PROTECT_SUBJECT = 'Voice Challenge: voice protection request';
 
 export default function VoiceChallengeIntro() {
