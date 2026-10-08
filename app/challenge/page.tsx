@@ -3,12 +3,16 @@
 import Link from 'next/link';
 import {
   ArrowRight, Mic, Shield, Eye, Clock, Mail, CheckCircle,
-  Briefcase, Headphones, Radio, Users, Heart, TrendingUp,
-  Lock, Compass, Target, MessageCircle
+  Briefcase, Headphones, Radio, Heart,
+  Lock, Compass, ShieldCheck
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useDarkMode } from '@/lib/DarkModeContext';
+
+// TODO: replace with the real VartaLang support address before deploying
+const PROTECT_EMAIL = 'hello@vartalang.in';
+const PROTECT_SUBJECT = 'Voice Challenge: voice protection request';
 
 export default function VoiceChallengeIntro() {
   const { darkMode } = useDarkMode();
@@ -83,6 +87,25 @@ export default function VoiceChallengeIntro() {
     },
   ];
 
+  const frameworkControls = [
+    'Human use only, or AI use',
+    'Who can license your voice',
+    'Which industries can use it',
+    'Which applications are permitted',
+    'Where it can be used',
+    'For how long',
+    'Whether it can be used for AI training',
+    'Whether it can be cloned',
+    'Whether it can be sublicensed',
+    'How you share in the revenue it generates',
+  ];
+
+  const protectRequests = [
+    'Ask how your recording is stored and who can listen to it',
+    'Report a recording or clip you think is your voice being misused',
+    'Ask us to remove your recording from the challenge',
+  ];
+
   return (
     <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'bg-[#1a1410]' : 'bg-[#FFF9F5]'}`}>
 
@@ -90,15 +113,18 @@ export default function VoiceChallengeIntro() {
 
       {/* Hero */}
       <section className="pt-30 pb-10 px-4 relative overflow-hidden">
-        <div className={`absolute top-10 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-30 ${
-          darkMode ? 'bg-orange-500' : 'bg-orange-200'
-        }`}></div>
+        <div
+          aria-hidden="true"
+          className={`absolute top-10 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-30 ${
+            darkMode ? 'bg-orange-500' : 'bg-orange-200'
+          }`}
+        ></div>
 
         <div className="max-w-5xl mx-auto relative z-10 text-center">
           <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold mb-5 ${
             darkMode ? 'bg-orange-900/20 text-orange-300' : 'bg-orange-100 text-orange-700'
           }`}>
-            <Radio className="w-4 h-4" />
+            <Radio className="w-4 h-4" aria-hidden="true" />
             A VartaLang Community Initiative
           </div>
 
@@ -131,7 +157,7 @@ export default function VoiceChallengeIntro() {
             className="group inline-flex items-center gap-2 px-8 py-3.5 rounded-full font-bold text-base bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-xl hover:scale-105 transition-all"
           >
             Start the Challenge
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
           </Link>
 
           <p className={`text-xs mt-3 ${darkMode ? 'text-orange-300/50' : 'text-gray-500'}`}>
@@ -181,7 +207,7 @@ export default function VoiceChallengeIntro() {
                 <span className={`text-2xl font-black mb-2 block ${darkMode ? 'text-orange-500/40' : 'text-orange-300'}`}>
                   {i + 1}
                 </span>
-                <step.icon className={`w-5 h-5 mb-2 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                <step.icon className={`w-5 h-5 mb-2 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} aria-hidden="true" />
                 <h3 className={`font-bold mb-1 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
                   {step.title}
                 </h3>
@@ -217,7 +243,7 @@ export default function VoiceChallengeIntro() {
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
                   darkMode ? 'bg-orange-500/20' : 'bg-orange-100'
                 }`}>
-                  <item.icon className={`w-5 h-5 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                  <item.icon className={`w-5 h-5 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} aria-hidden="true" />
                 </div>
                 <div>
                   <h3 className={`font-bold mb-1 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
@@ -279,7 +305,7 @@ export default function VoiceChallengeIntro() {
             <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold mb-5 ${
               darkMode ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-100 text-orange-700'
             }`}>
-              <Heart className="w-4 h-4" />
+              <Heart className="w-4 h-4" aria-hidden="true" />
               Why we're actually doing this
             </div>
 
@@ -317,7 +343,7 @@ export default function VoiceChallengeIntro() {
                 <div key={item.text} className={`flex items-center gap-2 p-3 rounded-lg text-sm ${
                   darkMode ? 'bg-orange-900/20 text-orange-200' : 'bg-orange-50 text-gray-700'
                 }`}>
-                  <item.icon className="w-4 h-4 shrink-0" />
+                  <item.icon className="w-4 h-4 shrink-0" aria-hidden="true" />
                   {item.text}
                 </div>
               ))}
@@ -326,8 +352,112 @@ export default function VoiceChallengeIntro() {
         </div>
       </section>
 
+      {/* Protect your voice — request-based, research phase */}
+      <section className="py-14 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className={`p-8 rounded-2xl border ${
+            darkMode
+              ? 'bg-orange-900/10 border-orange-800/30'
+              : 'bg-white border-orange-200 shadow-lg'
+          }`}>
+            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold mb-5 ${
+              darkMode ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-100 text-orange-700'
+            }`}>
+              <ShieldCheck className="w-4 h-4" aria-hidden="true" />
+              Voice protection
+            </div>
+
+            <h2 className={`text-2xl font-black mb-4 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+              Want your voice protected? Write to us.
+            </h2>
+
+            <div className={`space-y-4 text-sm leading-relaxed ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
+              <p>
+                By default, your recording is only used to connect you with companies hiring for voice
+                and language work. If you'd like extra care taken with your voice, you can ask us directly.
+              </p>
+              <p>
+                We're still researching voice protection and misuse checks, so for now this is a
+                request-based process, not an automatic service. We can't promise to find every place a
+                voice is used, or to prove that a voice was cloned by AI — but we will look into what you
+                report and tell you honestly what we find.
+              </p>
+            </div>
+
+            <div className={`mt-8 pt-6 border-t ${darkMode ? 'border-orange-800/30' : 'border-orange-100'}`}>
+              <h3 className={`text-lg font-bold mb-2 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+                The framework we're working toward
+              </h3>
+              <p className={`text-sm leading-relaxed mb-4 ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
+                Just as an author works with a publisher to control how their work is published and
+                licensed, a voice artist should be able to decide how their voice is used. You should
+                be able to decide:
+              </p>
+
+              <ul className="grid sm:grid-cols-2 gap-2">
+                {frameworkControls.map((text) => (
+                  <li
+                    key={text}
+                    className={`flex items-start gap-2 p-3 rounded-lg text-sm ${
+                      darkMode ? 'bg-orange-900/20 text-orange-200' : 'bg-orange-50 text-gray-700'
+                    }`}
+                  >
+                    <CheckCircle
+                      className={`w-4 h-4 mt-0.5 shrink-0 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}
+                      aria-hidden="true"
+                    />
+                    {text}
+                  </li>
+                ))}
+              </ul>
+
+              <p className={`text-sm leading-relaxed mt-4 ${darkMode ? 'text-orange-200/80' : 'text-gray-700'}`}>
+                If you don't want AI to use your voice, that's completely okay. You can remain a human
+                voice artist and be hired for dubbing, narration, cinema, OTT, advertising and other
+                work. If you choose to take part in AI, you should do it on your terms.
+              </p>
+              <p className={`text-sm leading-relaxed mt-3 font-semibold ${darkMode ? 'text-orange-200' : 'text-gray-900'}`}>
+                This is the framework we want to build with voice artists, lawyers, linguists and
+                researchers. It is not live today.
+              </p>
+            </div>
+
+            <p className={`text-sm font-semibold mt-8 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
+              Until then, you can ask us:
+            </p>
+
+            <ul className="mt-3 space-y-2">
+              {protectRequests.map((text) => (
+                <li
+                  key={text}
+                  className={`flex items-start gap-2 text-sm ${darkMode ? 'text-orange-200' : 'text-gray-700'}`}
+                >
+                  <CheckCircle
+                    className={`w-4 h-4 mt-0.5 shrink-0 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}
+                    aria-hidden="true"
+                  />
+                  {text}
+                </li>
+              ))}
+            </ul>
+
+            <a
+              href={`mailto:${PROTECT_EMAIL}?subject=${encodeURIComponent(PROTECT_SUBJECT)}`}
+              className={`inline-flex items-center gap-2 mt-6 px-6 py-3 rounded-full font-bold text-sm border transition-all hover:scale-105 ${
+                darkMode
+                  ? 'border-orange-500/50 text-orange-300 hover:bg-orange-500/10'
+                  : 'border-orange-300 text-orange-700 hover:bg-orange-50'
+              }`}
+            >
+              <Mail className="w-4 h-4" aria-hidden="true" />
+              Email us at {PROTECT_EMAIL}
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* Final CTA */}
-      <section className="py-16 px-4">
+      <section className={`py-16 px-4 ${darkMode ? 'bg-[#1f1612]' : 'bg-orange-50/30'}`}>
         <div className="max-w-3xl mx-auto text-center">
           <h2 className={`text-3xl font-black mb-4 ${darkMode ? 'text-orange-50' : 'text-gray-900'}`}>
             Five minutes. Your language. Your voice.
@@ -341,10 +471,10 @@ export default function VoiceChallengeIntro() {
             className="inline-flex items-center gap-2 px-9 py-4 rounded-full font-black text-lg bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-2xl hover:scale-105 transition-all"
           >
             Start the Challenge
-            <ArrowRight className="w-5 h-5" />
+            <ArrowRight className="w-5 h-5" aria-hidden="true" />
           </Link>
 
-          <div className="grid grid-cols-4 gap-3 max-w-xl mx-auto mt-10">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-xl mx-auto mt-10">
             {[
               { icon: Compass, text: 'Record' },
               { icon: Clock, text: 'Reviewed' },
@@ -352,7 +482,7 @@ export default function VoiceChallengeIntro() {
               { icon: Briefcase, text: 'Discovered' },
             ].map((item) => (
               <div key={item.text} className={`p-3 rounded-lg ${darkMode ? 'bg-orange-900/20' : 'bg-white shadow'}`}>
-                <item.icon className={`w-5 h-5 mx-auto mb-1.5 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                <item.icon className={`w-5 h-5 mx-auto mb-1.5 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} aria-hidden="true" />
                 <div className={`text-xs font-bold ${darkMode ? 'text-orange-200' : 'text-gray-900'}`}>
                   {item.text}
                 </div>
