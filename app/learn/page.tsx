@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { BookOpen, Search, MapPin, Languages as LanguagesIcon, Sparkles, ExternalLink, Puzzle } from 'lucide-react';
+import { BookOpen, Search, MapPin, Languages as LanguagesIcon, Sparkles, ExternalLink, Puzzle, Radio } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useDarkMode } from '@/lib/DarkModeContext';
@@ -49,6 +49,12 @@ export default function LearnPage() {
     lang.nativeName?.toLowerCase().includes(query.toLowerCase())
   );
 
+  const ctaClass = `inline-flex items-center gap-2 px-6 py-2.5 rounded-full font-semibold border transition-all hover:scale-105 hover:shadow-lg ${
+    darkMode
+      ? 'bg-orange-900/20 border-orange-700/40 text-orange-200 hover:border-orange-500'
+      : 'bg-white border-orange-200 text-orange-700 hover:border-orange-400'
+  }`;
+
   return (
     <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'bg-[#1a1410]' : 'bg-[#FFF9F5]'}`}>
       <Navbar />
@@ -93,22 +99,22 @@ export default function LearnPage() {
             />
           </div>
 
-          {/* Crossword CTA */}
-          <div className="mt-5">
+          {/* Crossword + Radio CTAs */}
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
             <a
               href={GAMES_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-full font-semibold border transition-all hover:scale-105 hover:shadow-lg ${
-                darkMode
-                  ? 'bg-orange-900/20 border-orange-700/40 text-orange-200 hover:border-orange-500'
-                  : 'bg-white border-orange-200 text-orange-700 hover:border-orange-400'
-              }`}
+              className={ctaClass}
             >
               <Puzzle className="w-4 h-4" />
               Play a language crossword
               <ExternalLink className="w-3.5 h-3.5 opacity-70" />
             </a>
+            <Link href="/radio" className={ctaClass}>
+              <Radio className="w-4 h-4" />
+              Play Gauraiyya Radio!
+            </Link>
           </div>
         </div>
       </section>
