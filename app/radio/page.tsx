@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Fraunces, Tiro_Devanagari_Hindi } from 'next/font/google';
 import {
   Play, Pause, Radio, Languages, GraduationCap, ArrowRight, Loader2, Sun, Moon,
-  MapPin, Droplets, Wind, Thermometer, Newspaper, ExternalLink,
+  MapPin, Droplets, Wind, Thermometer, Newspaper, ExternalLink, Lock, LogIn, Clock,
 } from 'lucide-react';
 import { useDarkMode } from '@/lib/DarkModeContext';
 
@@ -11,8 +11,17 @@ const display = Fraunces({ subsets: ['latin'], style: ['normal', 'italic'] });
 const deva = Tiro_Devanagari_Hindi({ subsets: ['devanagari', 'latin'], weight: '400' });
 
 const MAIN_SITE = 'https://vartalang.in';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 // Radio Browser: the open, community directory behind most "open radio" apps
 const RB_API = 'https://all.api.radio-browser.info/json';
+
+// Guest limit: 5 minutes of actual listening, then login is required
+const FREE_SECONDS = 300;
+const FREE_KEY = 'gauraiyya_free_seconds';
+const getToken = () => {
+  try { return localStorage.getItem('token'); } catch { return null; }
+};
+const fmtLeft = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
 const DEFAULT_COORDS = { lat: 28.6139, lon: 77.209 }; // Delhi, used only if location can't be found at all
 
@@ -268,6 +277,13 @@ export default function GauraiyyaRadio() {
   const token = useRef(0);
   const trying = useRef(false);
 
+  // guest limit / login gate
+  const [authed, setAuthed] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [used, setUsed] = useState(0);
+  const usedRef = useRef(0);
+  const [showGate, setShowGate] = useState(false);
+
   // weather panel
   const [coords, setCoords] = useState<Coords | null>(null);
   const [locating, setLocating] = useState(true);
@@ -280,6 +296,24 @@ export default function GauraiyyaRadio() {
   const papers = PAPERS[st.id] ?? [];
 
   const stopHls = () => { hlsRef.current?.destroy(); hlsRef.current = null; };
+
+  const stopAll = () => {
+    token.current++;
+    trying.current = false;
+    stopHls();
+    audioRef.current?.pause();
+    setPlaying(false);
+    setLoading(false);
+  };
+
+  // true (and opens the modal) if this guest has used up the free minutes
+  const blocked = () => {
+    if (authChecked && !authed && usedRef.current >= FREE_SECONDS) {
+      setShowGate(true);
+      return true;
+    }
+    return false;
+  };
 
   // Try one URL: resolves true once audio is actually playing, false on error / 7s timeout
   const attempt = (url: string) =>
@@ -363,6 +397,7 @@ export default function GauraiyyaRadio() {
   };
 
   const tune = async (index: number) => {
+    if (blocked()) return;
     const my = ++token.current;
     const s = stations[index];
     trying.current = true;
@@ -401,16 +436,8 @@ export default function GauraiyyaRadio() {
   };
 
   const togglePlay = () => {
-    if (playing || loading) {
-      token.current++;
-      trying.current = false;
-      stopHls();
-      audioRef.current?.pause();
-      setPlaying(false);
-      setLoading(false);
-    } else {
-      tune(active);
-    }
+    if (playing || loading) stopAll();
+    else tune(active);
   };
 
   const pick = (i: number) => {
@@ -419,6 +446,56 @@ export default function GauraiyyaRadio() {
   };
 
   useEffect(() => () => { stopHls(); audioRef.current?.pause(); }, []);
+
+  // ---------- Auth + free-listening limit ----------
+
+  const checkAuth = async () => {
+    const t = getToken();
+    if (!t) { setAuthed(false); setAuthChecked(true); return; }
+    try {
+      const r = await fetch(`${API_URL}/auth/me`, { headers: { Authorization: `Bearer ${t}` } });
+      if (r.ok) {
+        setAuthed(true);
+        setShowGate(false);
+      } else {
+        try { localStorage.removeItem('token'); } catch { /* ignore */ }
+        setAuthed(false);
+      }
+    } catch {
+      setAuthed(false);
+    }
+    setAuthChecked(true);
+  };
+
+  useEffect(() => {
+    try { usedRef.current = Number(localStorage.getItem(FREE_KEY)) || 0; } catch { /* ignore */ }
+    setUsed(usedRef.current);
+    checkAuth();
+    // logged in from another tab? re-check when the user comes back
+    window.addEventListener('focus', checkAuth);
+    return () => window.removeEventListener('focus', checkAuth);
+  }, []);
+
+  // A guest's free time only runs while audio is actually playing
+  useEffect(() => {
+    if (!playing || authed) return;
+    const t = setInterval(() => {
+      usedRef.current += 1;
+      setUsed(usedRef.current);
+      try { localStorage.setItem(FREE_KEY, String(usedRef.current)); } catch { /* ignore */ }
+      if (usedRef.current >= FREE_SECONDS) {
+        stopAll();
+        setShowGate(true);
+      }
+    }, 1000);
+    return () => clearInterval(t);
+  }, [playing, authed]);
+
+  // lock page scroll while the modal is open
+  useEffect(() => {
+    document.body.style.overflow = showGate ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [showGate]);
 
   // ---------- Location, weather, clock ----------
 
@@ -562,24 +639,69 @@ export default function GauraiyyaRadio() {
         }}
       />
 
+      {/* LOGIN GATE: shown after the free minutes, can't be dismissed */}
+      {showGate && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="gate-title"
+        >
+          <div className={`w-full max-w-md rounded-3xl border p-8 text-center shadow-2xl ${darkMode ? 'bg-[#1f1612] border-orange-900/50' : 'bg-[#FFF9F5] border-orange-200'}`}>
+            <div className="w-16 h-16 mx-auto mb-5 rounded-full flex items-center justify-center bg-linear-to-br from-orange-500 to-red-600 text-white">
+              <Lock className="w-7 h-7" aria-hidden="true" />
+            </div>
+            <h2 id="gate-title" className={`${display.className} text-2xl sm:text-3xl font-semibold ${ink}`}>
+              Liked the music?
+            </h2>
+            <p className={`mt-3 text-sm sm:text-base ${soft}`}>
+              Log in to VartaLang to keep listening. Radio stays free, you just need an account.
+            </p>
+            <div className="mt-7 flex flex-col gap-3">
+              <a
+                href="/auth/login?redirect=/radio"
+                className={`inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full font-bold bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-xl hover:scale-105 transition-all ${focus}`}
+              >
+                <LogIn className="w-4 h-4" aria-hidden="true" /> Log in to continue
+              </a>
+              <a
+                href="/auth/signup?redirect=/radio"
+                className={`px-8 py-3.5 rounded-full font-semibold border transition-all ${focus} ${
+                  darkMode ? 'border-orange-700 text-orange-200 hover:bg-orange-900/20' : 'border-orange-300 text-stone-700 hover:bg-orange-50'
+                }`}
+              >
+                New here? Create an account
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="absolute inset-x-0 top-0 z-20">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <a href={MAIN_SITE} className={`text-lg ${ink} ${focus} rounded`}>
             <span className="font-black">Varta</span><span className="font-medium">Lang</span>
           </a>
           <div className="flex items-center gap-2">
-        
-          <span className={`inline-flex items-center gap-2 text-sm font-semibold px-3 py-1.5 rounded-full ${
-            playing
-              ? darkMode ? 'bg-red-500/20 text-red-200' : 'bg-red-100 text-red-700'
-              : darkMode ? 'bg-orange-900/30 text-orange-200' : 'bg-white/70 text-stone-700'
-          }`}>
-            <span className="relative flex h-2 w-2">
-              {playing && <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75 animate-ping" />}
-              <span className={`relative inline-flex rounded-full h-2 w-2 ${playing ? 'bg-red-500' : 'bg-stone-400'}`} />
+            {authChecked && !authed && (
+              <span className={`inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-full ${
+                darkMode ? 'bg-orange-900/30 text-orange-200' : 'bg-white/70 text-stone-700'
+              }`}>
+                <Clock className="w-3.5 h-3.5" aria-hidden="true" />
+                {fmtLeft(Math.max(0, FREE_SECONDS - used))} left, then log in
+              </span>
+            )}
+            <span className={`inline-flex items-center gap-2 text-sm font-semibold px-3 py-1.5 rounded-full ${
+              playing
+                ? darkMode ? 'bg-red-500/20 text-red-200' : 'bg-red-100 text-red-700'
+                : darkMode ? 'bg-orange-900/30 text-orange-200' : 'bg-white/70 text-stone-700'
+            }`}>
+              <span className="relative flex h-2 w-2">
+                {playing && <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75 animate-ping" />}
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${playing ? 'bg-red-500' : 'bg-stone-400'}`} />
+              </span>
+              {playing ? 'On air' : 'Off air'}
             </span>
-            {playing ? 'On air' : 'Off air'}
-          </span>
           </div>
         </div>
       </header>
